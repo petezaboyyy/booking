@@ -1,0 +1,34 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking-web
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    restart: unless-stopped
+
+  database:
+    image: mariadb:10.11
+    container_name: booking-database
+    environment:
+      MARIADB_DATABASE: now_booking
+      MARIADB_USER: booking
+      MARIADB_PASSWORD: booking_local
+      MARIADB_ROOT_PASSWORD: root_local
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - booking-database-data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  booking-database-data:
