@@ -1,57 +1,93 @@
-<aside data-component="sidebar"></aside>
-<div class="main-content">
-  <div>
-    <header data-component="topbar"></header>
-    <main class="content">
-      <div class="card-groups">
-        <header>
-          <div>
-            <h1 class="icon-office" data-i18n>My bookings</h1>
-            <p data-i18n>View and manage your own room reservations</p>
-          </div>
-          <div class="header-actions">
-            <a class="btn btn-primary icon-new" href="/booking" data-i18n>Book a room</a>
-          </div>
-        </header>
-        <div class="content-body">
-          <div class="tablebody">
-            <table class="table border fullwidth" data-table="myBookings" data-source="api/booking/mybookings" data-default-sort="created_at desc" data-page-size="25"
-                   data-search-columns="room_name,topic,comment" data-action-url="api/booking/mybookings/action" data-row-actions='{
-                                "view":{
-                                  "title":"View",
-                                  "className":"btn btn-warning icon-search"
-                                },
-                                "edit": {
-                                  "title": "Edit",
-                                  "className": "btn btn-success icon-edit",
-                                  "condition":"${can_edit == true}"
-                                },
-                                "cancel": {
-                                  "title": "Cancel",
-                                  "className": "btn btn-danger icon-ban",
-                                  "confirm": "{LNG_Confirm cancellation}",
-                                  "condition":"${can_cancel == true}"
-                                }
-                              }'>
-              <thead>
-                <tr>
-                  <th data-field="room_name" data-sort="room_name" data-formatter="formatRoomWithImage" data-i18n>{LNG_Room}</th>
-                  <th data-field="topic" data-template="<span class='two_line'>${topic}</span>" data-i18n>{LNG_Topic}</th>
-                  <th data-field="reservation_text" data-sort="begin" class="center" data-cell-class="center" data-i18n> {LNG_Reservation period}</th>
-                  <th data-field="created_at" data-sort="created_at" class="center" data-cell-class="center" data-format="datetime" data-i18n>{LNG_Created}</th>
-                  <th data-field="status" data-filter="true" data-type="select" data-sort="status" class="center" data-cell-class="center" data-formatter="formatTableOptionStatus"
-                      data-i18n>{LNG_Status}</th>
-                  <th data-field="reason" data-template="<span class='two_line'>${reason}</span>" data-i18n>{LNG_Reason}</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
+<div class='roomly-dashboard roomly-bookings-page'>
+  <header class='roomly-topbar'>
+    <a class='roomly-brand' href='/' aria-label='Roomly dashboard'>
+      <span class='roomly-brand-icon icon-office' aria-hidden='true'></span>
+      <span>Roomly</span>
+    </a>
+    <nav class='roomly-nav' aria-label='Main navigation'>
+      <a href='/'>
+        <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
+        <span data-i18n>Dashboard</span>
+      </a>
+      <a class='is-active' href='/my-bookings'>
+        <span class='roomly-menu-icon icon-list' aria-hidden='true'></span>
+        <span data-i18n>My bookings</span>
+      </a>
+      <a href='/booking'>
+        <span class='roomly-menu-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Book a room</span>
+      </a>
+      <a href='/rooms'>
+        <span class='roomly-menu-icon icon-office' aria-hidden='true'></span>
+        <span data-i18n>All rooms</span>
+      </a>
+    </nav>
+    <div class='roomly-user-actions'>
+      <a class='roomly-icon-button' href='/approvals' aria-label='Booking approvals'>
+        <span class='roomly-action-icon icon-bell' aria-hidden='true'></span>
+        <span class='roomly-notification-dot' aria-hidden='true'></span>
+      </a>
+      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='Switch language' aria-label='Switch language'>
+        <span class='roomly-language-icon icon-language' aria-hidden='true'></span>
+        <span class='roomly-language-option roomly-language-th'>TH</span>
+        <span class='roomly-language-divider' aria-hidden='true'>/</span>
+        <span class='roomly-language-option roomly-language-en'>EN</span>
+      </button>
+      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='Toggle theme' aria-label='Toggle theme'>
+        <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
+        <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
+      </button>
+      <div class='roomly-profile-data' data-component='api' data-endpoint='api/index/auth/me'>
+        <a class='roomly-profile' data-attr='href:&quot;profile?id=&quot; + data.id'>
+          <img class='roomly-avatar' data-attr='src:data.avatar,alt:data.name'>
+          <span class='roomly-profile-copy'>
+            <strong data-text='data.name'>User</strong>
+            <small data-i18n>Profile</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class='roomly-content roomly-bookings-content'>
+    <section class='roomly-page-heading'>
+      <div class='roomly-page-heading-copy'>
+        <div class='roomly-page-heading-icon icon-office' aria-hidden='true'></div>
+        <div>
+          <h1 id='my-bookings-title' data-i18n>My bookings</h1>
+          <p class='roomly-page-description' data-i18n>View and manage your own room reservations</p>
         </div>
       </div>
-    </main>
-  </div>
-  <footer class="footer">
-    <p class="center">&copy; 2026 Admin Framework - Powered by <a href="https://nowjs.net">Now.js</a></p>
-  </footer>
+      <a class='roomly-primary-action' href='/booking'>
+        <span class='roomly-inline-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Book a room</span>
+      </a>
+    </section>
+
+    <section class='roomly-bookings-panel' aria-labelledby='my-bookings-title'>
+      <div class='roomly-table-wrap tablebody'>
+        <table class='table border fullwidth roomly-bookings-table'
+               data-table='myBookings'
+               data-source='api/booking/mybookings'
+               data-default-sort='created_at desc'
+               data-page-size='25'
+               data-search-columns='room_name,topic,comment'
+               data-action-url='api/booking/mybookings/action'
+               data-row-actions='{&quot;view&quot;:{&quot;title&quot;:&quot;View&quot;,&quot;className&quot;:&quot;btn btn-warning icon-search&quot;},&quot;edit&quot;:{&quot;title&quot;:&quot;Edit&quot;,&quot;className&quot;:&quot;btn btn-success icon-edit&quot;,&quot;condition&quot;:&quot;${can_edit == true}&quot;},&quot;cancel&quot;:{&quot;title&quot;:&quot;Cancel&quot;,&quot;className&quot;:&quot;btn btn-danger icon-ban&quot;,&quot;confirm&quot;:&quot;{LNG_Confirm cancellation}&quot;,&quot;condition&quot;:&quot;${can_cancel == true}&quot;}}'>
+          <thead>
+            <tr>
+              <th data-field='room_name' data-sort='room_name' data-formatter='formatRoomWithImage' data-i18n>{LNG_Room}</th>
+              <th data-field='topic' data-template='<span class=&quot;two_line&quot;>${topic}</span>' data-i18n>{LNG_Topic}</th>
+              <th data-field='reservation_text' data-sort='begin' class='center' data-cell-class='center' data-i18n>{LNG_Reservation period}</th>
+              <th data-field='created_at' data-sort='created_at' class='center' data-cell-class='center' data-format='datetime' data-i18n>{LNG_Created}</th>
+              <th data-field='status' data-filter='true' data-type='select' data-sort='status' class='center' data-cell-class='center'
+                  data-formatter='formatTableOptionStatus' data-i18n>{LNG_Status}</th>
+              <th data-field='reason' data-template='<span class=&quot;two_line&quot;>${reason}</span>' data-i18n>{LNG_Reason}</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 </div>

@@ -22,13 +22,13 @@ EventManager.on('router:initialized', () => {
     });
 
     RouterManager.register('/my-bookings', {
-        template: 'booking/my-bookings.html',
+        template: window.location.origin + '/templates/booking/my-bookings.html?v=20260810-5',
         title: '{LNG_My bookings}',
         requireAuth: true
     });
 
     RouterManager.register('/booking', {
-        template: 'booking/booking-recurring.html',
+        template: window.location.origin + '/templates/booking/booking-recurring.html?v=20260810-11',
         title: '{LNG_Book a room}',
         requireAuth: true
     });
@@ -65,9 +65,9 @@ EventManager.on('router:initialized', () => {
     });
 
     RouterManager.register('/', {
-        template: 'booking/calendar.html',
-        title: '{LNG_Reservation calendar}',
-        requireAuth: false,
+        template: 'index.html',
+        title: '{LNG_Dashboard}',
+        requireAuth: true,
         requireGuest: false
     });
 });
@@ -192,6 +192,30 @@ document.addEventListener('change', event => {
         requestAnimationFrame(() => syncDeleteOnlyBulkAction(table.dataset.table));
     }
 });
+
+document.addEventListener('click', (event) => {
+    const themeToggle = event.target.closest('[data-roomly-theme-toggle]');
+    if (themeToggle) {
+        event.preventDefault();
+        const configManager = window.Now?.getManager?.('config') || window.AppConfigManager;
+        if (configManager?.toggle) {
+            configManager.toggle();
+        }
+        return;
+    }
+
+    const languageToggle = event.target.closest?.('[data-roomly-language-toggle]');
+    if (languageToggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        const i18nManager = window.Now?.getManager?.('i18n') || window.I18nManager;
+        if (i18nManager?.setLocale) {
+            const current = i18nManager.getCurrentLocale?.() || document.documentElement.lang || 'en';
+            const nextLocale = current.toLowerCase().startsWith('th') ? 'en' : 'th';
+            i18nManager.setLocale(nextLocale, true);
+        }
+    }
+}, true);
 
 function formatRoomWithImage(cell, rawValue, rowData, attributes) {
     const opts = attributes.lookupOptions || attributes.tableDataOptions || attributes.tableFilterOptions;

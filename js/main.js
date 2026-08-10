@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         enabled: true,
         defaultTheme: 'light',
         storageKey: 'crm_theme',
-        systemPreference: false, // Not use system color scheme preference
+        systemPreference: true, // Follow system preference until the user chooses a theme
 
         // Smooth transitions
         transition: {

@@ -1,13 +1,92 @@
-<aside data-component="sidebar"></aside>
-<div class="main-content">
-  <div>
-    <header data-component="topbar"></header>
-    <main class="content">
-      <h1 class="center" data-i18n>Welcome to the Admin Framework</h1>
-      <p class="center" data-i18n>This is your central hub for managing customer relationships effectively.</p>
-    </main>
-  </div>
-  <footer class="footer">
-    <p class="center">&copy; 2026 Admin Framework - Powered by <a href="https://nowjs.net">Now.js</a></p>
-  </footer>
+<div class='roomly-dashboard'>
+  <header class='roomly-topbar'>
+    <a class='roomly-brand' href='/' aria-label='Roomly dashboard'>
+      <span class='roomly-brand-icon icon-office' aria-hidden='true'></span>
+      <span>Roomly</span>
+    </a>
+    <nav class='roomly-nav' aria-label='Main navigation'>
+      <a class='is-active' href='/'>
+        <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
+        <span data-i18n>Dashboard</span>
+      </a>
+      <a href='/my-bookings'>
+        <span class='roomly-menu-icon icon-list' aria-hidden='true'></span>
+        <span data-i18n>My bookings</span>
+      </a>
+      <a href='/booking'>
+        <span class='roomly-menu-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Book a room</span>
+      </a>
+      <a href='/rooms'>
+        <span class='roomly-menu-icon icon-office' aria-hidden='true'></span>
+        <span data-i18n>All rooms</span>
+      </a>
+    </nav>
+    <div class='roomly-user-actions'>
+      <a class='roomly-icon-button' href='/approvals' aria-label='Booking approvals'>
+        <span class='roomly-action-icon icon-bell' aria-hidden='true'></span>
+        <span class='roomly-notification-dot' aria-hidden='true'></span>
+      </a>
+      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='Switch language' aria-label='Switch language'>
+        <span class='roomly-language-icon icon-language' aria-hidden='true'></span>
+        <span class='roomly-language-option roomly-language-th'>TH</span>
+        <span class='roomly-language-divider' aria-hidden='true'>/</span>
+        <span class='roomly-language-option roomly-language-en'>EN</span>
+      </button>
+      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='Toggle theme' aria-label='Toggle theme'>
+        <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
+        <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
+      </button>
+      <div class='roomly-profile-data' data-component='api' data-endpoint='api/index/auth/me'>
+        <a class='roomly-profile' data-attr='href:&quot;profile?id=&quot; + data.id'>
+          <img class='roomly-avatar' data-attr='src:data.avatar,alt:data.name'>
+          <span class='roomly-profile-copy'>
+            <strong data-text='data.name'>User</strong>
+            <small data-i18n>Profile</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+  <main class='roomly-content'>
+    <section class='roomly-hero' data-component='api' data-endpoint='api/index/auth/me'>
+      <div>
+        <h1><span data-i18n>Welcome back</span>, <span data-text='data.name'>User</span>!</h1>
+        <p data-i18n>Manage your room reservations and view the latest schedule.</p>
+      </div>
+      <a class='roomly-primary-action' href='/booking'>
+        <span class='roomly-inline-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Quick booking</span>
+      </a>
+    </section>
+    <section class='roomly-stat-grid' data-component='api' data-endpoint='api/booking/statistics' aria-label='Booking statistics'>
+      <a class='roomly-stat-card' href='/my-bookings?status=0' data-if='my'>
+        <div><p data-i18n>Pending review</p><strong data-text='my.pending'>0</strong></div>
+        <span class='roomly-stat-icon icon-loading' aria-hidden='true'></span>
+      </a>
+      <a class='roomly-stat-card roomly-stat-secondary' href='/my-bookings?status=5' data-if='my'>
+        <div><p data-i18n>Returned for edit</p><strong data-text='my.returned'>0</strong></div>
+        <span class='roomly-stat-icon icon-edit' aria-hidden='true'></span>
+      </a>
+      <a class='roomly-stat-card roomly-stat-tertiary' href='/my-bookings?status=1' data-if='my'>
+        <div><p data-i18n>Approved</p><strong data-text='my.approved'>0</strong></div>
+        <span class='roomly-stat-icon icon-valid' aria-hidden='true'></span>
+      </a>
+    </section>
+    <section class='roomly-calendar-panel'>
+      <div class='roomly-panel-heading'>
+        <div><p class='roomly-eyebrow' data-i18n>Schedule</p><h2 data-i18n>Reservation calendar</h2></div>
+        <a href='/rooms' data-i18n>View all rooms</a>
+      </div>
+      <div class='roomly-calendar'
+           data-event-calendar
+           data-api='api/booking/calendar'
+           data-on-event-click-api='api/booking/view?id={id}'
+           data-view='month'
+           data-show-today='true'
+           data-show-view-switcher='true'
+           data-show-period-picker='true'>
+      </div>
+    </section>
+  </main>
 </div>

@@ -1,27 +1,75 @@
 <!-- Booking form with daily and selected-weekday recurrence -->
-<aside data-component="sidebar"></aside>
-<div class="main-content">
-  <div>
-    <header data-component="topbar"></header>
-    <main class="content">
-      <form data-form="booking" data-load-api="api/booking/booking/get" data-load-query-params="true" data-ajax-submit="true" action="api/booking/booking/save" method="post"
+<div class='roomly-dashboard roomly-booking-page'>
+  <header class='roomly-topbar'>
+    <a class='roomly-brand' href='/' aria-label='Roomly dashboard'>
+      <span class='roomly-brand-icon icon-office' aria-hidden='true'></span>
+      <span>Roomly</span>
+    </a>
+    <nav class='roomly-nav' aria-label='Main navigation'>
+      <a href='/'>
+        <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
+        <span data-i18n>Dashboard</span>
+      </a>
+      <a href='/my-bookings'>
+        <span class='roomly-menu-icon icon-list' aria-hidden='true'></span>
+        <span data-i18n>My bookings</span>
+      </a>
+      <a class='is-active' href='/booking'>
+        <span class='roomly-menu-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Book a room</span>
+      </a>
+      <a href='/rooms'>
+        <span class='roomly-menu-icon icon-office' aria-hidden='true'></span>
+        <span data-i18n>All rooms</span>
+      </a>
+    </nav>
+    <div class='roomly-user-actions'>
+      <a class='roomly-icon-button' href='/approvals' aria-label='Booking approvals'>
+        <span class='roomly-action-icon icon-bell' aria-hidden='true'></span>
+        <span class='roomly-notification-dot' aria-hidden='true'></span>
+      </a>
+      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='Switch language' aria-label='Switch language'>
+        <span class='roomly-language-icon icon-language' aria-hidden='true'></span>
+        <span class='roomly-language-option roomly-language-th'>TH</span>
+        <span class='roomly-language-divider' aria-hidden='true'>/</span>
+        <span class='roomly-language-option roomly-language-en'>EN</span>
+      </button>
+      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='Toggle theme' aria-label='Toggle theme'>
+        <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
+        <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
+      </button>
+      <div class='roomly-profile-data' data-component='api' data-endpoint='api/index/auth/me'>
+        <a class='roomly-profile' data-attr='href:&quot;profile?id=&quot; + data.id'>
+          <img class='roomly-avatar' data-attr='src:data.avatar,alt:data.name'>
+          <span class='roomly-profile-copy'>
+            <strong data-text='data.name'>User</strong>
+            <small data-i18n>Profile</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class='roomly-content roomly-booking-content'>
+      <form class='roomly-booking-form' data-form="booking" data-load-api="api/booking/booking/get" data-load-query-params="true" data-ajax-submit="true" action="api/booking/booking/save" method="post"
             autocomplete="off" data-script="initBookingForm">
-        <div class="card-groups">
-          <header>
+        <div class="card-groups roomly-booking-shell">
+          <header class='roomly-page-heading roomly-booking-heading'>
             <div>
-              <h1 class="icon-edit">
+              <h1 id='booking-page-title' class="icon-edit">
                 <span data-i18n>Book a room</span>
                 <span data-if="id > 0" data-class="'status' + status" data-text="status_text"></span>
               </h1>
               <p data-i18n>Create or update a room reservation request</p>
             </div>
-            <div class="header-actions">
+            <div class="header-actions roomly-booking-header-actions">
               <a class="btn btn-info icon-office" href="/rooms" data-i18n>All rooms</a>
               <a class="btn btn-warning icon-list" href="/my-bookings" data-i18n>My bookings</a>
             </div>
           </header>
-          <div class="content-body">
-            <fieldset>
+          <div class="content-body roomly-booking-form-body">
+            <div class='roomly-booking-main-column'>
+            <fieldset class='roomly-form-card roomly-requester-card'>
               <legend data-i18n>Requester</legend>
               <div>
                 <label for="member_name" data-i18n>Name</label>
@@ -30,7 +78,8 @@
                 </span>
               </div>
             </fieldset>
-            <fieldset data-attr="disabled:!canEdit">
+            <div class='roomly-reservation-surface'>
+            <fieldset class='roomly-form-card roomly-reservation-card' data-attr="disabled:!canEdit">
               <legend data-i18n>Reservation details</legend>
               <div class="form-group">
                 <div class="width50">
@@ -165,7 +214,7 @@
                 </span>
               </div>
             </fieldset>
-            <fieldset data-if="reason">
+            <fieldset class='roomly-form-card roomly-decision-card' data-if="reason">
               <legend data-i18n>Latest decision</legend>
               <div>
                 <label for="reason" data-i18n>Reason</label>
@@ -174,17 +223,31 @@
                 </span>
               </div>
             </fieldset>
-            <fieldset class="submit">
+            <fieldset class="submit roomly-form-actions">
               <aside class="error" data-if="!canEdit" data-i18n>This booking has already been processed and cannot be changed</aside>
               <button type="submit" class="btn btn-primary icon-save" data-attr="disabled:!canEdit" data-i18n>Save</button>
               <input type="hidden" name="id" data-attr="value:id">
             </fieldset>
+            </div>
+            </div>
+            <aside class='roomly-booking-context' aria-label='Room selection'>
+              <div class='roomly-booking-context-visual' aria-hidden='true'>
+                <span class='roomly-context-orbit roomly-context-orbit-one'></span>
+                <span class='roomly-context-orbit roomly-context-orbit-two'></span>
+                <span class='roomly-context-building icon-office'></span>
+              </div>
+              <div class='roomly-booking-context-copy'>
+                <span class='roomly-context-eyebrow' data-i18n>Room</span>
+                <h2 data-i18n>All rooms</h2>
+                <p data-i18n>Please select</p>
+                <a href='/rooms'>
+                  <span class='icon-search' aria-hidden='true'></span>
+                  <span data-i18n>All rooms</span>
+                </a>
+              </div>
+            </aside>
           </div>
         </div>
       </form>
-    </main>
-  </div>
-  <footer class="footer">
-    <p class="center">&copy; 2026 Admin Framework - Powered by <a href="https://nowjs.net">Now.js</a></p>
-  </footer>
+  </main>
 </div>
