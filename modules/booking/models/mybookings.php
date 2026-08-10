@@ -34,6 +34,7 @@ class Model extends \Kotchasan\Model
                 'R.begin',
                 'R.end',
                 'R.schedule_type',
+                'RecurrenceDays.value recurrence_days',
                 'R.status',
                 'R.created_at',
                 'Room.name room_name',
@@ -45,6 +46,7 @@ class Model extends \Kotchasan\Model
             ->join('rooms Room', ['Room.id', 'R.room_id'], 'LEFT')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'Room.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('user U', ['U.id', 'R.member_id'], 'LEFT')
+            ->join('reservation_data RecurrenceDays', [['RecurrenceDays.reservation_id', 'R.id'], ['RecurrenceDays.name', 'recurrence_days']], 'LEFT')
             ->where($where);
 
         if (!empty($params['search'])) {

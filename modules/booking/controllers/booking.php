@@ -42,7 +42,8 @@ class Controller extends ApiController
             $data->options = [
                 'room_id' => Helper::getRoomOptions(true, $includeRoomId),
                 'use' => Helper::getUseOptions(),
-                'accessories' => Helper::getAccessoryOptions()
+                'accessories' => Helper::getAccessoryOptions(),
+                'recurrence_days' => Helper::getWeekdayOptions()
             ];
 
             return $this->successResponse($data, 'Booking details retrieved');
@@ -91,9 +92,10 @@ class Controller extends ApiController
 
             $meta = [
                 'use' => $save['use'],
-                'accessories' => array_values(array_filter(array_map('intval', $save['accessories'])))
+                'accessories' => array_values(array_filter(array_map('intval', $save['accessories']))),
+                'recurrence_days' => $save['recurrence_days']
             ];
-            unset($save['use'], $save['accessories']);
+            unset($save['use'], $save['accessories'], $save['recurrence_days']);
 
             $id = Model::saveReservation($booking->id, $save, $meta);
             \Index\Log\Model::add($id, 'booking', 'Save', 'Saved room booking: '.$id, $login->id);
@@ -124,6 +126,13 @@ class Controller extends ApiController
             'begin_time' => $request->post('begin_time')->time(),
             'end_date' => $request->post('end_date')->date(),
             'end_time' => $request->post('end_time')->time(),
+            'schedule_type' => $request
+                ->post('schedule_type')
+                ->topic(),
+
+            'recurrence_days' => $request
+                ->post('recurrence_days', [])
+                ->toInt(),
             'accessories' => $request->post('accessories', [])->toInt(),
             'comment' => $request->post('comment')->textarea(),
             'topic' => $request->post('topic')->topic(),
@@ -178,7 +187,45 @@ class Controller extends ApiController
 
                 $save['begin'] = $save['begin_date'].' '.$save['begin_time'].':01';
                 $save['end'] = $save['end_date'].' '.$save['end_time'].':00';
-                $save['schedule_type'] = Helper::SCHEDULE_DAILY_SLOT;
+
+                $save['schedule_type'] = Helper::normalizeScheduleType(
+                    $save['schedule_type'],
+                    Helper::SCHEDULE_DAILY_SLOT
+                );
+
+                if (!in_array($save['schedule_type'], [
+                    Helper::SCHEDULE_DAILY_SLOT,
+                    Helper::SCHEDULE_WEEKLY_SLOT
+                ], true)) {
+                    $save['schedule_type'] = Helper::SCHEDULE_DAILY_SLOT;
+                }
+
+                $save['recurrence_days'] = Helper::normalizeRecurrenceDays(
+                    $save['recurrence_days']
+                );
+
+                if ($save['schedule_type'] === Helper::SCHEDULE_WEEKLY_SLOT) {
+                    if (empty($save['recurrence_days'])) {
+                        $errors['recurrence_days'] = 'Please select';
+
+                        return $errors;
+                    }
+                } else {
+                    $save['recurrence_days'] = [];
+                }
+
+                $schedule = Helper::buildBookingSchedule(
+                    $save['begin'],
+                    $save['end'],
+                    $save['schedule_type'],
+                    $save['recurrence_days']
+                );
+                if ($schedule === null || !Helper::bookingScheduleHasOccurrence($schedule)) {
+                    $errors['recurrence_days'] = 'Selected weekdays do not occur in the reservation period';
+
+                    return $errors;
+                }
+
                 $save['id'] = $booking->id;
                 $save['member_id'] = $booking->member_id;
 

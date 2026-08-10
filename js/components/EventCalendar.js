@@ -1159,6 +1159,9 @@ const EventCalendar = {
       const slotEndTime = scheduleType === 'recurring-slot'
         ? (this.normalizeTimeValue(event.slotEndTime) || this.normalizeTimeValue(endDate))
         : this.normalizeTimeValue(event.slotEndTime);
+      const recurrenceDays = Array.isArray(event.recurrenceDays)
+        ? [...new Set(event.recurrenceDays.map(Number).filter(day => Number.isInteger(day) && day >= 0 && day <= 6))]
+        : [];
 
       return {
         id: event.id || `event-${index}-${Date.now()}`,
@@ -1172,6 +1175,7 @@ const EventCalendar = {
         rangeEnd,
         slotStartTime,
         slotEndTime,
+        recurrenceDays,
         category: event.category || null,
         description: event.description || null,
         location: event.location || null,
@@ -1500,7 +1504,14 @@ const EventCalendar = {
     }
 
     const checkDate = this.getStartOfDay(date);
-    return checkDate >= bounds.start && checkDate <= bounds.end;
+    if (checkDate < bounds.start || checkDate > bounds.end) {
+      return false;
+    }
+    if (this.isRecurringSlotEvent(event) && event.recurrenceDays?.length > 0) {
+      return event.recurrenceDays.includes(checkDate.getDay());
+    }
+
+    return true;
   },
 
   /**

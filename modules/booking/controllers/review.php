@@ -173,7 +173,12 @@ class Controller extends ApiController
                     'id' => (int) $row->id,
                     'room_id' => (int) $row->room_id,
                     'begin' => (string) $row->begin,
-                    'end' => (string) $row->end
+                    'end' => (string) $row->end,
+                    'schedule_type' => Helper::getScheduleType(
+                        $row,
+                        Helper::SCHEDULE_CONTINUOUS
+                    ),
+                    'recurrence_days' => $row->recurrence_days ?? []
                 ])) {
                     return $this->errorResponse('Booking are not available at select time', 400);
                 }

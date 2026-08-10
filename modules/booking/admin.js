@@ -28,7 +28,7 @@ EventManager.on('router:initialized', () => {
     });
 
     RouterManager.register('/booking', {
-        template: 'booking/booking.html',
+        template: 'booking/booking-recurring.html',
         title: '{LNG_Book a room}',
         requireAuth: true
     });
@@ -238,5 +238,29 @@ function initBookingSettings(element, data) {
 
     return () => {
         approveLevel.removeEventListener('change', approveChange);
+    };
+}
+
+function initBookingForm(element, data) {
+    const scheduleType = element.querySelector('#schedule_type');
+    const recurrenceDays = element.querySelector('#recurrence_days');
+    if (!scheduleType || !recurrenceDays) {
+        return () => {};
+    }
+
+    const recurrenceGroup = recurrenceDays.closest('.width50');
+    const scheduleChange = () => {
+        const weekly = scheduleType.value === 'weekly-slot';
+        if (recurrenceGroup) {
+            recurrenceGroup.style.display = weekly ? '' : 'none';
+        }
+        recurrenceDays.disabled = !weekly;
+    };
+
+    scheduleType.addEventListener('change', scheduleChange);
+    scheduleChange();
+
+    return () => {
+        scheduleType.removeEventListener('change', scheduleChange);
     };
 }

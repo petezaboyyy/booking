@@ -40,6 +40,7 @@ class Model extends \Kotchasan\Model
                 'end_date' => '',
                 'end_time' => '',
                 'schedule_type' => Helper::SCHEDULE_DAILY_SLOT,
+                'recurrence_days' => [],
                 'use' => '',
                 'accessories' => [],
                 'canEdit' => true,
@@ -81,6 +82,9 @@ class Model extends \Kotchasan\Model
         $record->end_time = !empty($record->end) ? date('H:i', strtotime((string) $record->end)) : '';
         $record->use = (string) ($meta['use'] ?? '');
         $record->accessories = self::csvToArray($meta['accessories'] ?? '');
+        $record->recurrence_days = Helper::normalizeRecurrenceDays(
+            $meta['recurrence_days'] ?? ''
+        );
         $record->canEdit = Helper::canEditBooking($record);
         $record->status_text = Helper::getStatusText($record);
 
@@ -162,7 +166,8 @@ class Model extends \Kotchasan\Model
                 'Building.value room_building',
                 'Seats.value room_seats',
                 'UseMeta.value use_id',
-                'Accessories.value accessories'
+                'Accessories.value accessories',
+                'RecurrenceDays.value recurrence_days'
             )
             ->from('reservation R')
             ->join('rooms Room', ['Room.id', 'R.room_id'], 'LEFT')
@@ -172,6 +177,7 @@ class Model extends \Kotchasan\Model
             ->join('rooms_meta Seats', [['Seats.room_id', 'Room.id'], ['Seats.name', 'seats']], 'LEFT')
             ->join('reservation_data UseMeta', [['UseMeta.reservation_id', 'R.id'], ['UseMeta.name', 'use']], 'LEFT')
             ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
+            ->join('reservation_data RecurrenceDays', [['RecurrenceDays.reservation_id', 'R.id'], ['RecurrenceDays.name', 'recurrence_days']], 'LEFT')
             ->where(['R.id', $id])
             ->first();
     }
@@ -189,7 +195,9 @@ class Model extends \Kotchasan\Model
         if (!$row) {
             return null;
         }
-
+        $recurrenceDays = Helper::normalizeRecurrenceDays(
+            $row->recurrence_days ?? ''
+        );
         return [
             'id' => (int) $row->id,
             'member_id' => (int) $row->member_id,
@@ -209,12 +217,14 @@ class Model extends \Kotchasan\Model
             'begin' => (string) $row->begin,
             'end' => (string) $row->end,
             'schedule_type' => Helper::getScheduleType($row, Helper::SCHEDULE_CONTINUOUS),
+            'recurrence_days' => $recurrenceDays,
             'begin_text' => Date::format($row->begin, 'd M Y H:i'),
             'end_text' => Date::format($row->end, 'd M Y H:i'),
             'reservation_text' => Helper::formatBookingTime((object) [
                 'begin' => (string) $row->begin,
                 'end' => (string) $row->end,
-                'schedule_type' => Helper::getScheduleType($row, Helper::SCHEDULE_CONTINUOUS)
+                'schedule_type' => Helper::getScheduleType($row, Helper::SCHEDULE_CONTINUOUS),
+                'recurrence_days' => $recurrenceDays
             ]),
             'use_id' => (string) ($row->use_id ?? ''),
             'use_text' => Helper::getUseLabel($row->use_id ?? ''),
@@ -422,7 +432,8 @@ class Model extends \Kotchasan\Model
         $current = Helper::buildBookingSchedule(
             $save['begin'] ?? null,
             $save['end'] ?? null,
-            $save['schedule_type'] ?? null
+            $save['schedule_type'] ?? null,
+            $save['recurrence_days'] ?? []
         );
         if ($current === null) {
             return false;
@@ -444,10 +455,12 @@ class Model extends \Kotchasan\Model
             ->fetchAll();
 
         foreach ($rows as $row) {
+            $meta = self::getMetaValues((int) $row->id);
             $existing = Helper::buildBookingSchedule(
                 (string) $row->begin,
                 (string) $row->end,
-                Helper::getScheduleType($row, Helper::SCHEDULE_CONTINUOUS)
+                Helper::getScheduleType($row, Helper::SCHEDULE_CONTINUOUS),
+                $meta['recurrence_days'] ?? []
             );
             if ($existing !== null && Helper::bookingSchedulesOverlap($current, $existing)) {
                 return false;

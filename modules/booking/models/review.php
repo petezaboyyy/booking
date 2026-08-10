@@ -59,6 +59,7 @@ class Model extends \Kotchasan\Model
         $row->use_text = Helper::getUseLabel($meta['use'] ?? '');
         $row->accessories = BookingModel::csvToArray($meta['accessories'] ?? '');
         $row->accessories_text = Helper::formatAccessoryNames($meta['accessories'] ?? '');
+        $row->recurrence_days = Helper::normalizeRecurrenceDays($meta['recurrence_days'] ?? '');
 
         return $row;
     }

@@ -1770,5 +1770,11 @@
     "Your OTP code is :otp. Please enter this code on the website to confirm your phone number.": "รหัส OTP ของคุณคือ :otp กรุณาป้อนรหัสนี้บนเว็บไซต์เพื่อยืนยันหมายเลขโทรศัพท์ของคุณ",
     "Your password has been successfully reset.": "รหัสผ่านของคุณถูกรีเซ็ตเรียบร้อยแล้ว",
     "Your registration information": "ข้อมูลการลงทะเบียนของคุณ",
-    "Zipcode": "รหัสไปรษณีย์"
+    "Zipcode": "รหัสไปรษณีย์",
+    "Repeat": "การทำซ้ำ",
+    "Repeat on": "ทำซ้ำในวัน",
+    "Selected weekdays": "วันที่เลือกในแต่ละสัปดาห์",
+    "Required when repeating on selected weekdays": "จำเป็นเมื่อเลือกทำซ้ำตามวันในสัปดาห์",
+    "Selected weekdays do not occur in the reservation period": "วันที่เลือกไม่อยู่ภายในช่วงวันที่จอง",
+    "The selected time applies to each occurrence within the date range": "ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก"
 }

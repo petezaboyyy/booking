@@ -14,6 +14,7 @@ class Controller extends \Gcms\Controller
 {
     public const SCHEDULE_CONTINUOUS = 'continuous';
     public const SCHEDULE_DAILY_SLOT = 'daily-slot';
+    public const SCHEDULE_WEEKLY_SLOT = 'weekly-slot';
 
     public const STATUS_PENDING_REVIEW = 0;
     public const STATUS_APPROVED = 1;
@@ -695,7 +696,7 @@ class Controller extends \Gcms\Controller
     public static function normalizeScheduleType(?string $scheduleType, ?string $default = null): string
     {
         $scheduleType = trim((string) $scheduleType);
-        if (in_array($scheduleType, [self::SCHEDULE_CONTINUOUS, self::SCHEDULE_DAILY_SLOT], true)) {
+        if (in_array($scheduleType, [self::SCHEDULE_CONTINUOUS, self::SCHEDULE_DAILY_SLOT, self::SCHEDULE_WEEKLY_SLOT], true)) {
             return $scheduleType;
         }
 
@@ -726,6 +727,62 @@ class Controller extends \Gcms\Controller
         );
     }
 
+
+    /**
+     * แปลงวันในสัปดาห์ให้เป็นเลข 0–6 ที่ไม่ซ้ำกัน
+     *
+     * @param array|string|null $days
+     *
+     * @return array
+     */
+    public static function normalizeRecurrenceDays($days): array
+    {
+        if (is_string($days)) {
+            $days = explode(',', $days);
+        }
+
+        if (!is_array($days)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($days as $day) {
+            if ((string) $day !== '' && is_numeric($day)) {
+                $day = (int) $day;
+
+                if ($day >= 0 && $day <= 6) {
+                    $normalized[$day] = $day;
+                }
+            }
+        }
+
+        ksort($normalized);
+
+        return array_values($normalized);
+    }
+
+    /**
+     * ตัวเลือกวันในสัปดาห์สำหรับแบบฟอร์ม
+     *
+     * @return array
+     */
+    public static function getWeekdayOptions(): array
+    {
+        $dayNames = Language::get('DATE_LONG', []);
+        $options = [];
+
+        for ($day = 0; $day <= 6; $day++) {
+            $options[] = [
+                'value' => (string) $day,
+                'text' => $dayNames[$day] ?? (string) $day
+            ];
+        }
+
+        return $options;
+    }
+
+
     /**
      * Build normalized booking schedule data from stored begin/end values.
      *
@@ -735,7 +792,7 @@ class Controller extends \Gcms\Controller
      *
      * @return array|null
      */
-    public static function buildBookingSchedule(?string $begin, ?string $end, ?string $scheduleType = null): ?array
+    public static function buildBookingSchedule(?string $begin, ?string $end, ?string $scheduleType = null, $recurrenceDays = []): ?array
     {
         if ($begin === null || $end === null || trim($begin) === '' || trim($end) === '') {
             return null;
@@ -754,7 +811,8 @@ class Controller extends \Gcms\Controller
             'begin_date' => date('Y-m-d', $beginTs),
             'end_date' => date('Y-m-d', $endTs),
             'begin_time' => date('H:i:s', $beginTs),
-            'end_time' => date('H:i:s', $endTs)
+            'end_time' => date('H:i:s', $endTs),
+            'recurrence_days' => self::normalizeRecurrenceDays($recurrenceDays)
         ];
     }
 
@@ -771,7 +829,24 @@ class Controller extends \Gcms\Controller
         if ($date < $schedule['begin_date'] || $date > $schedule['end_date']) {
             return null;
         }
+        if ($schedule['schedule_type'] === self::SCHEDULE_WEEKLY_SLOT) {
+            $timestamp = strtotime($date);
 
+            if ($timestamp === false) {
+                return null;
+            }
+
+            $weekday = (int) date('w', $timestamp);
+
+            if (!in_array($weekday, $schedule['recurrence_days'], true)) {
+                return null;
+            }
+
+            return [
+                'start' => self::timeToSeconds($schedule['begin_time']),
+                'end' => self::timeToSeconds($schedule['end_time'])
+            ];
+        }
         if ($schedule['schedule_type'] === self::SCHEDULE_DAILY_SLOT) {
             return [
                 'start' => self::timeToSeconds($schedule['begin_time']),
@@ -845,6 +920,30 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * Check that a schedule has at least one occurrence inside its date range.
+     */
+    public static function bookingScheduleHasOccurrence(array $schedule): bool
+    {
+        $cursor = strtotime($schedule['begin_date']);
+        $last = strtotime($schedule['end_date']);
+        if ($cursor === false || $last === false) {
+            return false;
+        }
+
+        while ($cursor <= $last) {
+            if (self::getBookingIntervalForDate($schedule, date('Y-m-d', $cursor)) !== null) {
+                return true;
+            }
+            $cursor = strtotime('+1 day', $cursor);
+            if ($cursor === false) {
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Read object field.
      *
      * @param object|null $row
@@ -874,12 +973,39 @@ class Controller extends \Gcms\Controller
         $schedule = self::buildBookingSchedule(
             $item->begin ?? null,
             $item->end ?? null,
-            self::getScheduleType($item, self::SCHEDULE_CONTINUOUS)
+            self::getScheduleType($item, self::SCHEDULE_CONTINUOUS),
+            $item->recurrence_days ?? []
         );
         if ($schedule === null) {
             return '';
         }
+        if ($schedule['schedule_type'] === self::SCHEDULE_WEEKLY_SLOT) {
+            $dayNames = Language::get('DATE_LONG', []);
 
+            $selectedDays = array_map(
+                static function ($day) use ($dayNames) {
+                    return $dayNames[$day] ?? (string) $day;
+                },
+                $schedule['recurrence_days']
+            );
+
+            $timeText = Date::format($item->begin, 'H:i')
+                .' {LNG_To} '
+                .Date::format($item->end, 'TIME_FORMAT');
+
+            $dateText = Date::format($item->begin, 'd M Y')
+                .' {LNG_To} '
+                .Date::format($item->end, 'd M Y');
+
+            return Language::trans(
+                implode(', ', $selectedDays)
+                .' {LNG_Time} '
+                .$timeText
+                .' ('
+                .$dateText
+                .')'
+            );
+        }
         if (
             $schedule['schedule_type'] === self::SCHEDULE_DAILY_SLOT &&
             $schedule['begin_date'] !== $schedule['end_date']
