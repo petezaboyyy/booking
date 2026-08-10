@@ -6,9 +6,10 @@ RUN apt-get update \
         libjpeg62-turbo-dev \
         libonig-dev \
         libpng-dev \
+        libwebp-dev \
         libxml2-dev \
         libzip-dev \
-    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" curl gd mbstring pdo_mysql xml zip \
     && a2enmod headers rewrite \
     && rm -rf /var/lib/apt/lists/*

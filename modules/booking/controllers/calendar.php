@@ -32,6 +32,7 @@ class Controller extends ApiController
                     'R.begin',
                     'R.end',
                     'R.schedule_type',
+                    'R.topic',
                     'Room.name room_name',
                     'Room.color room_color',
                     'RoomNumber.value room_number',
@@ -62,6 +63,7 @@ class Controller extends ApiController
                     $events[] = [
                         'id' => (string) $item->id,
                         'title' => $label,
+                        'description' => (string) $item->topic,
                         'start' => $item->begin,
                         'end' => $item->end,
                         'rangeStart' => $schedule['begin_date'],
@@ -78,6 +80,7 @@ class Controller extends ApiController
                 $events[] = [
                     'id' => (string) $item->id,
                     'title' => $label.', '.Helper::formatBookingTime($item, true),
+                    'description' => (string) $item->topic,
                     'start' => $item->begin,
                     'end' => $item->end,
                     'scheduleType' => 'continuous',

@@ -218,3 +218,23 @@
     align-items: stretch;
   }
 }
+
+/* Month calendar events: room color on the first quarter, label on the rest. */
+.ec-month-view .ec-day-event {
+  position: relative;
+  border-left: 0;
+  border-radius: var(--ec-event-radius);
+  padding: 0 6px 0 calc(25% + 6px);
+  background: var(--ec-bg-secondary);
+}
+.ec-month-view .ec-day-event::before {
+  content: '';
+  position: absolute;
+  inset: 0 75% 0 0;
+  background: var(--ec-day-event-color, var(--ec-primary));
+  border-radius: var(--ec-event-radius) 0 0 var(--ec-event-radius);
+}
+.ec-month-view .ec-day-event-title {
+  position: relative;
+  z-index: 1;
+}

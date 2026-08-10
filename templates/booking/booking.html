@@ -73,7 +73,9 @@
                 <div class="width50">
                   <label for="begin_time" data-i18n>Start time</label>
                   <span class="form-control icon-clock">
-                    <input type="time" id="begin_time" name="begin_time" data-attr="value:begin_time">
+                    <input type="text" id="begin_time" name="begin_time" data-attr="value:begin_time"
+                           inputmode="numeric" maxlength="5" placeholder="HH:MM"
+                           pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="Use 24-hour time format (HH:MM)">
                   </span>
                 </div>
               </div>
@@ -87,7 +89,9 @@
                 <div class="width50">
                   <label for="end_time" data-i18n>End time</label>
                   <span class="form-control icon-clock">
-                    <input type="time" id="end_time" name="end_time" data-attr="value:end_time">
+                    <input type="text" id="end_time" name="end_time" data-attr="value:end_time"
+                           inputmode="numeric" maxlength="5" placeholder="HH:MM"
+                           pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="Use 24-hour time format (HH:MM)">
                   </span>
                 </div>
               </div>
