@@ -24,8 +24,9 @@ WORKDIR /var/www/html
 # Copy source code into container
 COPY . /var/www/html
 
-# Set appropriate permissions for Apache
-RUN chown -R www-data:www-data /var/www/html \
+# Ensure necessary directories exist and set appropriate permissions for Apache
+RUN mkdir -p /var/www/html/datas /var/www/html/settings \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/datas /var/www/html/settings
 
 EXPOSE 80
