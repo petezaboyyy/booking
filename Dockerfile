@@ -19,3 +19,12 @@ RUN sed -ri \
     /etc/apache2/apache2.conf
 
 WORKDIR /var/www/html
+
+# Copy source code into container
+COPY . /var/www/html
+
+# Set appropriate permissions for Apache
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/datas /var/www/html/settings
+
+EXPOSE 80
