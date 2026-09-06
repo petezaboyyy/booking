@@ -10,6 +10,7 @@ return array (
     'prefix' => getenv('DB_PREFIX') ?: ($_SERVER['DB_PREFIX'] ?? ($_ENV['DB_PREFIX'] ?? 'app')),
     'hostname' => getenv('DB_HOST') ?: ($_SERVER['DB_HOST'] ?? ($_ENV['DB_HOST'] ?? 'database')),
     'port' => getenv('DB_PORT') ?: ($_SERVER['DB_PORT'] ?? ($_ENV['DB_PORT'] ?? '3306')),
+    'ssl' => (bool)(getenv('DB_SSL') ?: ($_SERVER['DB_SSL'] ?? ($_ENV['DB_SSL'] ?? false))),
   ),
   'tables' => 
   array (
