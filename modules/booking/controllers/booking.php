@@ -100,6 +100,13 @@ class Controller extends ApiController
             $id = Model::saveReservation($booking->id, $save, $meta);
             \Index\Log\Model::add($id, 'booking', 'Save', 'Saved room booking: '.$id, $login->id);
 
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('booking', 'updated', [
+                'action' => 'save',
+                'id' => $id,
+                'message' => 'New booking submitted'
+            ]);
+
             if ($booking->id === 0 || $booking->status !== $save['status']) {
                 $message = \Booking\Email\Controller::sendByBookingId($id);
             } else {

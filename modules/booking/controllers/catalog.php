@@ -29,7 +29,8 @@ class Controller extends ApiController
 
             return $this->successResponse([
                 'items' => Model::getItems(true)
-            ], 'Room catalog retrieved');
+            ], 'Room catalog retrieved')
+            ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }

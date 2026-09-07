@@ -106,6 +106,13 @@ class Controller extends ApiController
 
             \Index\Log\Model::add($id, 'booking', 'Save', 'Saved room: '.$save['name'], $login->id);
 
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('booking', 'updated', [
+                'action' => 'room_save',
+                'id' => $id,
+                'message' => 'Room updated'
+            ]);
+
             return $this->successResponse([
                 'actions' => [
                     [

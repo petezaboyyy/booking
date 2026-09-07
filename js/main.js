@@ -294,6 +294,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       version: '1.0.0'
     });
 
+    // Initialize real-time WebSocket updates via Pusher
+    initPusher();
+
   } catch (error) {
     console.error('Application initialization failed:', error);
   }
@@ -989,3 +992,118 @@ function copyToClipboard(cell, rawValue, rowData, attributes) {
     cell.textContent = '';
   }
 }
+
+/**
+ * Initialize Pusher WebSocket for real-time updates across the app
+ */
+async function initPusher() {
+  try {
+    // 1. Resolve Pusher Key and Cluster
+    let pusherKey = window.AppConfigManager?.state?.lastConfig?.pusher_key || null;
+    let pusherCluster = window.AppConfigManager?.state?.lastConfig?.pusher_cluster || 'ap1';
+
+    if (!pusherKey) {
+      try {
+        const baseUrl = window.WEB_URL || '/';
+        const res = await fetch(`${baseUrl}api/index/config/frontend-settings`, {
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        const config = json?.data || {};
+        pusherKey = config.pusher_key || null;
+        pusherCluster = config.pusher_cluster || 'ap1';
+      } catch (e) {
+        console.warn('[Pusher] Could not fetch frontend-settings:', e);
+      }
+    }
+
+    // Default fallback to configured keys
+    pusherKey = pusherKey || '19581bf926c848e2b603';
+    pusherCluster = pusherCluster || 'ap1';
+
+    // Exit if Pusher JS SDK is not loaded
+    if (typeof Pusher === 'undefined') {
+      console.warn('[Pusher] Pusher JS SDK is not loaded');
+      return;
+    }
+
+    const pusher = new Pusher(pusherKey, {
+      cluster: pusherCluster,
+      forceTLS: true
+    });
+
+    const channel = pusher.subscribe('booking');
+
+    channel.bind('updated', (data) => {
+      console.log('[Pusher] Real-time booking update received:', data);
+
+      // 1. Clear API Caches (ApiService & ApiComponent) so all queries fetch fresh server data
+      if (window.ApiService?.clearCache) {
+        ApiService.clearCache();
+      }
+      if (window.ApiComponent?.clearCache) {
+        ApiComponent.clearCache();
+      }
+      try {
+        localStorage.removeItem('api_cache');
+      } catch (e) {}
+
+      // 2. Auto-refresh ApiComponent instances (e.g. room catalog, statistics)
+      document.querySelectorAll('[data-component="api"]').forEach(el => {
+        if (window.ApiComponent?.refresh) {
+          ApiComponent.refresh(el);
+        } else {
+          const inst = window.ApiComponent?.getInstance(el) || el.apiInstance || el._apiComponent;
+          if (inst && window.ApiComponent?.loadData) {
+            ApiComponent.loadData(inst, false, { force: true, silent: true });
+          }
+        }
+      });
+
+      // 3. Auto-refresh EventCalendar if present on the current page
+      document.querySelectorAll('[data-event-calendar]').forEach(calEl => {
+        if (window.EventCalendar) {
+          const inst = typeof EventCalendar.getInstance === 'function'
+            ? EventCalendar.getInstance(calEl)
+            : (calEl._eventCalendar || null);
+
+          if (inst) {
+            inst.segmentCache?.clear?.();
+            if (typeof EventCalendar.loadEvents === 'function') {
+              EventCalendar.loadEvents(inst);
+            } else if (typeof EventCalendar.refresh === 'function') {
+              EventCalendar.refresh(calEl);
+            }
+          } else if (typeof EventCalendar.refresh === 'function') {
+            EventCalendar.refresh(calEl);
+          }
+        }
+      });
+
+      // 4. Auto-refresh TableComponent instances (e.g. My Bookings, Approvals, Rooms)
+      document.querySelectorAll('table[data-component="table"]').forEach(table => {
+        const inst = window.TableComponent?.getInstance(table);
+        if (inst && window.TableComponent?.refresh) {
+          TableComponent.refresh(inst);
+        }
+      });
+
+      // 5. Non-intrusive toast notification if message is provided
+      if (window.NotificationManager?.info && data?.message) {
+        NotificationManager.info(data.message);
+      }
+    });
+
+    pusher.connection.bind('connected', () => {
+      console.log('[Pusher] WebSocket connected to cluster:', pusherCluster);
+    });
+
+    pusher.connection.bind('error', (err) => {
+      console.error('[Pusher] Connection error:', err);
+    });
+  } catch (err) {
+    console.warn('[Pusher] Initialization error:', err);
+  }
+}
+

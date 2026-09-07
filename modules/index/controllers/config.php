@@ -50,7 +50,9 @@ class Controller extends ApiController
         'transportation',
         'promptpay_id',
         'discount',
-        'company'
+        'company',
+        'pusher_key',
+        'pusher_cluster'
     ];
 
     /**
