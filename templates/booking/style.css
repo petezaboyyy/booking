@@ -139,11 +139,14 @@
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;
-  background-color: rgba(255, 0, 0, 0.6);
+  background-color: #ef4444;
   color: #FFFFFF;
   position: absolute;
   bottom: 5px;
   right: 5px;
+}
+.booking-catalog-status.is-active {
+  background-color: #10b981;
 }
 .booking-catalog-meta:not(:empty) {
   padding: 0.7rem 0.85rem;
