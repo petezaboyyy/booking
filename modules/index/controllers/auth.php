@@ -657,7 +657,7 @@ class Controller extends ApiController
                 $actions[] = ['type' => 'redirect', 'url' => '/'];
             } else {
                 $actions[] = ['type' => 'notification', 'message' => $result['message'], 'variant' => 'success'];
-                $actions[] = ['type' => 'redirect', 'url' => 'login'];
+                $actions[] = ['type' => 'redirect', 'url' => '/login'];
             }
 
             $response['actions'] = $actions;
