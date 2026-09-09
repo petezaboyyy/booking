@@ -893,15 +893,7 @@ const EventCalendar = {
     prevBtn.className = 'ec-nav-btn ec-prev';
     prevBtn.setAttribute('aria-label', strings.previous || 'Previous');
     prevBtn.setAttribute('type', 'button');
-    const prevSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    prevSvg.setAttribute('viewBox', '0 0 24 24');
-    prevSvg.setAttribute('width', '20');
-    prevSvg.setAttribute('height', '20');
-    const prevPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    prevPath.setAttribute('fill', 'currentColor');
-    prevPath.setAttribute('d', 'M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z');
-    prevSvg.appendChild(prevPath);
-    prevBtn.appendChild(prevSvg);
+    prevBtn.textContent = '\u276E';
     this.addTrackedListener(instance, prevBtn, 'click', () => this.navigate(instance, -1));
     instance.prevButtonElement = prevBtn;
 
@@ -927,15 +919,7 @@ const EventCalendar = {
     nextBtn.className = 'ec-nav-btn ec-next';
     nextBtn.setAttribute('aria-label', strings.next || 'Next');
     nextBtn.setAttribute('type', 'button');
-    const nextSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    nextSvg.setAttribute('viewBox', '0 0 24 24');
-    nextSvg.setAttribute('width', '20');
-    nextSvg.setAttribute('height', '20');
-    const nextPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    nextPath.setAttribute('fill', 'currentColor');
-    nextPath.setAttribute('d', 'M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z');
-    nextSvg.appendChild(nextPath);
-    nextBtn.appendChild(nextSvg);
+    nextBtn.textContent = '\u276F';
     this.addTrackedListener(instance, nextBtn, 'click', () => this.navigate(instance, 1));
     instance.nextButtonElement = nextBtn;
 
