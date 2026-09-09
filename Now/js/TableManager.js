@@ -6266,8 +6266,70 @@ const TableManager = {
   },
 
   showLoading(table) {
-    const tbody = table.element.querySelector('tbody');
-    tbody.innerHTML = `<tr><td colspan="100%" class="text-center">${Now.translate('Loading')}...</td></tr>`;
+    const tableElement = table?.element || table;
+    const tbody = tableElement?.querySelector('tbody');
+    if (!tbody) return;
+
+    const thead = tableElement.querySelector('thead');
+    const headerCells = thead ? thead.querySelectorAll('tr:last-child > th, tr:first-child > th') : [];
+    const colCount = Math.max(headerCells.length || 0, table?.columns?.size || 0, 5);
+
+    const colTypes = [];
+    headerCells.forEach(th => {
+      if (th.classList.contains('check-column')) {
+        colTypes.push('check');
+      } else if (th.dataset.formatter === 'formatRoomWithImage' || th.dataset.field === 'room_name' || th.dataset.field === 'room_id') {
+        colTypes.push('room');
+      } else if (th.classList.contains('center') || th.dataset.field === 'status' || th.dataset.format === 'datetime' || th.dataset.sort === 'begin') {
+        colTypes.push('center');
+      } else if (th.classList.contains('icons') || th.classList.contains('row-actions')) {
+        colTypes.push('actions');
+      } else {
+        colTypes.push('text');
+      }
+    });
+
+    while (colTypes.length < colCount) {
+      colTypes.push('text');
+    }
+
+    const skeletonRows = [];
+    const rowCount = Math.min(table?.config?.pageSize || 6, 6);
+    const textWidths = ['75%', '60%', '85%', '70%', '50%', '80%'];
+
+    for (let r = 0; r < rowCount; r++) {
+      let rowHtml = '<tr class="skeleton-table-row">';
+      colTypes.forEach((type, colIndex) => {
+        const alignCenter = type === 'check' || type === 'center' || type === 'actions';
+        const cellClass = alignCenter ? ' class="center"' : '';
+        rowHtml += `<td${cellClass}>`;
+
+        if (type === 'check') {
+          rowHtml += '<div class="skeleton-shimmer skeleton-checkbox" style="margin:0 auto;"></div>';
+        } else if (type === 'room') {
+          rowHtml += `
+            <div class="booking-table-cell">
+              <div class="skeleton-shimmer skeleton-thumb"></div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
+                <div class="skeleton-shimmer skeleton-bar" style="width:${textWidths[(r + colIndex) % textWidths.length]};height:14px;"></div>
+                <div class="skeleton-shimmer skeleton-bar" style="width:40%;height:10px;"></div>
+              </div>
+            </div>`;
+        } else if (type === 'actions') {
+          rowHtml += '<div class="skeleton-shimmer skeleton-btn-sm" style="margin:0 auto;"></div>';
+        } else if (type === 'center') {
+          rowHtml += '<div class="skeleton-shimmer skeleton-badge" style="margin:0 auto;"></div>';
+        } else {
+          rowHtml += `<div class="skeleton-shimmer skeleton-bar" style="width:${textWidths[(r + colIndex) % textWidths.length]};height:14px;"></div>`;
+        }
+
+        rowHtml += '</td>';
+      });
+      rowHtml += '</tr>';
+      skeletonRows.push(rowHtml);
+    }
+
+    tbody.innerHTML = skeletonRows.join('');
   },
 
   updateSelectedRows(table) {

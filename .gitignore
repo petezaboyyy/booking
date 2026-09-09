@@ -63,6 +63,7 @@ docs/
 CDN.md
 CLAUDE.md
 /error_log.php
+ui-handoff/
 
 # Keep core framework files:
 # - Now/ directory (framework core)

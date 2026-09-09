@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             requireAuth: true
           },
           '/login': {
-            template: 'login.html',
+            template: window.location.origin + '/templates/login.html?v=20260817-3',
             title: '{LNG_Login}',
             requireGuest: true,
             requireAuth: false

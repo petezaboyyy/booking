@@ -27,8 +27,9 @@ class Model extends \Kotchasan\Model
                 'id' => 0,
                 'member_id' => (int) $login->id,
                 'member_name' => (string) $login->name,
-                'room_id' => $prefillRoomId,
+                'room_id' => $prefillRoomId > 0 ? (int) $prefillRoomId : '',
                 'room_name' => '',
+                'room_image' => $prefillRoomId > 0 ? (Helper::getRoomFirstImageUrl($prefillRoomId) ?: '') : '',
                 'topic' => '',
                 'reason' => '',
                 'comment' => '',
@@ -74,6 +75,7 @@ class Model extends \Kotchasan\Model
         }
 
         $meta = self::getMetaValues($id);
+        $record->room_image = !empty($record->room_id) ? (Helper::getRoomFirstImageUrl((int) $record->room_id) ?: '') : '';
         $record->schedule_type = Helper::getScheduleType($record, Helper::SCHEDULE_CONTINUOUS);
 
         $record->begin_date = !empty($record->begin) ? date('Y-m-d', strtotime((string) $record->begin)) : '';

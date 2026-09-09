@@ -1,14 +1,23 @@
-<div class="auth-container">
-  <div class="auth-card">
-    <!-- Use FormManager: data-form identifies the form type, data-action is the endpoint, ajaxSubmit enables AJAX -->
-    <form data-form="login" class="auth-form" novalidate action="api/index/auth/login" method="post" data-ajax-submit="true" data-redirect="/" data-auto-fill-intended-url="true"
-          data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
-      <div class="auth-header">
+<div class="roomly-login-page">
+  <form data-form="login" class="auth-form roomly-login-shell" novalidate action="api/index/auth/login" method="post" data-ajax-submit="true" data-redirect="/" data-auto-fill-intended-url="true"
+        data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
+    <section class="roomly-login-panel">
+      <div class="roomly-login-utilities">
+        <button class="roomly-language-toggle" type="button" data-roomly-language-toggle aria-label="Switch language">
+          <span class="roomly-language-icon icon-language"></span><span class="roomly-language-option roomly-language-th">TH</span><span class="roomly-language-divider">/</span><span class="roomly-language-option roomly-language-en">EN</span>
+        </button>
+        <button class="roomly-icon-button roomly-theme-toggle" type="button" data-roomly-theme-toggle aria-label="Toggle theme">
+          <span class="roomly-theme-glyph roomly-theme-moon icon-night"></span><span class="roomly-theme-glyph roomly-theme-sun icon-day"></span>
+        </button>
+      </div>
+      <div class="roomly-login-form-card">
+      <div class="roomly-login-mobile-brand"><span class="roomly-login-brand-mark icon-office"></span><span>Roomly</span></div>
+      <div class="auth-header roomly-login-header">
         <a href="/" class="auth-logo" data-style="backgroundImage:url({{data.logo}})"></a>
-        <h1 data-text="data.web_title" data-i18n></h1>
+        <h1 data-i18n>Welcome back</h1>
         <p class="login-message" data-i18n>Welcome back! Please login to proceed.</p>
       </div>
-      <fieldset>
+      <fieldset class="roomly-login-fields">
         <div>
           <label for="login_username" data-i18n>{LNG_Username}/{LNG_Email}</label>
           <span class="form-control icon-email">
@@ -23,7 +32,7 @@
           </span>
         </div>
         <div>
-          <div class="form-group">
+          <div class="form-group roomly-login-options">
             <div class="width50">
               <!-- remember checkbox: example also marked to persist its state -->
               <input type="checkbox" id="remember" class="switch" name="remember" value="1" data-persist="local" data-persist-key="login_remember">
@@ -35,7 +44,7 @@
           </div>
         </div>
       </fieldset>
-      <fieldset class="center">
+      <fieldset class="center roomly-login-submit">
         <button type="submit" class="btn btn-primary fullwidth large icon-signin" data-i18n>Log in</button>
       </fieldset>
       <!-- Social Login Divider -->
@@ -51,9 +60,10 @@
           <div data-attr="data-username:data.telegram_bot_username" data-social-provider="telegram"></div>
         </div>
       </fieldset>
-      <div class="center" data-if="data.user_register === 1">
+      <div class="center roomly-login-register" data-if="data.user_register === 1">
         <span data-i18n>Don't have an account?</span> <a href="register" data-i18n>Sign up</a>
       </div>
-    </form>
-  </div>
+      </div>
+    </section>
+  </form>
 </div>

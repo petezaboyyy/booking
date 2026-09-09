@@ -60,6 +60,28 @@
       </a>
     </section>
     <section class='roomly-stat-grid' data-component='api' data-endpoint='api/booking/statistics' aria-label='Booking statistics'>
+      <!-- Skeleton Stat Cards -->
+      <div class='roomly-stat-card is-skeleton' aria-hidden='true'>
+        <div style='flex: 1; display: flex; flex-direction: column; gap: 0.75rem;'>
+          <div class='skeleton-shimmer skeleton-bar' style='height: 12px; width: 60%;'></div>
+          <div class='skeleton-shimmer skeleton-bar' style='height: 42px; width: 35%;'></div>
+        </div>
+        <div class='skeleton-shimmer' style='width: 50px; height: 50px; border-radius: 999px; flex-shrink: 0;'></div>
+      </div>
+      <div class='roomly-stat-card is-skeleton' aria-hidden='true'>
+        <div style='flex: 1; display: flex; flex-direction: column; gap: 0.75rem;'>
+          <div class='skeleton-shimmer skeleton-bar' style='height: 12px; width: 65%;'></div>
+          <div class='skeleton-shimmer skeleton-bar' style='height: 42px; width: 35%;'></div>
+        </div>
+        <div class='skeleton-shimmer' style='width: 50px; height: 50px; border-radius: 999px; flex-shrink: 0;'></div>
+      </div>
+      <div class='roomly-stat-card is-skeleton' aria-hidden='true'>
+        <div style='flex: 1; display: flex; flex-direction: column; gap: 0.75rem;'>
+          <div class='skeleton-shimmer skeleton-bar' style='height: 12px; width: 50%;'></div>
+          <div class='skeleton-shimmer skeleton-bar' style='height: 42px; width: 35%;'></div>
+        </div>
+        <div class='skeleton-shimmer' style='width: 50px; height: 50px; border-radius: 999px; flex-shrink: 0;'></div>
+      </div>
       <a class='roomly-stat-card' href='/my-bookings?status=0' data-if='my'>
         <div><p data-i18n>Pending review</p><strong data-text='my.pending'>0</strong></div>
         <span class='roomly-stat-icon icon-loading' aria-hidden='true'></span>

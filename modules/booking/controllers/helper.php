@@ -239,7 +239,8 @@ class Controller extends \Gcms\Controller
         }
 
         if (!array_key_exists($roomId, self::$roomGalleryCache)) {
-            $files = \Download\Index\Controller::getAttachments($roomId, 'booking', self::$cfg->img_typies);
+            $imgTypes = (isset(self::$cfg->img_typies) && is_array(self::$cfg->img_typies)) ? self::$cfg->img_typies : ['jpg', 'jpeg', 'gif', 'png', 'webp'];
+            $files = \Download\Index\Controller::getAttachments($roomId, 'booking', $imgTypes);
             self::$roomGalleryCache[$roomId] = array_values(array_filter($files, static function ($file) {
                 return !empty($file['is_image']);
             }));
@@ -314,9 +315,11 @@ class Controller extends \Gcms\Controller
             if ((int) $item->is_active !== 1) {
                 $label .= ' ({LNG_Inactive})';
             }
+            $firstImg = self::getRoomFirstImageUrl((int) $item->id);
             $options[] = [
                 'value' => (string) $item->id,
-                'text' => $label
+                'text' => $label,
+                'image' => $firstImg ?: ''
             ];
         }
 
