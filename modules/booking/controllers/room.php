@@ -175,6 +175,13 @@ class Controller extends ApiController
 
             \Index\Log\Model::add((int) $json->id, 'booking', 'Delete', 'Removed room image: '.$json->file, $login->id);
 
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+                'action' => 'room_image_delete',
+                'id' => (int) $json->id,
+                'message' => 'Room image removed'
+            ]);
+
             return $this->successResponse([], 'Image removed successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);

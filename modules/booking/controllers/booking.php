@@ -297,6 +297,13 @@ class Controller extends ApiController
             // Log cancellation
             \Index\Log\Model::add($id, 'booking', 'Cancel', 'Cancelled room booking: '.$id, $login->id);
 
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+                'action' => 'cancel',
+                'id' => $id,
+                'message' => 'Booking cancelled'
+            ]);
+
             // Send notification
             $message = \Booking\Email\Controller::sendByBookingId($id);
 
