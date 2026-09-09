@@ -15,6 +15,25 @@ use Kotchasan\Logger;
 class Model extends \Kotchasan\Model
 {
     /**
+     * Create the authorization response for a private channel subscription.
+     *
+     * @return array|null Null when credentials are not configured
+     */
+    public static function authorizePrivateChannel(string $socketId, string $channel): ?array
+    {
+        $key = self::$cfg->pusher_key ?? getenv('PUSHER_KEY');
+        $secret = self::$cfg->pusher_secret ?? getenv('PUSHER_SECRET');
+
+        if (empty($key) || empty($secret)) {
+            return null;
+        }
+
+        $signature = hash_hmac('sha256', $socketId.':'.$channel, $secret);
+
+        return ['auth' => $key.':'.$signature];
+    }
+
+    /**
      * Trigger a Pusher event on a channel
      *
      * @param string $channel Channel name (e.g. 'booking')
@@ -95,4 +114,3 @@ class Model extends \Kotchasan\Model
         }
     }
 }
-

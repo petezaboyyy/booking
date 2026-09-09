@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           cookieName: 'XSRF-TOKEN',
           metaName: 'csrf-token',
           tokenUrl: 'api/index/auth/csrf-token' // CSRF endpoint
+        },
+        csp: {
+          directives: {
+            'script-src': ['https://js.pusher.com'],
+            'connect-src': ['wss://*.pusher.com', 'https://*.pusher.com']
+          }
         }
       },
 
@@ -998,13 +1004,17 @@ function copyToClipboard(cell, rawValue, rowData, attributes) {
  */
 async function initPusher() {
   try {
+    if (window.AuthManager?.isAuthenticated && !window.AuthManager.isAuthenticated()) {
+      return;
+    }
+
     // 1. Resolve Pusher Key and Cluster
+    const baseUrl = window.WEB_URL || '/';
     let pusherKey = window.AppConfigManager?.state?.lastConfig?.pusher_key || null;
     let pusherCluster = window.AppConfigManager?.state?.lastConfig?.pusher_cluster || 'ap1';
 
     if (!pusherKey) {
       try {
-        const baseUrl = window.WEB_URL || '/';
         const res = await fetch(`${baseUrl}api/index/config/frontend-settings`, {
           credentials: 'same-origin',
           headers: { 'Accept': 'application/json' }
@@ -1018,9 +1028,10 @@ async function initPusher() {
       }
     }
 
-    // Default fallback to configured keys
-    pusherKey = pusherKey || '19581bf926c848e2b603';
-    pusherCluster = pusherCluster || 'ap1';
+    if (!pusherKey) {
+      console.warn('[Pusher] Disabled: PUSHER_KEY is not configured');
+      return;
+    }
 
     // Exit if Pusher JS SDK is not loaded
     if (typeof Pusher === 'undefined') {
@@ -1030,10 +1041,23 @@ async function initPusher() {
 
     const pusher = new Pusher(pusherKey, {
       cluster: pusherCluster,
-      forceTLS: true
+      forceTLS: true,
+      channelAuthorization: {
+        endpoint: `${baseUrl}api/booking/pusher/authorize`,
+        transport: 'ajax',
+        headersProvider: () => {
+          const csrfToken = window.SecurityManager?.state?.csrfToken
+            || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          return csrfToken ? { 'X-CSRF-Token': csrfToken } : {};
+        }
+      }
     });
 
-    const channel = pusher.subscribe('booking');
+    const channel = pusher.subscribe('private-booking');
+
+    channel.bind('pusher:subscription_error', (error) => {
+      console.error('[Pusher] Private channel authorization failed:', error);
+    });
 
     channel.bind('updated', (data) => {
       console.log('[Pusher] Real-time booking update received:', data);

@@ -169,7 +169,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add($id, 'booking', 'Cancel', 'Cancelled room booking: '.$id, $login->id);
 
         // Broadcast real-time update via Pusher
-        \Booking\Pusher\Model::trigger('booking', 'updated', [
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
             'action' => 'cancel',
             'id' => $id,
             'message' => 'Booking cancelled'
@@ -201,7 +201,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add(0, 'booking', 'Delete', 'Deleted room booking ID(s): '.implode(', ', $ids), $login->id);
 
         // Broadcast real-time update via Pusher
-        \Booking\Pusher\Model::trigger('booking', 'updated', [
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
             'action' => 'delete',
             'ids' => $ids,
             'message' => 'Booking removed'

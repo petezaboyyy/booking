@@ -202,7 +202,7 @@ class Controller extends ApiController
             ]);
 
             // Broadcast real-time update via Pusher
-            \Booking\Pusher\Model::trigger('booking', 'updated', [
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
                 'action' => 'review',
                 'id' => $id,
                 'status' => $finalStatus,

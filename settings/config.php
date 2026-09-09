@@ -50,8 +50,8 @@ return array (
   'facebook_appId' => '',
   'default_department' => '',
   'google_client_id' => '',
-  'pusher_app_id' => getenv('PUSHER_APP_ID') ?: '2192388',
-  'pusher_key' => getenv('PUSHER_KEY') ?: '19581bf926c848e2b603',
-  'pusher_secret' => getenv('PUSHER_SECRET') ?: '3f272517a78b46369b81',
+  'pusher_app_id' => getenv('PUSHER_APP_ID') ?: '',
+  'pusher_key' => getenv('PUSHER_KEY') ?: '',
+  'pusher_secret' => getenv('PUSHER_SECRET') ?: '',
   'pusher_cluster' => getenv('PUSHER_CLUSTER') ?: 'ap1',
 );
