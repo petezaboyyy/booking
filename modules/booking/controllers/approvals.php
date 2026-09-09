@@ -167,6 +167,13 @@ class Controller extends \Gcms\Table
         // Log deletion
         \Index\Log\Model::add(0, 'booking', 'Delete', 'Deleted room reservation ID(s): '.implode(', ', $ids), $login->id);
 
+        // Broadcast real-time update via Pusher
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+            'action' => 'delete',
+            'ids' => $ids,
+            'message' => 'Booking removed'
+        ]);
+
         // Return success response
         return $this->redirectResponse('reload', 'Deleted room reservation(s) successfully', 200, 0, 'table');
     }

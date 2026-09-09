@@ -1,7 +1,7 @@
 <div class="auth-container">
   <div class="auth-card">
     <form data-form="register" class="auth-form" novalidate action="api/index/auth/register" method="post" data-ajax-submit="true" data-validate="true"
-          data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
+          data-redirect="/login" data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
       <div class="auth-header">
         <a href="/" class="auth-logo icon-register"></a>
         <h1 data-i18n>Create Account</h1>
@@ -40,7 +40,7 @@
         <button type="submit" class="btn btn-primary fullwidth large icon-register" data-i18n>Create Account</button>
       </fieldset>
       <div class="center">
-        <span data-i18n>Already have an account?</span> <a href="login" data-i18n>Sign in</a>
+        <span data-i18n>Already have an account?</span> <a href="/login" data-i18n>Sign in</a>
       </div>
     </form>
   </div>

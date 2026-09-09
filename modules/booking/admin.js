@@ -392,7 +392,7 @@ EventManager.on('page:loaded', refreshBookingTime24Inputs);
 
 // These tables expose only the Delete bulk action. Remove the placeholder and
 // keep Delete selected; the Process button still requires selected rows.
-const deleteOnlyBulkActionTables = new Set(['rooms', 'bookingApprovals']);
+const deleteOnlyBulkActionTables = new Set(['rooms', 'bookingApprovals', 'usage']);
 
 function syncDeleteOnlyBulkAction(tableId) {
     if (!deleteOnlyBulkActionTables.has(tableId)) return;

@@ -168,6 +168,13 @@ class Controller extends \Gcms\Table
         BookingModel::updateStatus($id, Helper::STATUS_CANCELLED_BY_REQUESTER);
         \Index\Log\Model::add($id, 'booking', 'Cancel', 'Cancelled room booking: '.$id, $login->id);
 
+        // Broadcast real-time update via Pusher
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+            'action' => 'cancel',
+            'id' => $id,
+            'message' => 'Booking cancelled'
+        ]);
+
         $message = \Booking\Email\Controller::sendByBookingId($id);
 
         return $this->redirectResponse('reload', $message, 200, 0, 'table');
@@ -192,6 +199,13 @@ class Controller extends \Gcms\Table
         }
 
         \Index\Log\Model::add(0, 'booking', 'Delete', 'Deleted room booking ID(s): '.implode(', ', $ids), $login->id);
+
+        // Broadcast real-time update via Pusher
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+            'action' => 'delete',
+            'ids' => $ids,
+            'message' => 'Booking removed'
+        ]);
 
         return $this->redirectResponse('reload', 'Deleted booking(s) successfully', 200, 0, 'table');
     }

@@ -201,6 +201,14 @@ class Controller extends ApiController
                 'status' => $finalStatus
             ]);
 
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+                'action' => 'review',
+                'id' => $id,
+                'status' => $finalStatus,
+                'message' => 'Booking status updated'
+            ]);
+
             $message = \Booking\Email\Controller::sendByBookingId($id);
 
             return $this->redirectResponse('/approvals', $message);

@@ -35,8 +35,7 @@ class Controller extends ApiController
                 ->select(Sql::COUNT('id', 'count'), 'status')
                 ->from('reservation')
                 ->where(['member_id', (int) $login->id])
-                ->groupBy('status')
-                ->cacheOn();
+                ->groupBy('status');
             $rows = [];
             foreach ($query->fetchAll() as $row) {
                 // Process each row
@@ -77,7 +76,8 @@ class Controller extends ApiController
             return $this->successResponse([
                 'my' => $my,
                 'approvals' => $approvals
-            ], 'Statistics retrieved');
+            ], 'Statistics retrieved')
+            ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }

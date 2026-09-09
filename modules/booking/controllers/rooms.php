@@ -123,6 +123,13 @@ class Controller extends \Gcms\Table
 
         \Index\Log\Model::add(0, 'booking', 'Delete', 'Deleted room ID(s): '.implode(', ', $ids), $login->id);
 
+        // Broadcast real-time update via Pusher
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+            'action' => 'room_delete',
+            'ids' => $ids,
+            'message' => 'Room deleted'
+        ]);
+
         return $this->redirectResponse('reload', 'Deleted '.$removeCount.' room(s) successfully');
     }
 
@@ -147,6 +154,14 @@ class Controller extends \Gcms\Table
 
         $msg = (int) $room->is_active === 1 ? 'Activated: '.$room->name : 'Deactivated: '.$room->name;
         \Index\Log\Model::add($room->id, 'booking', 'Active', $msg, $login->id);
+
+        // Broadcast real-time update via Pusher
+        \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+            'action' => 'room_status',
+            'id' => $room->id,
+            'is_active' => (int) $room->is_active,
+            'message' => $msg
+        ]);
 
         return $this->redirectResponse('reload', $msg, 200, 0, 'table');
     }

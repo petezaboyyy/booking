@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Main Application
  * Now.js Framework
  */
@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           cookieName: 'XSRF-TOKEN',
           metaName: 'csrf-token',
           tokenUrl: 'api/index/auth/csrf-token' // CSRF endpoint
+        },
+        csp: {
+          directives: {
+            'script-src': ['https://js.pusher.com'],
+            'connect-src': ['wss://*.pusher.com', 'https://*.pusher.com']
+          }
         }
       },
 
@@ -293,6 +299,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       name: 'Now.js',
       version: '1.0.0'
     });
+
+    // Initialize real-time WebSocket updates via Pusher
+    initPusher();
 
   } catch (error) {
     console.error('Application initialization failed:', error);
@@ -802,7 +811,7 @@ function initThemeSettingsAssistant(element, data) {
       return;
     }
 
-    setBusyButton(suggestButton, Now.translate('{LNG_Generating}…'), true);
+    setBusyButton(suggestButton, Now.translate('{LNG_Generating}โ€ฆ'), true);
     try {
       const response = await ApiService.post('api/index/settings/suggestTheme', {
         theme_prompt: prompt
@@ -987,5 +996,138 @@ function copyToClipboard(cell, rawValue, rowData, attributes) {
     cell.appendChild(link);
   } else {
     cell.textContent = '';
+  }
+}
+
+
+/**
+ * Initialize Pusher WebSocket for real-time updates across the app
+ */
+async function initPusher() {
+  try {
+    if (window.AuthManager?.isAuthenticated && !window.AuthManager.isAuthenticated()) {
+      return;
+    }
+
+    // 1. Resolve Pusher Key and Cluster
+    const baseUrl = window.WEB_URL || '/';
+    let pusherKey = window.AppConfigManager?.state?.lastConfig?.pusher_key || null;
+    let pusherCluster = window.AppConfigManager?.state?.lastConfig?.pusher_cluster || 'ap1';
+
+    if (!pusherKey) {
+      try {
+        const res = await fetch(`${baseUrl}api/index/config/frontend-settings`, {
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        const config = json?.data || {};
+        pusherKey = config.pusher_key || null;
+        pusherCluster = config.pusher_cluster || 'ap1';
+      } catch (e) {
+        console.warn('[Pusher] Could not fetch frontend-settings:', e);
+      }
+    }
+
+    if (!pusherKey) {
+      console.warn('[Pusher] Disabled: PUSHER_KEY is not configured');
+      return;
+    }
+
+    // Exit if Pusher JS SDK is not loaded
+    if (typeof Pusher === 'undefined') {
+      console.warn('[Pusher] Pusher JS SDK is not loaded');
+      return;
+    }
+
+    const pusher = new Pusher(pusherKey, {
+      cluster: pusherCluster,
+      forceTLS: true,
+      channelAuthorization: {
+        endpoint: `${baseUrl}api/booking/pusher/authorize`,
+        transport: 'ajax',
+        headersProvider: () => {
+          const csrfToken = window.SecurityManager?.state?.csrfToken
+            || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          return csrfToken ? { 'X-CSRF-Token': csrfToken } : {};
+        }
+      }
+    });
+
+    const channel = pusher.subscribe('private-booking');
+
+    channel.bind('pusher:subscription_error', (error) => {
+      console.error('[Pusher] Private channel authorization failed:', error);
+    });
+
+    channel.bind('updated', (data) => {
+      console.log('[Pusher] Real-time booking update received:', data);
+
+      // 1. Clear API Caches (ApiService & ApiComponent) so all queries fetch fresh server data
+      if (window.ApiService?.clearCache) {
+        ApiService.clearCache();
+      }
+      if (window.ApiComponent?.clearCache) {
+        ApiComponent.clearCache();
+      }
+      try {
+        localStorage.removeItem('api_cache');
+      } catch (e) {}
+
+      // 2. Auto-refresh ApiComponent instances (e.g. room catalog, statistics)
+      document.querySelectorAll('[data-component="api"]').forEach(el => {
+        if (window.ApiComponent?.refresh) {
+          ApiComponent.refresh(el);
+        } else {
+          const inst = window.ApiComponent?.getInstance(el) || el.apiInstance || el._apiComponent;
+          if (inst && window.ApiComponent?.loadData) {
+            ApiComponent.loadData(inst, false, { force: true, silent: true });
+          }
+        }
+      });
+
+      // 3. Auto-refresh EventCalendar if present on the current page
+      document.querySelectorAll('[data-event-calendar]').forEach(calEl => {
+        if (window.EventCalendar) {
+          const inst = typeof EventCalendar.getInstance === 'function'
+            ? EventCalendar.getInstance(calEl)
+            : (calEl._eventCalendar || null);
+
+          if (inst) {
+            inst.segmentCache?.clear?.();
+            if (typeof EventCalendar.loadEvents === 'function') {
+              EventCalendar.loadEvents(inst);
+            } else if (typeof EventCalendar.refresh === 'function') {
+              EventCalendar.refresh(calEl);
+            }
+          } else if (typeof EventCalendar.refresh === 'function') {
+            EventCalendar.refresh(calEl);
+          }
+        }
+      });
+
+      // 4. Auto-refresh TableComponent instances (e.g. My Bookings, Approvals, Rooms)
+      document.querySelectorAll('table[data-component="table"]').forEach(table => {
+        const inst = window.TableComponent?.getInstance(table);
+        if (inst && window.TableComponent?.refresh) {
+          TableComponent.refresh(inst);
+        }
+      });
+
+      // 5. Non-intrusive toast notification if message is provided
+      if (window.NotificationManager?.info && data?.message) {
+        NotificationManager.info(data.message);
+      }
+    });
+
+    pusher.connection.bind('connected', () => {
+      console.log('[Pusher] WebSocket connected to cluster:', pusherCluster);
+    });
+
+    pusher.connection.bind('error', (err) => {
+      console.error('[Pusher] Connection error:', err);
+    });
+  } catch (err) {
+    console.warn('[Pusher] Initialization error:', err);
   }
 }

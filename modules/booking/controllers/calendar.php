@@ -49,8 +49,7 @@ class Controller extends ApiController
                     ['R.begin', '<=', $end.' 23:59:59'],
                     ['R.end', '>=', $start.' 00:00:00']
                 ])
-                ->orderBy('R.begin')
-                ->cacheOn();
+                ->orderBy('R.begin');
 
             $events = [];
             foreach ($query->fetchAll() as $item) {
@@ -102,7 +101,8 @@ class Controller extends ApiController
 
             return $this->successResponse([
                 'data' => $events
-            ], 'Calendar data retrieved');
+            ], 'Calendar data retrieved')
+            ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }

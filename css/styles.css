@@ -13,8 +13,18 @@
   --header-color-background: var(--color-surface);
   --header-color-text: var(--color-text);
   --menu-highlight-bg: #000;
+  --font-family-base: 'Kanit', sans-serif;
+  --font-family-heading: 'Kanit', sans-serif;
 }
 * {
+  font-family: 'Kanit', sans-serif;
+}
+body,
+h1, h2, h3, h4, h5, h6,
+.card-groups h1,
+.card-groups h2,
+.card-groups h3,
+input, button, select, textarea, optgroup, option {
   font-family: 'Kanit', sans-serif;
 }
 body {

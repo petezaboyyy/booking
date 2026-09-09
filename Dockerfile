@@ -2,6 +2,7 @@ FROM php:8.3-apache
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        ca-certificates \
         libcurl4-openssl-dev \
         libjpeg62-turbo-dev \
         libonig-dev \
@@ -19,3 +20,13 @@ RUN sed -ri \
     /etc/apache2/apache2.conf
 
 WORKDIR /var/www/html
+
+# Copy source code into container
+COPY . /var/www/html
+
+# Ensure necessary directories exist and set appropriate permissions for Apache
+RUN mkdir -p /var/www/html/datas /var/www/html/settings \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/datas /var/www/html/settings
+
+EXPOSE 80

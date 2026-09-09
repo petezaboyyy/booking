@@ -106,6 +106,13 @@ class Controller extends ApiController
 
             \Index\Log\Model::add($id, 'booking', 'Save', 'Saved room: '.$save['name'], $login->id);
 
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+                'action' => 'room_save',
+                'id' => $id,
+                'message' => 'Room updated'
+            ]);
+
             return $this->successResponse([
                 'actions' => [
                     [
@@ -167,6 +174,13 @@ class Controller extends ApiController
             @unlink($file);
 
             \Index\Log\Model::add((int) $json->id, 'booking', 'Delete', 'Removed room image: '.$json->file, $login->id);
+
+            // Broadcast real-time update via Pusher
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+                'action' => 'room_image_delete',
+                'id' => (int) $json->id,
+                'message' => 'Room image removed'
+            ]);
 
             return $this->successResponse([], 'Image removed successfully');
         } catch (\Exception $e) {

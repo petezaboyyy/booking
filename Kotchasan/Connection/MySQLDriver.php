@@ -44,6 +44,17 @@ class MySQLDriver implements DriverInterface
                 \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES '.($config['charset'] ?? 'utf8mb4')
             ];
 
+            if (!empty($config['ssl'])) {
+                if (defined('\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+                    $options[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                }
+                if (!empty($config['ssl_ca']) && file_exists($config['ssl_ca'])) {
+                    $options[\PDO::MYSQL_ATTR_SSL_CA] = $config['ssl_ca'];
+                } elseif (file_exists('/etc/ssl/certs/ca-certificates.crt')) {
+                    $options[\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
+                }
+            }
+
             $this->pdo = new \PDO(
                 $dsn,
                 $config['username'] ?? '',

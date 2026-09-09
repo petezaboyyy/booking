@@ -56,8 +56,9 @@ ehthumbs.db
 Desktop.ini
 
 # Exclude non-core files and directories
-docs/
-/settings/
+/settings/*
+!/settings/config.php
+!/settings/database.php
 /datas/
 /data/
 CDN.md
