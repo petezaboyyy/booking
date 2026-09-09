@@ -5,7 +5,7 @@ return array (
   'web_title' => 'E-Booking',
   'web_description' => 'ระบบจองห้องประชุม',
   'timezone' => 'Asia/Bangkok',
-  'password_key' => '6a61e2700f289',
+  'password_key' => '6a61e52cb2c86',
   'reversion' => 1784799856,
   'api_tokens' => 
   array (
