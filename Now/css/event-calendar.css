@@ -185,6 +185,60 @@
   background: var(--ec-primary);
   color: white;
 }
+/* Filter Control */
+.ec-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 180px;
+  max-width: 280px;
+}
+.ec-filter-icon {
+  position: absolute;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ec-text-secondary);
+  pointer-events: none;
+  font-size: 14px;
+}
+.ec-filter-input {
+  width: 100%;
+  padding: 6px 28px 6px 32px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ec-text);
+  background: var(--ec-bg);
+  border: 1px solid var(--ec-border);
+  border-radius: 20px;
+  outline: none;
+  transition: border-color var(--ec-transition), box-shadow var(--ec-transition);
+}
+.ec-filter-input:focus {
+  border-color: var(--ec-primary);
+  box-shadow: 0 0 0 2px var(--ec-hover);
+}
+.ec-filter-clear {
+  position: absolute;
+  right: 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ec-text-secondary);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color var(--ec-transition), background var(--ec-transition);
+}
+.ec-filter-clear:hover {
+  color: var(--ec-text);
+  background: var(--ec-hover);
+}
 /* ========================================
    Month View
    ======================================== */

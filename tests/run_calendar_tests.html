@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>EventCalendar Filter In-Browser Test Suite</title>
+  <link rel="stylesheet" href="../Now/dist/now.core.min.css">
+  <link rel="stylesheet" href="../Now/dist/eventcalendar.min.css">
+  <script src="../Now/dist/now.core.min.js"></script>
+  <script src="../Now/dist/eventcalendar.min.js"></script>
+</head>
+<body>
+  <div id="test-container" style="max-width: 900px; margin: 20px auto;">
+    <div class="roomly-calendar-filter-bar">
+      <div class="roomly-calendar-filter-wrap">
+        <input type="text" id="test_filter_input" data-calendar-filter class="roomly-calendar-filter-input" placeholder="Filter room...">
+        <button type="button" id="test_filter_clear" data-calendar-filter-clear class="roomly-calendar-filter-clear">&times;</button>
+      </div>
+    </div>
+    <div id="test_calendar" data-event-calendar data-component="eventcalendar" data-filter-target="#test_filter_input"></div>
+    <div id="test-output" style="font-family: monospace; white-space: pre-wrap; margin-top: 20px; padding: 15px; border: 2px solid #ccc;"></div>
+  </div>
+
+  <script>
+    const output = document.getElementById('test-output');
+    const logs = [];
+    let passed = 0;
+    let failed = 0;
+
+    function assert(desc, condition) {
+      if (condition) {
+        passed++;
+        logs.push('[PASS] ' + desc);
+      } else {
+        failed++;
+        logs.push('[FAIL] ' + desc);
+        console.error('Assertion failed:', desc);
+      }
+    }
+
+    try {
+      assert('EventCalendar is defined globally', typeof window.EventCalendar === 'object' && window.EventCalendar !== null);
+
+      // 1. Test eventMatchesFilter logic
+      const evRoom1 = {
+        id: '6',
+        title: 'R-0001 ห้องประชุม 1, 08:00 - 09:00',
+        room_number: 'R-0001',
+        room_name: 'ห้องประชุม 1',
+        description: 'วิชา 204361',
+        start: new Date(2026, 8, 8, 8, 0),
+        end: new Date(2026, 8, 8, 9, 0)
+      };
+
+      const evRoom2 = {
+        id: '5',
+        title: 'R-0002 ห้องประชุม 2, 09:30 - 12:00',
+        room_number: 'R-0002',
+        room_name: 'ห้องประชุม 2',
+        description: 'วิชา 001200',
+        start: new Date(2026, 8, 9, 9, 30),
+        end: new Date(2026, 8, 9, 12, 0)
+      };
+
+      // Room 1 matching
+      assert('evRoom1 matches R-0001', EventCalendar.eventMatchesFilter(evRoom1, 'R-0001'));
+      assert('evRoom1 matches lowercase r-0001', EventCalendar.eventMatchesFilter(evRoom1, 'r-0001'));
+      assert('evRoom1 matches 0001', EventCalendar.eventMatchesFilter(evRoom1, '0001'));
+      assert('evRoom1 matches 1', EventCalendar.eventMatchesFilter(evRoom1, '1'));
+      assert('evRoom1 matches ห้องประชุม 1', EventCalendar.eventMatchesFilter(evRoom1, 'ห้องประชุม 1'));
+      assert('evRoom1 matches multi-token ห้อง 1', EventCalendar.eventMatchesFilter(evRoom1, 'ห้อง 1'));
+
+      // Topic and time non-contamination on Room 1
+      assert('evRoom1 does NOT match 2', !EventCalendar.eventMatchesFilter(evRoom1, '2'));
+      assert('evRoom1 does NOT match R-0002', !EventCalendar.eventMatchesFilter(evRoom1, 'R-0002'));
+      assert('evRoom1 does NOT match topic 204361', !EventCalendar.eventMatchesFilter(evRoom1, '204361'));
+      assert('evRoom1 does NOT match time 08:00', !EventCalendar.eventMatchesFilter(evRoom1, '08:00'));
+
+      // Room 2 matching
+      assert('evRoom2 matches R-0002', EventCalendar.eventMatchesFilter(evRoom2, 'R-0002'));
+      assert('evRoom2 matches 2', EventCalendar.eventMatchesFilter(evRoom2, '2'));
+      assert('evRoom2 matches ห้อง 2', EventCalendar.eventMatchesFilter(evRoom2, 'ห้อง 2'));
+
+      // CRITICAL: Room 2 has topic 'วิชา 001200' (has 1) and time '12:00' (has 1)
+      // Query '1' MUST NOT match Room 2!
+      assert('evRoom2 does NOT match 1 (no topic/time contamination)', !EventCalendar.eventMatchesFilter(evRoom2, '1'));
+      assert('evRoom2 does NOT match R-0001', !EventCalendar.eventMatchesFilter(evRoom2, 'R-0001'));
+
+      // 2. Test Component creation and external filter binding
+      const calEl = document.getElementById('test_calendar');
+      const inputEl = document.getElementById('test_filter_input');
+      const clearBtn = document.getElementById('test_filter_clear');
+
+      const inst = EventCalendar.create(calEl, {
+        defaultView: 'month',
+        showFilter: true,
+        filterTarget: '#test_filter_input',
+        events: [evRoom1, evRoom2]
+      });
+
+      assert('Calendar instance created', inst !== null && inst.element === calEl);
+      assert('Initial events count is 2', inst.events.length === 2);
+      assert('Filtered events initially return all 2 events', EventCalendar.getFilteredEvents(inst).length === 2);
+
+      // Filter to Room 1
+      EventCalendar.setFilter(inst, 'R-0001');
+      assert('setFilter R-0001 updates filterQuery', inst.filterQuery === 'r-0001');
+      assert('Filtered events count for R-0001 is exactly 1', EventCalendar.getFilteredEvents(inst).length === 1);
+      assert('Filtered event is Room 1', EventCalendar.getFilteredEvents(inst)[0].id === '6');
+      assert('Input element value synchronized to R-0001', inputEl.value === 'R-0001');
+      assert('Clear button is visible when filtered', clearBtn.style.display !== 'none');
+
+      // Filter by single digit '1'
+      EventCalendar.setFilter(inst, '1');
+      const filtered1 = EventCalendar.getFilteredEvents(inst);
+      assert('Filtered events count for digit 1 is exactly 1 (Room 1 only)', filtered1.length === 1 && filtered1[0].id === '6');
+
+      // Filter by single digit '2'
+      EventCalendar.setFilter(inst, '2');
+      const filtered2 = EventCalendar.getFilteredEvents(inst);
+      assert('Filtered events count for digit 2 is exactly 1 (Room 2 only)', filtered2.length === 1 && filtered2[0].id === '5');
+
+      // Filter by multi-token 'ห้อง 2'
+      EventCalendar.setFilter(inst, 'ห้อง 2');
+      const filteredThai = EventCalendar.getFilteredEvents(inst);
+      assert('Filtered events for ห้อง 2 is exactly Room 2', filteredThai.length === 1 && filteredThai[0].id === '5');
+
+      // Filter by nonexistent room
+      EventCalendar.setFilter(inst, 'NONEXISTENT_999');
+      assert('Nonexistent query returns 0 events', EventCalendar.getFilteredEvents(inst).length === 0);
+
+      // Clear filter via clearFilter()
+      EventCalendar.clearFilter(inst);
+      assert('clearFilter restores all 2 events', EventCalendar.getFilteredEvents(inst).length === 2);
+      assert('Input element is empty after clear', inputEl.value === '');
+      assert('Clear button is hidden after clear', clearBtn.style.display === 'none');
+
+      // Simulate clear button click
+      EventCalendar.setFilter(inst, 'R-0001');
+      assert('Set filter before clear click', EventCalendar.getFilteredEvents(inst).length === 1);
+      clearBtn.click();
+      assert('Clicking clear button restores all events', EventCalendar.getFilteredEvents(inst).length === 2);
+      assert('Clicking clear button blanks input element', inputEl.value === '');
+
+      // Simulate Escape key in input
+      EventCalendar.setFilter(inst, 'R-0002');
+      assert('Set filter before Escape key', EventCalendar.getFilteredEvents(inst).length === 1);
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assert('Escape key restores all events', EventCalendar.getFilteredEvents(inst).length === 2);
+      assert('Escape key blanks input element', inputEl.value === '');
+
+      // Simulate user typing in input
+      inputEl.value = 'R-0001';
+      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+      assert('Typing in input triggers filtering to 1 event', EventCalendar.getFilteredEvents(inst).length === 1);
+
+      // Spanning segments cache test
+      const gridStart = new Date(2026, 8, 1);
+      const segmentsBefore = EventCalendar.calculateSpanningSegments(inst, gridStart, 42);
+      EventCalendar.setFilter(inst, 'R-0002');
+      const segmentsAfter = EventCalendar.calculateSpanningSegments(inst, gridStart, 42);
+      assert('Segments recalculation respects filter changes', Array.isArray(segmentsBefore) && Array.isArray(segmentsAfter));
+
+      // View switching test while filtered
+      EventCalendar.changeView(inst, 'week');
+      assert('Week view renders while filter active', inst.currentView === 'week');
+      EventCalendar.changeView(inst, 'day');
+      assert('Day view renders while filter active', inst.currentView === 'day');
+      EventCalendar.changeView(inst, 'month');
+      assert('Month view restored while filter active', inst.currentView === 'month');
+
+      logs.push('\nSUMMARY: ' + passed + ' passed, ' + failed + ' failed.');
+      output.textContent = logs.join('\n');
+      if (failed === 0) {
+        output.setAttribute('data-test-status', 'SUCCESS');
+      } else {
+        output.setAttribute('data-test-status', 'FAILURE');
+      }
+    } catch (e) {
+      logs.push('[CRASH] ' + e.message + '\n' + e.stack);
+      output.textContent = logs.join('\n');
+      output.setAttribute('data-test-status', 'ERROR');
+    }
+  </script>
+</body>
+</html>
+

@@ -589,6 +589,103 @@ html[data-theme='dark'] .roomly-theme-sun {
   color: var(--roomly-primary);
 }
 
+/* Calendar Filter Bar */
+.roomly-calendar-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.roomly-calendar-filter-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+}
+
+.roomly-calendar-filter-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--ec-text-secondary, var(--roomly-muted));
+  font-size: 14px;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roomly-calendar-filter-input {
+  width: 100%;
+  height: 40px;
+  padding: 8px 36px 8px 38px;
+  border-radius: 12px;
+  border: 1px solid var(--ec-border, var(--roomly-outline));
+  background: var(--ec-bg, var(--roomly-surface));
+  color: var(--ec-text, var(--roomly-text));
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.roomly-calendar-filter-input:focus {
+  outline: none;
+  border-color: var(--ec-primary, var(--roomly-primary));
+  box-shadow: 0 0 0 3px rgba(0, 101, 145, 0.15);
+}
+
+.roomly-calendar-filter-clear {
+  position: absolute;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ec-text-secondary, var(--roomly-muted));
+  font-size: 16px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.roomly-calendar-filter-clear:hover {
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--ec-text, var(--roomly-text));
+}
+
+[data-theme='dark'] .roomly-calendar-filter-input {
+  background: var(--ec-bg, #101c2c);
+  border-color: var(--ec-border, rgba(151, 180, 211, 0.24));
+  color: var(--ec-text, #edf6ff);
+}
+
+[data-theme='dark'] .roomly-calendar-filter-clear {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--ec-text-secondary, #a9b9ca);
+}
+
+[data-theme='dark'] .roomly-calendar-filter-clear:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .roomly-calendar-filter-bar {
+    justify-content: stretch;
+  }
+  .roomly-calendar-filter-wrap {
+    max-width: 100%;
+  }
+}
+
 .roomly-calendar {
   min-height: 520px;
 }

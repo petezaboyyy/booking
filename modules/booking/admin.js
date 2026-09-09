@@ -41,6 +41,95 @@ if (window.EventCalendar) {
     };
 }
 
+// Calendar Room Filter Initialization & SPA Lifecycle Binding
+function initCalendarRoomFilter() {
+    const filterInputs = document.querySelectorAll('[data-calendar-filter], #calendar_room_filter, #member_calendar_room_filter');
+    if (!filterInputs.length) return;
+
+    filterInputs.forEach(input => {
+        const root = input.closest('.card-groups, .roomly-calendar-panel, .content, main, body') || document;
+        const calendarEl = root.querySelector('[data-event-calendar], [data-component="eventcalendar"], [data-component="event-calendar"], .event-calendar');
+        if (!calendarEl) return;
+
+        const clearBtn = input.parentElement?.querySelector('[data-calendar-filter-clear], .roomly-calendar-filter-clear, .calendar-filter-clear');
+
+        const syncClearVisibility = () => {
+            if (clearBtn) {
+                clearBtn.style.display = input.value.trim() ? 'inline-flex' : 'none';
+            }
+        };
+
+        const applyFilter = (query) => {
+            syncClearVisibility();
+            if (window.EventCalendar) {
+                const inst = typeof EventCalendar.getInstance === 'function'
+                    ? EventCalendar.getInstance(calendarEl)
+                    : (calendarEl._eventCalendar || null);
+
+                if (inst) {
+                    if (typeof EventCalendar.setFilter === 'function') {
+                        EventCalendar.setFilter(inst, query);
+                    } else {
+                        inst._filterRawQuery = query;
+                        inst.filterQuery = String(query || '').trim().toLowerCase();
+                        if (inst.segmentCache) inst.segmentCache.clear();
+                        if (typeof EventCalendar.render === 'function') {
+                            EventCalendar.render(inst);
+                        }
+                    }
+                }
+            }
+        };
+
+        if (!input._filterInitialized && !input._calendarBoundInstance) {
+            input._filterInitialized = true;
+
+            input.addEventListener('input', (e) => {
+                applyFilter(e.target.value);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    input.value = '';
+                    applyFilter('');
+                    input.blur();
+                }
+            });
+
+            if (clearBtn && !clearBtn._filterInitialized) {
+                clearBtn._filterInitialized = true;
+                clearBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    input.value = '';
+                    applyFilter('');
+                    input.focus();
+                });
+            }
+        } else if (input._calendarBoundInstance) {
+            input._filterInitialized = true;
+        }
+
+        // Sync initial state
+        if (calendarEl._eventCalendar?.filterQuery && !input.value) {
+            input.value = calendarEl._eventCalendar._filterRawQuery || '';
+        }
+        syncClearVisibility();
+    });
+}
+
+// Bind to SPA and lifecycle events
+if (window.EventManager?.on) {
+    EventManager.on('route:changed', () => setTimeout(initCalendarRoomFilter, 50));
+    EventManager.on('page:loaded', () => setTimeout(initCalendarRoomFilter, 50));
+    EventManager.on('calendar:loaded', () => setTimeout(initCalendarRoomFilter, 50));
+}
+document.addEventListener('route:changed', () => setTimeout(initCalendarRoomFilter, 50));
+document.addEventListener('page:loaded', () => setTimeout(initCalendarRoomFilter, 50));
+document.addEventListener('DOMContentLoaded', () => setTimeout(initCalendarRoomFilter, 100));
+window.addEventListener('pageshow', () => setTimeout(initCalendarRoomFilter, 100));
+setTimeout(initCalendarRoomFilter, 150);
+
 // TableManager Skeleton Loading override
 function renderTableSkeletonLoading(table) {
     const tableElement = table?.element || table;

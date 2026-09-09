@@ -25,6 +25,10 @@ class Controller extends ApiController
 
             $start = $request->get('start')->date();
             $end = $request->get('end')->date();
+            $roomFilter = $request->get('room')->topic();
+            if (empty($roomFilter)) {
+                $roomFilter = $request->get('q')->topic();
+            }
 
             $query = \Kotchasan\Model::createQuery()
                 ->select(
@@ -48,8 +52,22 @@ class Controller extends ApiController
                     ['R.status', self::$cfg->booking_calendar_status],
                     ['R.begin', '<=', $end.' 23:59:59'],
                     ['R.end', '>=', $start.' 00:00:00']
-                ])
-                ->orderBy('R.begin');
+                ]);
+
+            if (!empty($roomFilter)) {
+                $tokens = array_filter(preg_split('/\s+/', trim($roomFilter)));
+                if (!empty($tokens)) {
+                    foreach ($tokens as $token) {
+                        $search = '%'.$token.'%';
+                        $query->where([
+                            ['RoomNumber.value', 'LIKE', $search],
+                            ['Room.name', 'LIKE', $search]
+                        ], 'OR');
+                    }
+                }
+            }
+
+            $query->orderBy('R.begin');
 
             $events = [];
             foreach ($query->fetchAll() as $item) {
@@ -72,6 +90,9 @@ class Controller extends ApiController
                     $events[] = [
                         'id' => (string) $item->id,
                         'title' => $label,
+                        'room_number' => (string) ($item->room_number ?? ''),
+                        'room_name' => (string) ($item->room_name ?? ''),
+                        'member_name' => (string) ($item->member_name ?? ''),
                         'description' => (string) $item->topic,
                         'start' => $item->begin,
                         'end' => $item->end,
@@ -90,6 +111,9 @@ class Controller extends ApiController
                 $events[] = [
                     'id' => (string) $item->id,
                     'title' => $label.', '.Helper::formatBookingTime($item, true),
+                    'room_number' => (string) ($item->room_number ?? ''),
+                    'room_name' => (string) ($item->room_name ?? ''),
+                    'member_name' => (string) ($item->member_name ?? ''),
                     'description' => (string) $item->topic,
                     'start' => $item->begin,
                     'end' => $item->end,

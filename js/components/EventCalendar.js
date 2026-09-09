@@ -28,6 +28,10 @@ const EventCalendar = {
     showToday: true,
     showViewSwitcher: true,
     showPeriodPicker: false,
+    showFilter: true,
+    filterPlaceholder: null,
+    filterQuery: '',
+    filterTarget: null,
     views: ['month', 'week', 'day'],
     api: null,
     apiMethod: 'GET',
@@ -87,7 +91,9 @@ const EventCalendar = {
         'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
       ],
       dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
-      dayNamesShort: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+      dayNamesShort: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'],
+      filterPlaceholder: 'ค้นหาห้อง หรือเลขห้อง...',
+      filterClear: 'ล้างการค้นหา'
     },
     en: {
       today: 'Today',
@@ -116,7 +122,9 @@ const EventCalendar = {
         'Sep', 'Oct', 'Nov', 'Dec'
       ],
       dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-      dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      filterPlaceholder: 'Filter room or number...',
+      filterClear: 'Clear filter'
     }
   },
 
@@ -143,14 +151,15 @@ const EventCalendar = {
   discoverCalendars(container = document) {
     if (!container) return;
 
+    const selector = '[data-event-calendar], [data-component="eventcalendar"], [data-component="event-calendar"]';
     const elements = [];
 
-    if (typeof container.matches === 'function' && container.matches('[data-event-calendar]')) {
+    if (typeof container.matches === 'function' && container.matches(selector)) {
       elements.push(container);
     }
 
     if (typeof container.querySelectorAll === 'function') {
-      container.querySelectorAll('[data-event-calendar]').forEach(element => {
+      container.querySelectorAll(selector).forEach(element => {
         elements.push(element);
       });
     }
@@ -568,6 +577,8 @@ const EventCalendar = {
       eventSegments: [],
       isLoading: false,
       error: null,
+      filterQuery: (config.filterQuery || '').trim().toLowerCase(),
+      _filterRawQuery: config.filterQuery || '',
       // Event listeners cleanup tracking
       eventListeners: [],
       // Performance caching
@@ -581,6 +592,11 @@ const EventCalendar = {
 
     // Setup DOM structure
     this.setupCalendar(instance);
+
+    // Populate initial events from config if provided
+    if (config.events && Array.isArray(config.events)) {
+      instance.events = this.normalizeEvents(config.events, config);
+    }
 
     // Load events if API configured
     if (config.api) {
@@ -618,6 +634,10 @@ const EventCalendar = {
     if (dataset.showToday !== undefined) options.showToday = dataset.showToday !== 'false';
     if (dataset.showViewSwitcher !== undefined) options.showViewSwitcher = dataset.showViewSwitcher !== 'false';
     if (dataset.showPeriodPicker !== undefined) options.showPeriodPicker = dataset.showPeriodPicker !== 'false';
+    if (dataset.showFilter !== undefined) options.showFilter = dataset.showFilter !== 'false';
+    if (dataset.filterPlaceholder) options.filterPlaceholder = dataset.filterPlaceholder;
+    if (dataset.filterQuery) options.filterQuery = dataset.filterQuery;
+    if (dataset.filterTarget) options.filterTarget = dataset.filterTarget;
     if (dataset.views) options.views = dataset.views.split(',').map(v => v.trim());
 
     // Parse inline events
@@ -828,6 +848,17 @@ const EventCalendar = {
       header.appendChild(nav);
     }
 
+    // Filter control inside header if enabled and no external filter target
+    const hasExternalFilter = Boolean(
+      (config.filterTarget && document.querySelector(config.filterTarget)) ||
+      instance.element.closest('.card-groups, .roomly-calendar-panel, .content, main, body')?.querySelector('[data-calendar-filter], #calendar_room_filter, #member_calendar_room_filter')
+    );
+
+    if (config.showFilter && !hasExternalFilter) {
+      const filter = this.createFilter(instance);
+      header.appendChild(filter);
+    }
+
     // View switcher
     if (config.showViewSwitcher && config.views.length > 1) {
       const switcher = this.createViewSwitcher(instance);
@@ -842,6 +873,9 @@ const EventCalendar = {
     content.className = 'ec-content';
     element.appendChild(content);
     instance.contentElement = content;
+
+    // Bind external filter if present
+    this.bindExternalFilter(instance);
   },
 
   /**
@@ -969,6 +1003,147 @@ const EventCalendar = {
   },
 
   /**
+   * Create filter control for calendar header
+   */
+  createFilter(instance) {
+    const {config} = instance;
+    const strings = this.getLocaleStrings(config.locale);
+
+    const filterContainer = document.createElement('div');
+    filterContainer.className = 'ec-filter';
+
+    // Search Icon
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'ec-filter-icon';
+    iconSpan.setAttribute('aria-hidden', 'true');
+    iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>';
+
+    // Input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'ec-filter-input';
+    const placeholderText = config.filterPlaceholder || strings.filterPlaceholder || 'Filter room or number...';
+    input.placeholder = placeholderText;
+    input.setAttribute('aria-label', placeholderText);
+    input.value = instance._filterRawQuery || '';
+    input.autocomplete = 'off';
+
+    // Clear Button
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'ec-filter-clear';
+    clearBtn.setAttribute('aria-label', strings.filterClear || 'Clear filter');
+    clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+    clearBtn.style.display = (instance._filterRawQuery && instance._filterRawQuery.trim()) ? 'inline-flex' : 'none';
+
+    // Event listeners
+    this.addTrackedListener(instance, input, 'input', (e) => {
+      const val = e.target.value;
+      clearBtn.style.display = val.trim() ? 'inline-flex' : 'none';
+      this.setFilter(instance, val);
+    });
+
+    this.addTrackedListener(instance, input, 'keydown', (e) => {
+      if (e.key === 'Escape') {
+        input.value = '';
+        clearBtn.style.display = 'none';
+        this.setFilter(instance, '');
+        input.blur();
+      }
+    });
+
+    this.addTrackedListener(instance, clearBtn, 'click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      input.value = '';
+      clearBtn.style.display = 'none';
+      this.setFilter(instance, '');
+      input.focus();
+    });
+
+    filterContainer.appendChild(iconSpan);
+    filterContainer.appendChild(input);
+    filterContainer.appendChild(clearBtn);
+
+    instance.filterContainerElement = filterContainer;
+    instance.filterInputElement = input;
+    instance.filterClearButtonElement = clearBtn;
+
+    return filterContainer;
+  },
+
+  /**
+   * Bind an external filter input element to the calendar instance
+   */
+  bindExternalFilter(instance) {
+    if (!instance || !instance.element) return;
+    const {config} = instance;
+
+    let externalInput = config.filterTarget ? document.querySelector(config.filterTarget) : null;
+    if (!externalInput) {
+      const root = instance.element.closest('.card-groups, .roomly-calendar-panel, .content, main, body') || document;
+      externalInput = root.querySelector('[data-calendar-filter], #calendar_room_filter, #member_calendar_room_filter');
+    }
+
+    if (!externalInput) return;
+
+    // If external input exists and internal filter was rendered, remove internal filter to prevent duplicate UI
+    if (instance.filterContainerElement && instance.filterContainerElement.parentNode) {
+      instance.filterContainerElement.remove();
+      instance.filterContainerElement = null;
+      instance.filterInputElement = null;
+      instance.filterClearButtonElement = null;
+    }
+
+    instance.externalFilterInput = externalInput;
+
+    if (externalInput._calendarBoundInstance === instance) return;
+    externalInput._calendarBoundInstance = instance;
+
+    if (instance._filterRawQuery && !externalInput.value) {
+      externalInput.value = instance._filterRawQuery;
+    }
+
+    const clearBtn = externalInput.parentElement?.querySelector('[data-calendar-filter-clear], .roomly-calendar-filter-clear, .calendar-filter-clear');
+    const syncClearBtn = () => {
+      if (clearBtn) {
+        clearBtn.style.display = externalInput.value.trim() ? 'inline-flex' : 'none';
+      }
+    };
+    syncClearBtn();
+
+    const onInput = (e) => {
+      const val = e.target.value;
+      syncClearBtn();
+      this.setFilter(instance, val);
+    };
+
+    const onKeydown = (e) => {
+      if (e.key === 'Escape') {
+        externalInput.value = '';
+        syncClearBtn();
+        this.setFilter(instance, '');
+        externalInput.blur();
+      }
+    };
+
+    this.addTrackedListener(instance, externalInput, 'input', onInput);
+    this.addTrackedListener(instance, externalInput, 'keydown', onKeydown);
+
+    if (clearBtn) {
+      const onClearClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        externalInput.value = '';
+        syncClearBtn();
+        this.setFilter(instance, '');
+        externalInput.focus();
+      };
+      this.addTrackedListener(instance, clearBtn, 'click', onClearClick);
+    }
+  },
+
+  /**
    * Update header labels when locale changes.
    */
   updateHeaderText(instance) {
@@ -993,6 +1168,19 @@ const EventCalendar = {
 
     if (instance.yearSelectElement) {
       instance.yearSelectElement.setAttribute('aria-label', strings.selectYear || strings.year);
+    }
+
+    const filterInput = instance.filterInputElement || instance.externalFilterInput;
+    if (filterInput) {
+      const placeholderText = instance.config.filterPlaceholder || strings.filterPlaceholder || 'Filter room or number...';
+      filterInput.placeholder = placeholderText;
+      filterInput.setAttribute('aria-label', placeholderText);
+    }
+
+    const clearBtn = instance.filterClearButtonElement ||
+      instance.externalFilterInput?.parentElement?.querySelector('[data-calendar-filter-clear], .roomly-calendar-filter-clear, .calendar-filter-clear');
+    if (clearBtn) {
+      clearBtn.setAttribute('aria-label', strings.filterClear || 'Clear filter');
     }
 
     if (instance.viewSwitcherElement) {
@@ -1166,6 +1354,8 @@ const EventCalendar = {
       return {
         id: event.id || `event-${index}-${Date.now()}`,
         title: event.title || 'Untitled',
+        room_number: event.room_number || event.roomNumber || '',
+        room_name: event.room_name || event.roomName || '',
         start: startDate,
         end: endDate,
         allDay: scheduleType === 'recurring-slot' ? false : event.allDay !== false,
@@ -1190,6 +1380,7 @@ const EventCalendar = {
   render(instance) {
     this.syncInstanceLocale(instance);
     this.updateHeaderText(instance);
+    this.bindExternalFilter(instance);
 
     // Show error state if any
     if (instance.error) {
@@ -1269,7 +1460,8 @@ const EventCalendar = {
    * Render month view
    */
   renderMonthView(instance) {
-    const {contentElement, currentDate, config, events} = instance;
+    const {contentElement, currentDate, config} = instance;
+    const events = this.getFilteredEvents(instance);
     const strings = this.getLocaleStrings(config.locale);
     const monthViewMetrics = this.getMonthViewLayoutMetrics(instance);
 
@@ -1334,7 +1526,8 @@ const EventCalendar = {
         cellDate.setDate(gridStart.getDate() + (week * 7) + day);
 
         const cell = this.createDayCell(instance, cellDate, monthStart.getMonth(), {
-          hiddenSpanningCount: hiddenSpanningCounts.get(day) || 0
+          hiddenSpanningCount: hiddenSpanningCounts.get(day) || 0,
+          events
         });
         dayFragment.appendChild(cell);
       }
@@ -1360,7 +1553,8 @@ const EventCalendar = {
    * Create a day cell for month view
    */
   createDayCell(instance, date, currentMonth, options = {}) {
-    const {config, events} = instance;
+    const {config} = instance;
+    const events = options.events || this.getFilteredEvents(instance);
     const today = new Date();
     const hiddenSpanningCount = Math.max(0, Number(options.hiddenSpanningCount) || 0);
 
@@ -1732,10 +1926,12 @@ const EventCalendar = {
    * Calculate spanning event segments
    */
   calculateSpanningSegments(instance, gridStart, totalDays) {
-    const {events, config, segmentCache} = instance;
+    const {config, segmentCache} = instance;
+    const events = this.getFilteredEvents(instance);
+    const filterKey = (instance.filterQuery || '').trim().toLowerCase();
 
-    // Create cache key based on events and date range
-    const cacheKey = `${this.formatDateISO(gridStart)}-${totalDays}-${events.length}`;
+    // Create cache key based on events, filter and date range
+    const cacheKey = `${this.formatDateISO(gridStart)}-${totalDays}-${events.length}-${filterKey}`;
 
     // Check cache
     if (segmentCache.has(cacheKey)) {
@@ -2183,7 +2379,8 @@ const EventCalendar = {
    * Render week view
    */
   renderWeekView(instance) {
-    const {contentElement, currentDate, config, events} = instance;
+    const {contentElement, currentDate, config} = instance;
+    const events = this.getFilteredEvents(instance);
     const strings = this.getLocaleStrings(config.locale);
 
     contentElement.innerHTML = '';
@@ -2340,7 +2537,8 @@ const EventCalendar = {
    * Render day view
    */
   renderDayView(instance) {
-    const {contentElement, currentDate, config, events} = instance;
+    const {contentElement, currentDate, config} = instance;
+    const events = this.getFilteredEvents(instance);
     const strings = this.getLocaleStrings(config.locale);
 
     contentElement.innerHTML = '';
@@ -3657,6 +3855,110 @@ const EventCalendar = {
   },
 
   /**
+   * Check if an event matches a search/filter query
+   */
+  eventMatchesFilter(event, query) {
+    if (!query) return true;
+    const q = String(query).trim().toLowerCase();
+    if (!q) return true;
+
+    // Split query by spaces to support multi-keyword search (e.g. "ห้อง 1", "R 0001")
+    const terms = q.split(/\s+/).filter(Boolean);
+    if (!terms.length) return true;
+
+    // Room-specific fields prioritized for room filtering
+    const roomValues = [
+      event.room_number,
+      event.roomNumber,
+      event.room_name,
+      event.roomName,
+      event.location,
+      event.data?.room_number,
+      event.data?.room_name
+    ].filter(val => val != null && String(val).trim() !== '').map(val => String(val).toLowerCase());
+
+    if (roomValues.length > 0) {
+      return terms.every(term => roomValues.some(val => val.includes(term)));
+    }
+
+    // Fallback if event has no explicit room metadata: strip time from title if present
+    const titleWithoutTime = String(event.title || '').replace(/,\s*\d{1,2}:\d{2}.*$/, '').trim().toLowerCase();
+    const fallbackValues = [titleWithoutTime].filter(Boolean);
+    return terms.every(term => fallbackValues.some(val => val.includes(term)));
+  },
+
+  /**
+   * Get filtered events for an instance
+   */
+  getFilteredEvents(elementOrInstance) {
+    const instance = this.getInstance(elementOrInstance);
+    if (!instance) return [];
+
+    const query = (instance.filterQuery || '').trim().toLowerCase();
+    if (!query) {
+      return instance.events;
+    }
+
+    return instance.events.filter(event => this.eventMatchesFilter(event, query));
+  },
+
+  /**
+   * Set calendar event filter (e.g. by room number or room name)
+   */
+  setFilter(elementOrInstance, query) {
+    const instance = this.getInstance(elementOrInstance);
+    if (!instance) return;
+
+    const rawQuery = query == null ? '' : String(query);
+    const normalized = rawQuery.trim().toLowerCase();
+    if (instance._filterRawQuery === rawQuery && instance.filterQuery === normalized) return;
+
+    instance._filterRawQuery = rawQuery;
+    instance.filterQuery = normalized;
+    instance.segmentCache.clear();
+
+    if (instance.filterInputElement && instance.filterInputElement.value !== rawQuery) {
+      instance.filterInputElement.value = rawQuery;
+    }
+    if (instance.filterClearButtonElement) {
+      instance.filterClearButtonElement.style.display = rawQuery.trim() ? 'inline-flex' : 'none';
+    }
+
+    const externalInput = instance.externalFilterInput ||
+      document.querySelector(instance.config.filterTarget || '[data-calendar-filter], #calendar_room_filter, #member_calendar_room_filter');
+    if (externalInput && externalInput !== instance.filterInputElement && externalInput.value !== rawQuery) {
+      externalInput.value = rawQuery;
+      const externalClear = externalInput.parentElement?.querySelector('.calendar-filter-clear, .roomly-calendar-filter-clear, [data-calendar-filter-clear]');
+      if (externalClear) {
+        externalClear.style.display = rawQuery.trim() ? 'inline-flex' : 'none';
+      }
+    }
+
+    this.render(instance);
+    this.emitEvent('eventcalendar:filter', {
+      element: instance.element,
+      query: rawQuery,
+      filteredCount: this.getFilteredEvents(instance).length,
+      totalCount: instance.events.length
+    });
+  },
+
+  /**
+   * Clear active calendar filter
+   */
+  clearFilter(elementOrInstance) {
+    this.setFilter(elementOrInstance, '');
+  },
+
+  /**
+   * Get active filter query string
+   */
+  getFilter(elementOrInstance) {
+    const instance = this.getInstance(elementOrInstance);
+    return instance ? (instance._filterRawQuery || '') : '';
+  },
+
+  /**
    * Get instance
    */
   getInstance(elementOrInstance) {
@@ -3709,6 +4011,24 @@ const EventCalendar = {
 // Register with Now framework if available
 if (window.Now?.registerManager) {
   Now.registerManager('eventCalendar', EventCalendar);
+}
+
+// Register component if ComponentManager is available
+if (window.ComponentManager && !ComponentManager.has?.('eventcalendar')) {
+  ComponentManager.define('eventcalendar', {
+    template: null,
+    validElement(el) {
+      return el.matches('[data-event-calendar], [data-component="eventcalendar"], [data-component="event-calendar"]');
+    },
+    setupElement(el) {
+      return EventCalendar.create(el);
+    },
+    beforeDestroy() {
+      if (this.element && this.element._eventCalendar) {
+        EventCalendar.destroy(this.element._eventCalendar);
+      }
+    }
+  });
 }
 
 // Expose globally (but don't auto-init - let app decide)

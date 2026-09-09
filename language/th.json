@@ -1791,5 +1791,9 @@
     "Selected weekdays": "วันที่เลือกในแต่ละสัปดาห์",
     "Required when repeating on selected weekdays": "จำเป็นเมื่อเลือกทำซ้ำตามวันในสัปดาห์",
     "Selected weekdays do not occur in the reservation period": "วันที่เลือกไม่อยู่ภายในช่วงวันที่จอง",
-    "The selected time applies to each occurrence within the date range": "ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก"
+    "The selected time applies to each occurrence within the date range": "ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก",
+    "Filter by room number or name...": "ค้นหาห้อง หรือเลขห้อง...",
+    "Search room or number...": "ค้นหาห้อง หรือเลขห้อง...",
+    "Filter room or number...": "ค้นหาห้อง หรือเลขห้อง...",
+    "Clear filter": "ล้างตัวกรอง"
 }

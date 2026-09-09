@@ -100,14 +100,24 @@
         <div><p class='roomly-eyebrow' data-i18n>Schedule</p><h2 data-i18n>Reservation calendar</h2></div>
         <a href='/rooms' data-i18n>View all rooms</a>
       </div>
+      <div class='roomly-calendar-filter-bar'>
+        <div class='roomly-calendar-filter-wrap'>
+          <span class='roomly-calendar-filter-icon icon-search' aria-hidden='true'></span>
+          <input type='text' id='member_calendar_room_filter' data-calendar-filter class='roomly-calendar-filter-input' placeholder='ค้นหาห้อง หรือเลขห้อง...' data-i18n='Filter by room number or name...' autocomplete='off'>
+          <button type='button' class='roomly-calendar-filter-clear' data-calendar-filter-clear aria-label='Clear filter' style='display:none;'>&times;</button>
+        </div>
+      </div>
       <div class='roomly-calendar'
            data-event-calendar
+           data-component='eventcalendar'
            data-api='api/booking/calendar'
            data-on-event-click-api='api/booking/view?id={id}'
            data-view='month'
            data-show-today='true'
            data-show-view-switcher='true'
-           data-show-period-picker='true'>
+           data-show-period-picker='true'
+           data-show-filter='true'
+           data-filter-target='#member_calendar_room_filter'>
       </div>
     </section>
   </main>
