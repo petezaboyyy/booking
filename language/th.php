@@ -1786,5 +1786,8 @@ return array(
   'Filter by room number or name...' => 'ค้นหาห้อง หรือเลขห้อง...',
   'Search room or number...' => 'ค้นหาห้อง หรือเลขห้อง...',
   'Filter room or number...' => 'ค้นหาห้อง หรือเลขห้อง...',
-  'Clear filter' => 'ล้างตัวกรอง'
+  'Clear filter' => 'ล้างตัวกรอง',
+  'ระบบจองห้องคณะสัตวแพทยศาสตร์' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
+  'Faculty of Veterinary Medicine Room Reservation' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
+  'Roomly' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์'
 );

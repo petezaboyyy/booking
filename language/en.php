@@ -66,5 +66,8 @@ return array(
   'Filter by room number or name...' => 'Filter by room number or name...',
   'Search room or number...' => 'Filter room or number...',
   'Filter room or number...' => 'Filter room or number...',
-  'Clear filter' => 'Clear filter'
+  'Clear filter' => 'Clear filter',
+  'ระบบจองห้องคณะสัตวแพทยศาสตร์' => 'Faculty of Veterinary Medicine Room Reservation',
+  'Faculty of Veterinary Medicine Room Reservation' => 'Faculty of Veterinary Medicine Room Reservation',
+  'Roomly' => 'Faculty of Veterinary Medicine Room Reservation'
 );

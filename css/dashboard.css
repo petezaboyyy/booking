@@ -115,15 +115,31 @@ html[data-theme='dark']:not([data-ui-role='admin']) .footer {
 .roomly-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   color: var(--roomly-primary);
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: -.02em;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .roomly-brand:hover {
   color: var(--roomly-primary);
+}
+
+.roomly-brand-logo {
+  display: inline-block;
+  height: 42px;
+  width: auto;
+  max-width: 125px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .roomly-brand-logo {
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, .35));
 }
 
 .roomly-brand-icon {
@@ -1056,18 +1072,24 @@ html[data-theme='dark'] .roomly-theme-sun {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 24px;
+  gap: 20px;
   min-width: 960px;
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--roomly-outline);
   background: color-mix(in srgb, var(--roomly-surface) 88%, transparent);
   color: var(--roomly-muted);
 }
 
-.roomly-bookings-panel .table_nav:first-child > div {
-  align-items: center;
-  flex-direction: row;
-  gap: 12px;
+.roomly-bookings-panel .table_nav:first-child > div,
+.roomly-bookings-panel .table_nav .filter-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-direction: row !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
 .roomly-bookings-panel .table_nav:first-child > :last-child {
@@ -1081,32 +1103,110 @@ html[data-theme='dark'] .roomly-theme-sun {
   font-weight: 600;
   letter-spacing: .07em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.roomly-bookings-panel .table_nav input,
-.roomly-bookings-panel .table_nav select,
-.roomly-bookings-panel .filter-control {
-  border-color: var(--roomly-outline);
-  background: var(--roomly-surface-low);
-  color: var(--roomly-text);
+.roomly-bookings-panel .table_nav span.form-control,
+.roomly-bookings-panel .table_nav .form-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  flex: none !important;
 }
 
-.roomly-bookings-panel .table_nav input,
+/* Dropdown select matching Dashboard ec-period-select */
 .roomly-bookings-panel .table_nav select {
-  height: 42px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 38px;
+  line-height: 38px;
+  padding: 0 32px 0 14px;
+  border: 1px solid var(--roomly-outline, #cbd5e1);
   border-radius: 10px;
-  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  background-color: var(--roomly-surface-low, #f8fafc);
+  color: var(--roomly-text, #1e293b);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
 }
 
-.roomly-bookings-panel .table_nav input:hover,
 .roomly-bookings-panel .table_nav select:hover {
-  background-color: var(--roomly-surface-container);
+  background-color: var(--roomly-surface-container, #f1f5f9);
+  border-color: var(--roomly-primary, #006591);
 }
 
-.roomly-bookings-panel .table_nav input:focus,
 .roomly-bookings-panel .table_nav select:focus {
-  border-color: var(--roomly-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--roomly-primary) 16%, transparent);
+  border-color: var(--roomly-primary, #006591);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--roomly-primary, #006591) 20%, transparent);
+}
+
+.roomly-bookings-panel .table_nav select option {
+  background: var(--roomly-surface, #ffffff);
+  color: var(--roomly-text, #1e293b);
+}
+
+/* Dark Theme Table Nav Select */
+[data-theme='dark'] .roomly-bookings-panel .table_nav select {
+  border-color: var(--roomly-outline, rgba(255, 255, 255, 0.12));
+  background-color: var(--roomly-surface-container, rgba(255, 255, 255, 0.06));
+  color: var(--roomly-text, #e8eaed);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+[data-theme='dark'] .roomly-bookings-panel .table_nav select:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--roomly-primary, #8ab4f8);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23f1f5f9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+[data-theme='dark'] .roomly-bookings-panel .table_nav select option {
+  background: #1e293b;
+  color: #e8eaed;
+}
+
+/* Toolbar search input matching 38px height and palette */
+.roomly-bookings-panel .table_nav input {
+  height: 38px;
+  line-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--roomly-outline, #cbd5e1);
+  background-color: var(--roomly-surface-low, #f8fafc);
+  color: var(--roomly-text, #1e293b);
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  outline: none;
+}
+
+.roomly-bookings-panel .table_nav input:hover {
+  background-color: var(--roomly-surface-container, #f1f5f9);
+  border-color: var(--roomly-primary, #006591);
+}
+
+.roomly-bookings-panel .table_nav input:focus {
+  border-color: var(--roomly-primary, #006591);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--roomly-primary, #006591) 20%, transparent);
+}
+
+[data-theme='dark'] .roomly-bookings-panel .table_nav input {
+  border-color: var(--roomly-outline, rgba(255, 255, 255, 0.12));
+  background-color: var(--roomly-surface-container, rgba(255, 255, 255, 0.06));
+  color: var(--roomly-text, #e8eaed);
+}
+
+[data-theme='dark'] .roomly-bookings-panel .table_nav input:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--roomly-primary, #8ab4f8);
 }
 
 .roomly-bookings-panel .table_nav:first-child > :last-child input {
@@ -1264,7 +1364,7 @@ html[data-theme='dark'] .roomly-theme-sun {
   }
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1240px) {
   .roomly-topbar {
     grid-template-columns: auto 1fr;
   }
@@ -1275,16 +1375,55 @@ html[data-theme='dark'] .roomly-theme-sun {
     padding: 10px 0;
     border-top: 1px solid var(--roomly-outline);
   }
+}
 
+@media (max-width: 1050px) {
   .roomly-stat-grid,
   .roomly-stat-grid > [data-component='api'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+@media (max-width: 960px) {
+  .roomly-topbar {
+    padding: 0 20px;
+  }
+
+  .roomly-brand {
+    font-size: 15px;
+    gap: 10px;
+  }
+
+  .roomly-brand-logo {
+    height: 36px;
+    max-width: 95px;
+  }
+
+  .roomly-profile-copy {
+    display: none;
+  }
+}
+
 @media (max-width: 700px) {
   .roomly-topbar {
     padding: 0 16px;
+  }
+
+  .roomly-brand {
+    font-size: 14px;
+    gap: 8px;
+    max-width: calc(100vw - 150px);
+  }
+
+  .roomly-brand-logo {
+    height: 32px;
+    max-width: 85px;
+  }
+
+  .roomly-brand span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .roomly-profile-copy,
@@ -2771,8 +2910,14 @@ html[data-theme='dark'] .roomly-theme-sun {
 
 .roomly-login-mobile-brand {
   display: none;
-  margin-bottom: 32px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
   color: var(--roomly-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
 }
 
 .roomly-login-mobile-brand .roomly-login-brand-mark {
@@ -2780,9 +2925,27 @@ html[data-theme='dark'] .roomly-theme-sun {
   background: var(--roomly-surface-container);
 }
 
+.roomly-login-mobile-brand .roomly-brand-logo {
+  height: 38px;
+  width: auto;
+  max-width: 105px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.roomly-login-mobile-brand span {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--roomly-primary);
+}
+
 .roomly-login-page .roomly-login-header {
-  align-items: flex-start;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
   margin-bottom: 30px;
 }
 
@@ -2790,20 +2953,44 @@ html[data-theme='dark'] .roomly-theme-sun {
   display: none;
 }
 
+.roomly-login-page .roomly-login-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.roomly-login-page .roomly-login-brand-logo {
+  height: 64px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  transition: transform .2s ease;
+}
+
+.roomly-login-page .roomly-login-brand:hover .roomly-login-brand-logo {
+  transform: scale(1.02);
+}
+
+.roomly-login-page .roomly-login-title,
 .roomly-login-page .roomly-login-header h1 {
   margin: 0;
   color: var(--roomly-text);
-  font-size: 35px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -.035em;
-  line-height: 1.25;
+  letter-spacing: -.02em;
+  line-height: 1.35;
+  text-align: center;
 }
 
-.roomly-login-page .roomly-login-header p {
-  margin: 9px 0 0;
+.roomly-login-page .roomly-login-header p,
+.roomly-login-page .roomly-login-header .login-message {
+  margin: 2px 0 0;
   color: var(--roomly-muted);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .roomly-login-fields {
@@ -3017,5 +3204,23 @@ html[data-theme='dark'] .roomly-theme-sun {
   .roomly-login-page .roomly-login-shell,
   .roomly-login-page .roomly-login-panel {
     min-height: 100vh;
+  }
+
+  .roomly-login-mobile-brand {
+    font-size: 14px;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .roomly-login-mobile-brand .roomly-brand-logo,
+  .roomly-login-page .roomly-login-brand-logo {
+    height: 50px;
+    max-width: 175px;
+  }
+
+  .roomly-login-mobile-brand span,
+  .roomly-login-page .roomly-login-title,
+  .roomly-login-page .roomly-login-header h1 {
+    font-size: 19px;
   }
 }

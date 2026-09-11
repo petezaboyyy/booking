@@ -2,6 +2,10 @@
 
 $files = [
     'templates/booking/calendar.html',
+    'templates/booking/catalog.html',
+    'templates/booking/my-bookings.html',
+    'templates/booking/booking-recurring.html',
+    'templates/login.html',
     'templates/index.html',
     'templates/booking/style.css',
     'css/dashboard.css',
@@ -10,6 +14,8 @@ $files = [
     'language/th.php',
     'language/en.json',
     'language/en.php',
+    'images/logo.png',
+    'js/main.js',
     'index.html'
 ];
 

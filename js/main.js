@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Main Application
  * Now.js Framework
  */
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             requireAuth: true
           },
           '/login': {
-            template: window.location.origin + '/templates/login.html?v=20260817-3',
+            template: window.location.origin + '/templates/login.html?v=20260911-vet-login',
             title: '{LNG_Login}',
             requireGuest: true,
             requireAuth: false

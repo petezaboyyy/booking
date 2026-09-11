@@ -315,7 +315,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260908-fix-accessory-dropdown';
+const ROOMLY_ROLE_UI_VERSION = '20260911-vet-logo';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {

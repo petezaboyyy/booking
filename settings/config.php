@@ -2,8 +2,8 @@
 /* config.php */
 return array (
   'version' => '7.0.2',
-  'web_title' => 'E-Booking',
-  'web_description' => 'ระบบจองห้องประชุม',
+  'web_title' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
+  'web_description' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
   'timezone' => 'Asia/Bangkok',
   'password_key' => '6a61e52cb2c86',
   'reversion' => 1784799856,

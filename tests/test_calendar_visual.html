@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html data-theme=dark>
+<head>
+  <meta charset=UTF-8>
+  <link rel=stylesheet href=../Now/dist/now.core.min.css>
+  <link rel=stylesheet href=../Now/dist/eventcalendar.min.css>
+  <link rel=stylesheet href=../templates/booking/style.css?v=20260910-nav-arrows-v3>
+  <link rel=stylesheet href=../css/dashboard.css?v=20260910-nav-arrows-v3>
+  <style>
+    body {
+      background: #0b1320;
+      padding: 40px;
+      font-family: 'Kanit', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class=roomly-calendar-panel>
+    <div class=roomly-calendar
+         data-event-calendar
+         data-component=eventcalendar
+         data-view=month
+         data-show-today=true
+         data-show-view-switcher=true
+         data-show-period-picker=true>
+    </div>
+  </div>
+
+  <script src=../Now/dist/now.core.min.js></script>
+  <script src=../Now/dist/eventcalendar.min.js?v=20260810-weekly-booking></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      EventCalendar.create(document.querySelector('.roomly-calendar'), {
+        defaultView: 'month',
+        showPeriodPicker: true,
+        showToday: true,
+        locale: 'th'
+      });
+    });
+  </script>
+</body>
+</html>
