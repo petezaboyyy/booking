@@ -127,10 +127,13 @@ class Model extends \Kotchasan\Model
         }
 
         $data['social'] = $provider;
-        if ($provider === 'microsoft' && (!\Gcms\MicrosoftOAuth::guid($data['microsoft_id'] ?? '')
-            || (($data['microsoft_tenant_id'] ?? '') !== (self::$cfg->microsoft_tenant ?? '')
-                && !\Gcms\MicrosoftOAuth::isDemoIdentity($data)))) {
-            return ['success' => false, 'message' => 'Invalid Microsoft identity', 'code' => 401];
+        if ($provider === 'microsoft') {
+            self::ensureSchema();
+            if (!\Gcms\MicrosoftOAuth::guid($data['microsoft_id'] ?? '')
+                || (($data['microsoft_tenant_id'] ?? '') !== (self::$cfg->microsoft_tenant ?? '')
+                    && !\Gcms\MicrosoftOAuth::isDemoIdentity($data))) {
+                return ['success' => false, 'message' => 'Invalid Microsoft identity', 'code' => 401];
+            }
         }
 
         $existingUser = self::findAuthUser($provider, $data);
@@ -181,6 +184,7 @@ class Model extends \Kotchasan\Model
         }
 
         if ($provider === 'microsoft') {
+            self::ensureSchema();
             return static::createQuery()->select('*')->from('user')->where([
                 ['microsoft_id', $socialId],
                 ['microsoft_tenant_id', self::$cfg->microsoft_tenant]
@@ -516,6 +520,7 @@ class Model extends \Kotchasan\Model
     private static function findAuthUser($provider, array $data)
     {
         if ($provider === 'microsoft' && !empty($data['microsoft_id'])) {
+            self::ensureSchema();
             $user = static::createQuery()->select('*')->from('user')->where([
                 ['microsoft_id', $data['microsoft_id']],
                 ['microsoft_tenant_id', $data['microsoft_tenant_id'] ?? '']
@@ -755,6 +760,46 @@ class Model extends \Kotchasan\Model
             }
         } catch (\Exception $e) {
             // Silently fail
+        }
+    }
+
+    /**
+     * Ensure Microsoft SSO columns and index exist in the user table.
+     */
+    public static function ensureSchema()
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+        try {
+            $dbConfigFile = (defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__, 3).'/').'settings/database.php';
+            if (!file_exists($dbConfigFile)) {
+                return;
+            }
+            $dbConfig = (require $dbConfigFile)['mysql'] ?? null;
+            if (!$dbConfig || empty($dbConfig['hostname']) || empty($dbConfig['dbname'])) {
+                return;
+            }
+            $table = ($dbConfig['prefix'] ?? 'app').'_user';
+            if (!preg_match('/^[a-zA-Z0-9_]+$/D', $table)) {
+                return;
+            }
+            $dsn = 'mysql:host='.$dbConfig['hostname'].';port='.($dbConfig['port'] ?? 3306).';dbname='.$dbConfig['dbname'].';charset=utf8mb4';
+            $pdo = new \PDO($dsn, $dbConfig['username'] ?? '', $dbConfig['password'] ?? '', [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+            $columns = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(\PDO::FETCH_COLUMN);
+            if (!in_array('microsoft_id', $columns, true)) {
+                $pdo->exec("ALTER TABLE `$table` MODIFY `social` ENUM('user','facebook','google','line','telegram','microsoft') NULL DEFAULT 'user'");
+                $pdo->exec("ALTER TABLE `$table` ADD `microsoft_id` VARCHAR(64) NULL DEFAULT NULL");
+                $pdo->exec("ALTER TABLE `$table` ADD `microsoft_tenant_id` VARCHAR(36) NULL DEFAULT NULL");
+                $indices = $pdo->query("SHOW INDEX FROM `$table`")->fetchAll(\PDO::FETCH_ASSOC);
+                if (!in_array('microsoft_identity', array_column($indices, 'Key_name'), true)) {
+                    $pdo->exec("ALTER TABLE `$table` ADD UNIQUE KEY `microsoft_identity` (`microsoft_tenant_id`, `microsoft_id`)");
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('ensureSchema error: '.$e->getMessage());
         }
     }
 }
