@@ -84,7 +84,22 @@ class Api extends \Kotchasan\ApiController
      */
     public static function isSuperAdmin($login)
     {
-        return $login && isset($login->id) && (int) $login->id === 1;
+        if (!$login) {
+            return false;
+        }
+        if (isset($login->id) && (int) $login->id === 1) {
+            return true;
+        }
+
+        // The explicitly pinned demo Microsoft identity is the temporary
+        // deployment administrator. Requiring status=1 keeps a deliberate
+        // demotion effective while avoiding email-based privilege grants.
+        return isset($login->status) && (int) $login->status === 1
+            && class_exists('\\Gcms\\MicrosoftOAuth')
+            && \Gcms\MicrosoftOAuth::isDemoIdentity([
+                'microsoft_tenant_id' => (string) ($login->microsoft_tenant_id ?? ''),
+                'microsoft_id' => (string) ($login->microsoft_id ?? '')
+            ]);
     }
 
     /**

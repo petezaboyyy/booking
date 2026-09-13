@@ -113,6 +113,15 @@ if (defined('ROOT_PATH')) {
                     $db->query("ALTER TABLE `$table_user` CHANGE `social` `social` ENUM('user','facebook','google','line','telegram') NULL DEFAULT 'user'");
                     $content[] = '<li class="correct">user: แก้ไข social เป็น ENUM</li>';
                 }
+                $db->query("ALTER TABLE `$table_user` MODIFY `social` ENUM('user','facebook','google','line','telegram','microsoft') NULL DEFAULT 'user'");
+                foreach (['microsoft_id' => 'VARCHAR(64)', 'microsoft_tenant_id' => 'VARCHAR(36)'] as $field => $type) {
+                    if (!$db->fieldExists($table_user, $field)) {
+                        $db->query("ALTER TABLE `$table_user` ADD `$field` $type NULL DEFAULT NULL");
+                    }
+                }
+                if (!$db->indexExists($table_user, 'microsoft_identity')) {
+                    $db->query("ALTER TABLE `$table_user` ADD UNIQUE KEY `microsoft_identity` (`microsoft_tenant_id`, `microsoft_id`)");
+                }
                 // telegram_id: varchar(13) → varchar(20)
                 if (!$db->isColumnType($table_user, 'telegram_id', 'varchar(20)')) {
                     $db->query("ALTER TABLE `$table_user` CHANGE `telegram_id` `telegram_id` VARCHAR(20) NULL DEFAULT NULL");

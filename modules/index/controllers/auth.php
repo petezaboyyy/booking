@@ -106,6 +106,10 @@ class Controller extends ApiController
             // Validate request method
             ApiController::validateMethod($request, 'POST');
 
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
+
             // Validate CSRF token
             $this->validateCsrfToken($request);
 
@@ -479,6 +483,9 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'POST');
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
             $this->validateCsrfToken($request);
 
             // Check if forgot password is enabled
@@ -539,6 +546,9 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'POST');
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
             $this->validateCsrfToken($request);
 
             // Check if forgot password is enabled
@@ -590,6 +600,9 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'POST');
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
             $this->validateCsrfToken($request);
 
             // Check if registration is enabled
@@ -724,7 +737,8 @@ class Controller extends ApiController
             $settings = [
                 'user_register' => !empty(self::$cfg->user_register),
                 'user_forgot' => !empty(self::$cfg->user_forgot),
-                'activate_user' => !empty(self::$cfg->activate_user)
+                'activate_user' => !empty(self::$cfg->activate_user),
+                'microsoft_only' => \Gcms\MicrosoftOAuth::microsoftOnly()
             ];
 
             return $this->successResponse($settings, 'Settings retrieved');

@@ -29,7 +29,7 @@ class Model extends \Kotchasan\Model
     /**
      * Supported social providers stored in the user.social enum column.
      */
-    const PROVIDERS = ['facebook', 'google', 'line', 'telegram'];
+    const PROVIDERS = ['facebook', 'google', 'line', 'telegram', 'microsoft'];
 
     /**
      * Find or create user from social login
@@ -42,6 +42,9 @@ class Model extends \Kotchasan\Model
     public static function findOrCreateSocialUser($provider, array $socialUser)
     {
         $provider = self::normalizeProvider($provider);
+        if ($provider === 'microsoft') {
+            return ['success' => false, 'message' => 'Use the Microsoft OAuth callback'];
+        }
         $socialId = trim((string) ($socialUser['id'] ?? ''));
 
         if ($socialId === '' || !self::isSupportedProvider($provider)) {
@@ -124,6 +127,11 @@ class Model extends \Kotchasan\Model
         }
 
         $data['social'] = $provider;
+        if ($provider === 'microsoft' && (!\Gcms\MicrosoftOAuth::guid($data['microsoft_id'] ?? '')
+            || (($data['microsoft_tenant_id'] ?? '') !== (self::$cfg->microsoft_tenant ?? '')
+                && !\Gcms\MicrosoftOAuth::isDemoIdentity($data)))) {
+            return ['success' => false, 'message' => 'Invalid Microsoft identity', 'code' => 401];
+        }
 
         $existingUser = self::findAuthUser($provider, $data);
         if ($existingUser !== null) {
@@ -145,7 +153,15 @@ class Model extends \Kotchasan\Model
             ];
         }
 
-        return \Index\Register\Model::registerFromSocial($data, $baseUrl);
+        $result = \Index\Register\Model::registerFromSocial($data, $baseUrl);
+        // Bootstrap only a newly created, explicitly pinned personal identity.
+        // Existing accounts retain their roles, including later demotions.
+        if ($provider === 'microsoft' && \Gcms\MicrosoftOAuth::isDemoIdentity($data)
+            && !empty($result['success']) && !empty($result['user']['id'])) {
+            \Kotchasan\DB::create()->update('user', ['id', $result['user']['id']], ['status' => 1]);
+            $result['user']['status'] = 1;
+        }
+        return $result;
     }
 
     /**
@@ -162,6 +178,13 @@ class Model extends \Kotchasan\Model
         $socialId = trim((string) $socialId);
         if ($socialId === '' || !self::isSupportedProvider($provider)) {
             return null;
+        }
+
+        if ($provider === 'microsoft') {
+            return static::createQuery()->select('*')->from('user')->where([
+                ['microsoft_id', $socialId],
+                ['microsoft_tenant_id', self::$cfg->microsoft_tenant]
+            ])->first();
         }
 
         if ($provider === 'line') {
@@ -277,6 +300,11 @@ class Model extends \Kotchasan\Model
             'telegram_id' => ($provider === 'telegram') ? $socialId : null
         ];
 
+        if ($provider === 'microsoft') {
+            $userData['microsoft_id'] = $socialId;
+            $userData['microsoft_tenant_id'] = self::$cfg->microsoft_tenant;
+        }
+
         // Insert user
         $db = \Kotchasan\DB::create();
         $userId = $db->insert('user', $userData);
@@ -317,6 +345,10 @@ class Model extends \Kotchasan\Model
             $updateData['line_uid'] = $socialId;
         } elseif ($provider === 'telegram') {
             $updateData['telegram_id'] = $socialId;
+        } elseif ($provider === 'microsoft') {
+            // Linking is only called with a server-verified identity by trusted code.
+            $updateData['microsoft_id'] = $socialId;
+            $updateData['microsoft_tenant_id'] = self::$cfg->microsoft_tenant;
         }
 
         // Update avatar if not set
@@ -386,7 +418,7 @@ class Model extends \Kotchasan\Model
         // Check if user has password set (can only unlink if has password)
         $provider = self::normalizeProvider($provider);
         $user = static::createQuery()
-            ->select('password', 'social', 'line_uid', 'telegram_id')
+            ->select('*')
             ->from('user')
             ->where([['id', $userId]])
             ->first();
@@ -400,7 +432,8 @@ class Model extends \Kotchasan\Model
 
         $isLinked = $user->social === $provider
             || ($provider === 'line' && !empty($user->line_uid))
-            || ($provider === 'telegram' && !empty($user->telegram_id));
+            || ($provider === 'telegram' && !empty($user->telegram_id))
+            || ($provider === 'microsoft' && !empty($user->microsoft_id));
 
         if (!$isLinked) {
             return [
@@ -425,6 +458,9 @@ class Model extends \Kotchasan\Model
             $updateData['line_uid'] = null;
         } elseif ($provider === 'telegram') {
             $updateData['telegram_id'] = null;
+        } elseif ($provider === 'microsoft') {
+            $updateData['microsoft_id'] = null;
+            $updateData['microsoft_tenant_id'] = null;
         }
 
         \Kotchasan\DB::create()->update('user', [['id', $userId]], $updateData);
@@ -445,7 +481,7 @@ class Model extends \Kotchasan\Model
     public static function getLinkedAccounts($userId)
     {
         $user = static::createQuery()
-            ->select('social', 'line_uid', 'telegram_id')
+            ->select('*')
             ->from('user')
             ->where([['id', $userId]])
             ->first();
@@ -465,6 +501,9 @@ class Model extends \Kotchasan\Model
             $linked[] = 'telegram';
         }
 
+        if (!empty($user->microsoft_id) && !in_array('microsoft', $linked, true)) {
+            $linked[] = 'microsoft';
+        }
         return $linked;
     }
 
@@ -476,6 +515,15 @@ class Model extends \Kotchasan\Model
      */
     private static function findAuthUser($provider, array $data)
     {
+        if ($provider === 'microsoft' && !empty($data['microsoft_id'])) {
+            $user = static::createQuery()->select('*')->from('user')->where([
+                ['microsoft_id', $data['microsoft_id']],
+                ['microsoft_tenant_id', $data['microsoft_tenant_id'] ?? '']
+            ])->first();
+            if ($user !== null) {
+                return $user;
+            }
+        }
         if ($provider === 'line' && !empty($data['line_uid'])) {
             $user = self::findBySocialId('line', $data['line_uid']);
             if ($user !== null) {
@@ -504,6 +552,11 @@ class Model extends \Kotchasan\Model
      */
     private static function canLoginWithProvider($user, $provider, array $data)
     {
+        if ($provider === 'microsoft') {
+            return !empty($user->microsoft_id)
+                && (string) $user->microsoft_id === (string) ($data['microsoft_id'] ?? '')
+                && (string) ($user->microsoft_tenant_id ?? '') === (string) ($data['microsoft_tenant_id'] ?? '');
+        }
         if (($user->social ?? 'user') === $provider) {
             return true;
         }
@@ -566,6 +619,9 @@ class Model extends \Kotchasan\Model
      */
     private static function loginUser($existingUser, $providerLabel, $clientIp = null)
     {
+        if ((int) ($existingUser->active ?? 0) !== 1 || !empty($existingUser->activatecode)) {
+            return ['success' => false, 'message' => 'Account is not active', 'code' => 401];
+        }
         $loginResult = \Index\Auth\Model::generateTokens($existingUser->id);
         if (!$loginResult) {
             return [

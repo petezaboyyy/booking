@@ -246,7 +246,7 @@ class LoginAttempt extends \Kotchasan\KBase
 
             $remaining = self::getRemainingLockTime($username, $ip);
             if ($remaining > 0) {
-                return true;
+                return True;
             }
 
             self::releaseExpiredLockout($username, $ip);

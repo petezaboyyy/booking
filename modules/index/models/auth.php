@@ -219,17 +219,17 @@ class Model extends \Kotchasan\Model
      * @param string $name Cookie name
      * @param string $value Cookie value
      */
-    public static function setCookie($name, $value)
+    public static function setCookie($name, $value, $sameSite = null)
     {
-        // Harden cookie flags consistently with Auth\Controller: mark Secure and
-        // upgrade SameSite to Strict over HTTPS. HttpOnly is always set so the
-        // token is never readable from JavaScript (XSS cannot exfiltrate it).
-        $secure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+        // Follow framework HTTPS detection, including the configured reverse proxy.
+        // OAuth callbacks use Lax so the first redirected request carries the cookie.
+        $secure = (defined('HTTPS') && HTTPS) || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+        $sameSite = in_array($sameSite, ['Strict', 'Lax'], true) ? $sameSite : ($secure ? 'Strict' : 'Lax');
         $options = [
             'path' => '/',
             'secure' => $secure,
             'httponly' => true,
-            'samesite' => $secure ? 'Strict' : 'Lax',
+            'samesite' => $sameSite,
             'expires' => time() + self::TOKEN_EXPIRY
         ];
 

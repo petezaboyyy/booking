@@ -4,6 +4,15 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: booking-web
+    environment:
+      BOOKING_MICROSOFT_CLIENT_ID: ${BOOKING_MICROSOFT_CLIENT_ID:-}
+      BOOKING_MICROSOFT_CLIENT_SECRET: ${BOOKING_MICROSOFT_CLIENT_SECRET:-}
+      BOOKING_MICROSOFT_TENANT: ${BOOKING_MICROSOFT_TENANT:-}
+      BOOKING_MICROSOFT_ALLOWED_DOMAINS: ${BOOKING_MICROSOFT_ALLOWED_DOMAINS:-}
+      BOOKING_MICROSOFT_REDIRECT_URI: ${BOOKING_MICROSOFT_REDIRECT_URI:-}
+      BOOKING_MICROSOFT_DEMO_EMAIL: ${BOOKING_MICROSOFT_DEMO_EMAIL:-}
+      BOOKING_MICROSOFT_DEMO_OID: ${BOOKING_MICROSOFT_DEMO_OID:-}
+      BOOKING_MICROSOFT_ONLY: ${BOOKING_MICROSOFT_ONLY:-1}
     depends_on:
       database:
         condition: service_healthy
@@ -16,6 +25,15 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
+    command:
+      - sh
+      - -c
+      - |
+        if [ -f /var/www/html/settings/config.php ]; then
+          chgrp www-data /var/www/html/settings/config.php
+          chmod g+rw /var/www/html/settings/config.php
+        fi
+        exec apache2-foreground
     restart: unless-stopped
 
   database:
@@ -33,6 +51,7 @@ services:
       retries: 20
     volumes:
       - booking-database-data:/var/lib/mysql
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     restart: unless-stopped
 
 volumes:

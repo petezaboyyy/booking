@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const scripts = [
         `${currentDir}js/components/sidebar.js`,
         `${currentDir}js/components/topbar.js`,
-        `${currentDir}js/components/SocialLogin.js`
+        `${currentDir}js/components/SocialLogin.js?v=20260912-microsoft-sso-3`
       ];
 
       // Dynamically load all component scripts

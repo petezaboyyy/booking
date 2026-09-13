@@ -998,3 +998,24 @@ td a {
 [data-component="graph"] {
   height: 300px;
 }
+
+.social-login-buttons .icon-microsoft {
+  color: #00a4ef;
+  border: 1px solid #00a4ef;
+}
+.social-login-buttons .icon-microsoft::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(#f25022, #f25022) 0 0 / 7px 7px,
+    linear-gradient(#7fba00, #7fba00) 100% 0 / 7px 7px,
+    linear-gradient(#00a4ef, #00a4ef) 0 100% / 7px 7px,
+    linear-gradient(#ffb900, #ffb900) 100% 100% / 7px 7px;
+  background-repeat: no-repeat;
+}
+.social-login-buttons .icon-microsoft:hover,
+.social-login-buttons .icon-microsoft:focus-visible {
+  background-color: #e8f6fd;
+  color: #006a9b;
+}
