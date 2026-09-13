@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: booking-web
+    depends_on:
+      database:
+        condition: service_healthy
     environment:
       BOOKING_MICROSOFT_CLIENT_ID: ${BOOKING_MICROSOFT_CLIENT_ID:-}
       BOOKING_MICROSOFT_CLIENT_SECRET: ${BOOKING_MICROSOFT_CLIENT_SECRET:-}
@@ -13,10 +16,6 @@ services:
       BOOKING_MICROSOFT_DEMO_EMAIL: ${BOOKING_MICROSOFT_DEMO_EMAIL:-}
       BOOKING_MICROSOFT_DEMO_OID: ${BOOKING_MICROSOFT_DEMO_OID:-}
       BOOKING_MICROSOFT_ONLY: ${BOOKING_MICROSOFT_ONLY:-1}
-    depends_on:
-      database:
-        condition: service_healthy
-    environment:
       PUSHER_APP_ID: ${PUSHER_APP_ID:-}
       PUSHER_KEY: ${PUSHER_KEY:-}
       PUSHER_SECRET: ${PUSHER_SECRET:-}

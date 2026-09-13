@@ -131,11 +131,13 @@ class MicrosoftOAuth
             curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($post, '', '&', PHP_QUERY_RFC3986));
         }
         $raw = curl_exec($curl);
+        $err = curl_error($curl);
         $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         $data = is_string($raw) ? json_decode($raw, true) : null;
         if ($status !== 200 || !is_array($data)) {
-            throw new \RuntimeException('Microsoft service request failed');
+            $msg = !empty($err) ? $err : ($data['error_description'] ?? ($data['error'] ?? "HTTP status $status"));
+            throw new \RuntimeException('Microsoft service request failed: '.$msg);
         }
         return $data;
     }

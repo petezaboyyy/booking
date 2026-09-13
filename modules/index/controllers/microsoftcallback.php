@@ -91,14 +91,17 @@ class Controller extends \Gcms\Api
             header('Location: '.$transaction['return']);
             exit;
         } catch (\Throwable $e) {
-            // Deliberately omit upstream exception text, codes, tokens and personal data.
-            error_log('Microsoft SSO: authentication rejected');
+            error_log('Microsoft SSO: authentication rejected: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
             if (session_status() === PHP_SESSION_ACTIVE) {
                 session_write_close();
             }
             http_response_code(400);
             header('Content-Type: text/html; charset=UTF-8');
-            echo '<!doctype html><html lang="en"><meta charset="utf-8"><title>Microsoft sign-in</title><body><h1>Microsoft sign-in</h1><p>'.htmlspecialchars($message, ENT_QUOTES, 'UTF-8').'</p><p><a href="../">Return to Booking</a></p></body></html>';
+            $debugNotice = '';
+            if (MicrosoftOAuth::demoEmail() !== '' || (defined('DEBUG_MODE') && DEBUG_MODE)) {
+                $debugNotice = '<p style="color:#a94442;background:#f2dede;border:1px solid #ebccd1;padding:12px;border-radius:4px;font-family:monospace;margin:15px 0;"><strong>Debug Error:</strong> '.htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8').'</p>';
+            }
+            echo '<!doctype html><html lang="en"><meta charset="utf-8"><title>Microsoft sign-in</title><body><h1>Microsoft sign-in</h1><p>'.htmlspecialchars($message, ENT_QUOTES, 'UTF-8').'</p>'.$debugNotice.'<p><a href="../">Return to Booking</a></p></body></html>';
         }
     }
 }
