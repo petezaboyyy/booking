@@ -54,4 +54,9 @@ return array (
   'pusher_key' => getenv('PUSHER_KEY') ?: '',
   'pusher_secret' => getenv('PUSHER_SECRET') ?: '',
   'pusher_cluster' => getenv('PUSHER_CLUSTER') ?: 'ap1',
+  'microsoft_client_id' => 'b8b1c97a-ac2c-4279-bd09-2906ea3d368e',
+  'microsoft_tenant' => 'cf81f1df-de59-4c29-91da-a2dfd04aa751',
+  'microsoft_allowed_domains' => 'cmu.ac.th',
+  'microsoft_redirect_uri' => 'http://localhost:8080/microsoft/callback.php',
+  'microsoft_client_secret' => '',
 );

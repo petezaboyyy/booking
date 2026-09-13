@@ -65,7 +65,7 @@ class Controller extends \Gcms\Table
     protected function checkAuthorization(Request $request, $login)
     {
         // Check if user is admin
-        if (!ApiController::isSuperAdmin($login)) {
+        if (!ApiController::isAdmin($login)) {
             return $this->errorResponse('Forbidden', 403);
         }
 
@@ -154,7 +154,7 @@ class Controller extends \Gcms\Table
      */
     protected function handleDeleteAction(Request $request, $login)
     {
-        if (!ApiController::isSuperAdmin($login)) {
+        if (!ApiController::isAdmin($login)) {
             return $this->errorResponse('Failed to process request', 403);
         }
 
@@ -185,7 +185,7 @@ class Controller extends \Gcms\Table
     {
         $id = $request->post('id')->toInt();
 
-        if (!ApiController::isSuperAdmin($login) && $id !== $login->id) {
+        if (!ApiController::isAdmin($login) && $id !== $login->id) {
             return $this->errorResponse('Failed to process request', 403);
         }
 
@@ -446,7 +446,7 @@ class Controller extends \Gcms\Table
     protected function handleImpersonateAction(Request $request, $login)
     {
         // Only SuperAdmin can impersonate
-        if (!ApiController::isSuperAdmin($login)) {
+        if (!ApiController::isAdmin($login)) {
             return $this->errorResponse('Only SuperAdmin can impersonate users', 403);
         }
 
