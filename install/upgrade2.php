@@ -462,7 +462,7 @@ function updateAdmin($db, $table_name, $username, $password, $password_key)
         'username' => $username,
         'status' => 1
     ]);
-    if (!$result || $result->id > 1) {
+    if (!$result) {
         throw new \Exception('ชื่อผู้ใช้ไม่ถูกต้อง หรือไม่ใช่ผู้ดูแลระบบสูงสุด');
     } elseif ($result->password === sha1($password.$result->salt)) {
         // password เวอร์ชั่นเก่า

@@ -4,7 +4,8 @@
         "Approved",
         "Rejected",
         "Canceled by customer",
-        "Canceled by the officer"
+        "Canceled by the officer",
+        "Returned for edit"
     ],
     "DATE_FORMAT": "d M Y, H:i",
     "DATE_LONG": [

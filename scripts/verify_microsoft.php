@@ -101,6 +101,7 @@ if (in_array('--database', $argv, true)) {
     require dirname(__DIR__).'/load.php';
     Kotchasan::createWebApplication('Gcms\\Config');
     check('ID 1 alone does not grant SuperAdmin', !Gcms\Api::isSuperAdmin((object) ['id'=>1,'status'=>1,'permission'=>[]]));
+    check('legacy ID 1 alone does not grant SuperAdmin', \Kotchasan\Login::isSuperAdmin((object) ['id'=>1,'status'=>1,'permission'=>[]]) === null);
     $property = new ReflectionProperty('Kotchasan\\KBase', 'cfg');
     $property->setAccessible(true);
     $appCfg = $property->getValue();

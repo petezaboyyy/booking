@@ -220,10 +220,6 @@ class Controller extends \Gcms\Table
         $baseUrl = !empty($referrer) ? substr($referrer, 0, strrpos($referrer, '/') + 1) : WEB_URL;
 
         foreach ($ids as $id) {
-            if ($id == 1) {
-                continue;
-            }
-
             $user = \Index\Profile\Model::get($id);
             if ($user && !empty($user->username)) {
                 $result = \Index\Forgot\Model::execute($user->id, $user->username, $baseUrl);
@@ -268,8 +264,7 @@ class Controller extends \Gcms\Table
         }
 
         $users = \Kotchasan\DB::create()->select('user', [
-            ['id', $ids],
-            ['id', '!=', 1]
+            ['id', $ids]
         ], [], ['id', 'username', 'name']);
 
         if (empty($users)) {
@@ -320,8 +315,7 @@ class Controller extends \Gcms\Table
         // Update users
         $editCount = \Kotchasan\DB::create()
             ->update('user', [
-                ['id', $ids],
-                ['id', '!=', 1]
+                ['id', $ids]
             ], ['active' => 1, 'activatecode' => '']);
 
         // Log the action
@@ -424,7 +418,6 @@ class Controller extends \Gcms\Table
         // Update users
         $editCount = \Kotchasan\DB::create()->update('user', [
             ['id', $ids],
-            ['id', '!=', 1],
             ['active', 1]
         ], ['active' => 0]);
 

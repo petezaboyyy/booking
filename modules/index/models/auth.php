@@ -95,7 +95,7 @@ class Model extends \Kotchasan\Model
         }
 
         // Check if account is active
-        if ($user->active != 1 && $user->id != 1) {
+        if ($user->active != 1) {
             return [
                 'success' => false,
                 'message' => 'Your account is not active',
@@ -104,7 +104,7 @@ class Model extends \Kotchasan\Model
         }
 
         // Check if email verification is pending
-        if (!empty($user->activatecode) && $user->id != 1) {
+        if (!empty($user->activatecode)) {
             return [
                 'success' => false,
                 'message' => 'Please verify your email address first',

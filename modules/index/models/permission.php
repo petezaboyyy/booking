@@ -31,9 +31,7 @@ class Model extends \Kotchasan\Model
     public static function toDataTable($params)
     {
         // Filters (AND conditions)
-        $where = [
-            ['U.id', '!=', 1]
-        ];
+        $where = [];
         if (isset($params['status']) && $params['status'] !== '') {
             $where[] = ['U.status', (int) $params['status']];
         }

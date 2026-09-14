@@ -77,11 +77,8 @@ if (defined('ROOT_PATH')) {
                 $password = $_SESSION['admin_password'];
                 $today = date('Y-m-d H:i:s');
                 $sql = "INSERT INTO `".$_SESSION['prefix']."_user` (`id`, `username`, `salt`, `password`, `token`, `status`, `active`, `permission`, `name`, `created_at`) VALUES";
-                $sql .= "(1, '$username', '$salt', '".sha1($password_key.$password.$salt)."', NULL, 1, 1, '', 'แอดมิน', '$today'),";
-                $sql .= "(2, 'demo', '$salt', '".sha1($password_key.'demo'.$salt)."', NULL, 0, 1, '', 'ตัวอย่าง', '$today'),";
-                $sql .= "(3, 'saksom@hotmail.com', '$salt', '".sha1($password_key.'saksom'.$salt)."', NULL, 0, 1, '', 'Saksom', '$today'),";
-                $sql .= "(4, 'aoch@hotmail.com', '$salt', '".sha1($password_key.'aoch'.$salt)."', NULL, 0, 1, '', 'Aoch', '$today'),";
-                $sql .= "(5, 'book@hotmail.com', '$salt', '".sha1($password_key.'book'.$salt)."', NULL, 0, 1, '', 'Book', '$today');";
+                $sql .= "(1, '$username', '$salt', '".sha1($password_key.$password.$salt)."', NULL, 1, 1, '', 'แอดมิน', '$today');";
+
                 $db->query($sql);
             } catch (\PDOException $ex) {
                 $error = true;

@@ -84,24 +84,10 @@ class Api extends \Kotchasan\ApiController
      */
     public static function isSuperAdmin($login)
     {
-        if (!$login) {
-            return false;
-        }
-
-        if (
-            isset($login->status)
+        return $login
+            && isset($login->status)
             && (int) $login->status === 1
-            && self::hasPermission($login, 'super_admin', false)
-        ) {
-            return true;
-        }
-
-        return isset($login->status) && (int) $login->status === 1
-            && class_exists('\Gcms\MicrosoftOAuth')
-            && \Gcms\MicrosoftOAuth::isDemoIdentity([
-                'microsoft_tenant_id' => (string) ($login->microsoft_tenant_id ?? ''),
-                'microsoft_id' => (string) ($login->microsoft_id ?? '')
-            ]);
+            && self::hasPermission($login, 'super_admin', false);
     }
 
     /**

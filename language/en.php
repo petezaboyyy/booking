@@ -6,7 +6,8 @@ return array(
     1 => 'Approved',
     2 => 'Rejected',
     3 => 'Canceled by customer',
-    4 => 'Canceled by the officer'
+    4 => 'Canceled by the officer',
+    5 => 'Returned for edit'
   ),
   'DATE_FORMAT' => 'd M Y, H:i',
   'DATE_LONG' => array(

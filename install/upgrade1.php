@@ -1,6 +1,6 @@
 <?php
 if (defined('ROOT_PATH')) {
-    $username = isset($_SESSION['admin_username']) ? $_SESSION['admin_username'] : 'admin@localhost';
+    $username = isset($_SESSION['admin_username']) ? $_SESSION['admin_username'] : '';
     $password = isset($_SESSION['admin_password']) ? $_SESSION['admin_password'] : 'admin';
     echo '<form method=post action=index.php autocomplete=off>';
     echo '<h2>สมาชิกผู้ดูแลระบบ</h2>';

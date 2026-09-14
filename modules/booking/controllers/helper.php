@@ -405,8 +405,15 @@ class Controller extends \Gcms\Controller
      */
     public static function normalizeStatusId(int $status, ?int $default = null): int
     {
-        $booking_status = Language::get('BOOKING_STATUS');
-        if (isset($booking_status[$status])) {
+        $validStatuses = [
+            self::STATUS_PENDING_REVIEW,
+            self::STATUS_APPROVED,
+            self::STATUS_REJECTED,
+            self::STATUS_CANCELLED_BY_REQUESTER,
+            self::STATUS_CANCELLED_BY_OFFICER,
+            self::STATUS_RETURNED_FOR_EDIT
+        ];
+        if (in_array($status, $validStatuses, true)) {
             return $status;
         }
 

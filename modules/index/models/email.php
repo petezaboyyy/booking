@@ -130,14 +130,12 @@ class Model extends \Kotchasan\KBase
         // Update users
         \Kotchasan\DB::create()->update('user', [
             ['id', $ids],
-            ['id', '!=', 1],
             ['active', 0]
         ], ['active' => 1]);
 
         // query users
         $users = \Kotchasan\DB::create()->select('user', [
             ['id', $ids],
-            ['id', '!=', 1],
             ['active', 1]
         ], [], ['username', 'name', 'line_uid', 'telegram_id']);
 
