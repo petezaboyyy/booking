@@ -1110,11 +1110,11 @@ async function initPusher() {
         }
       });
 
-      // 4. Auto-refresh TableComponent instances (e.g. My Bookings, Approvals, Rooms)
-      document.querySelectorAll('table[data-component="table"]').forEach(table => {
-        const inst = window.TableComponent?.getInstance(table);
-        if (inst && window.TableComponent?.refresh) {
-          TableComponent.refresh(inst);
+      // 4. Auto-refresh table data (e.g. My Bookings, Approvals, Rooms)
+      document.querySelectorAll('table[data-table]').forEach(table => {
+        const tableId = table.dataset.table;
+        if (tableId && window.TableManager?.loadTableData) {
+          TableManager.loadTableData(tableId, {force: true});
         }
       });
 
