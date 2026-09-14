@@ -19,8 +19,8 @@ RewriteCond %{REQUEST_URI} !^/api/
 RewriteRule ^(.*)$ index.html [L,QSA]
 
 <IfModule mod_headers.c>
-  # Revalidate the SPA shell and login template after authentication UI updates.
-  <FilesMatch "^(index|login)\.html$">
+  # Revalidate SPA templates so removed controls are not left in the browser cache.
+  <FilesMatch "\.html$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
   # CORS headers for API requests

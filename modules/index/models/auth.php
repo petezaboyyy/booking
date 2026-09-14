@@ -277,7 +277,7 @@ class Model extends \Kotchasan\Model
      * @param int $timestamp
      * @param int $expiry
      * @param string $type
-     * @param array $extraPayload Additional payload data (e.g., impersonated_by)
+     * @param array $extraPayload Session metadata
      *
      * @return string
      */
@@ -292,7 +292,7 @@ class Model extends \Kotchasan\Model
             'jti' => bin2hex(random_bytes(16))
         ];
 
-        // Merge extra payload (e.g., impersonated_by for impersonation)
+        // Merge session metadata.
         if (!empty($extraPayload)) {
             $payload = array_merge($payload, $extraPayload);
         }
@@ -907,149 +907,4 @@ class Model extends \Kotchasan\Model
         ];
     }
 
-    /**
-     * Impersonate user (SuperAdmin only)
-     * Reuses generateSecureToken() with extra impersonation flag
-     *
-     * @param int $adminId SuperAdmin ID (must be ID 1)
-     * @param int $targetUserId Target user ID to impersonate
-     * @param string $clientIp Client IP for logging
-     *
-     * @return array Result with token or error
-     */
-    public static function impersonateUser($adminId, $targetUserId, $clientIp = null)
-    {
-        // Security check: Only SuperAdmin (ID 1) can impersonate
-        if ($adminId != 1) {
-            return [
-                'success' => false,
-                'message' => 'Only SuperAdmin can impersonate users',
-                'code' => 'FORBIDDEN'
-            ];
-        }
-
-        // Cannot impersonate yourself
-        if ($adminId == $targetUserId) {
-            return [
-                'success' => false,
-                'message' => 'Cannot impersonate yourself',
-                'code' => 'INVALID_TARGET'
-            ];
-        }
-
-        // Reuse getUserById() - same query as normal login (with parse permission)
-        $targetUser = self::getUserById($targetUserId);
-
-        if (!$targetUser) {
-            return [
-                'success' => false,
-                'message' => 'Target user not found',
-                'code' => 'USER_NOT_FOUND'
-            ];
-        }
-
-        // Reuse generateSecureToken() with extra impersonation flag
-        $now = time();
-        $accessToken = self::generateSecureToken($targetUserId, $now, self::TOKEN_EXPIRY, 'access', [
-            'impersonated_by' => $adminId
-        ]);
-
-        // Reuse updateUserToken() - same as normal login
-        self::updateUserToken($targetUserId, $accessToken, $now + self::TOKEN_EXPIRY);
-
-        // Reuse logLoginActivity() - same pattern as normal login
-        self::logLoginActivity($targetUserId, 'Impersonate start by Admin#'.$adminId, $clientIp);
-
-        // Reuse sanitizeUserData() - same as normal login
-        $userData = self::sanitizeUserData($targetUser);
-
-        return [
-            'success' => true,
-            'message' => 'Impersonation started',
-            'user' => $userData,
-            'token' => $accessToken,
-            'expires_in' => self::TOKEN_EXPIRY,
-            'token_type' => 'Bearer'
-        ];
-    }
-
-    /**
-     * Check if current token is impersonating
-     *
-     * @param string $token
-     *
-     * @return array|null Returns ['admin_id' => int, 'user_id' => int] or null
-     */
-    public static function isImpersonating($token)
-    {
-        $payload = self::verifyToken($token);
-
-        if (!$payload || !isset($payload['impersonated_by'])) {
-            return null;
-        }
-
-        return [
-            'admin_id' => $payload['impersonated_by'],
-            'user_id' => $payload['sub']
-        ];
-    }
-
-    /**
-     * Restore admin session from impersonation
-     * Reuses getUserById(), generateTokens(), updateUserToken(), sanitizeUserData()
-     *
-     * @param string $currentToken Current impersonated token
-     * @param string $clientIp Client IP for logging
-     *
-     * @return array Result with admin token or error
-     */
-    public static function restoreAdmin($currentToken, $clientIp = null)
-    {
-        // Check if currently impersonating
-        $impersonateInfo = self::isImpersonating($currentToken);
-
-        if (!$impersonateInfo) {
-            return [
-                'success' => false,
-                'message' => 'Not currently impersonating',
-                'code' => 'NOT_IMPERSONATING'
-            ];
-        }
-
-        $adminId = $impersonateInfo['admin_id'];
-        $userId = $impersonateInfo['user_id'];
-
-        // Get user
-        $admin = self::getUserById($adminId);
-
-        if (!$admin) {
-            return [
-                'success' => false,
-                'message' => 'Original admin not found',
-                'code' => 'ADMIN_NOT_FOUND'
-            ];
-        }
-
-        // Reuse generateTokens() - same as normal login (clean token, no impersonation flag)
-        $tokens = self::generateTokens($adminId);
-
-        // Reuse updateUserToken() - same as normal login
-        self::updateUserToken($adminId, $tokens['access_token'], $tokens['expires_at']);
-
-        // Reuse logLoginActivity() - same pattern as normal login
-        self::logLoginActivity($adminId, 'Impersonate end from User#'.$userId, $clientIp);
-
-        // Reuse sanitizeUserData() - same as normal login
-        $adminData = self::sanitizeUserData($admin);
-
-        return [
-            'success' => true,
-            'message' => 'Restored to admin session',
-            'user' => $adminData,
-            'token' => $tokens['access_token'],
-            'refresh_token' => $tokens['refresh_token'],
-            'expires_in' => self::TOKEN_EXPIRY,
-            'token_type' => 'Bearer'
-        ];
-    }
 }

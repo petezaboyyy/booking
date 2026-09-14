@@ -795,7 +795,6 @@ return array(
   'Log in to Telegram to request an ID' => 'เข้าระบบ Telegram เพื่อขอ ID',
   'Login' => 'เข้าสู่ระบบ',
   'Login as' => 'เข้าระบบเป็น',
-  'Login as User' => 'เข้าสู่ระบบเป็นสมาชิก',
   'Login by' => 'เข้าระบบโดย',
   'Login information' => 'ข้อมูลการเข้าระบบ',
   'Login Message' => 'ข้อความการเข้าสู่ระบบ',

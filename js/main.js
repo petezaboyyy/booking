@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         translations: `${currentDir}language`
       },
 
+      // Route templates must reflect permission and action changes immediately.
+      template: {
+        cache: false
+      },
+
       // Enable framework-level auth so AuthManager will initialize before RouterManager
       auth: {
         enabled: true,

@@ -58,5 +58,5 @@ return array (
   'microsoft_tenant' => 'cf81f1df-de59-4c29-91da-a2dfd04aa751',
   'microsoft_allowed_domains' => 'cmu.ac.th',
   'microsoft_redirect_uri' => 'http://localhost:8080/microsoft/callback.php',
-  'microsoft_client_secret' => '',
+  'microsoft_client_secret' => getenv('MICROSOFT_CLIENT_SECRET') ?: '',
 );

@@ -927,23 +927,6 @@ const AuthManager = {
             throw new Error('No HTTP client available for logout request');
           }
 
-          // Check if admin session was restored (impersonation ended)
-          // Support wrapped response: { success, message, code, data: { ... } }
-          const payload = response?.data?.data ?? response?.data ?? response;
-          if (payload?.restored === true) {
-            this.state.loading = false;
-            this.emit('auth:restored', {user: payload.user, timestamp: Date.now()});
-
-            if (window.ResponseHandler?.process) {
-              await ResponseHandler.process(payload, {
-                reload: () => window.location.reload()
-              });
-            }
-
-            const restoreUrl = payload.actions?.find(a => a.type === 'redirect')?.url || '/';
-            this.redirectTo(restoreUrl);
-            return;
-          }
         } catch (error) {
           console.warn('Logout API failed:', error.message);
         }

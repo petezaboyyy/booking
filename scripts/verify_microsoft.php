@@ -100,6 +100,7 @@ foreach (['userType'=>'Guest','id'=>$client,'mail'=>'user@eviluniversity.ac.th']
 if (in_array('--database', $argv, true)) {
     require dirname(__DIR__).'/load.php';
     Kotchasan::createWebApplication('Gcms\\Config');
+    check('ID 1 alone does not grant SuperAdmin', !Gcms\Api::isSuperAdmin((object) ['id'=>1,'status'=>1,'permission'=>[]]));
     $property = new ReflectionProperty('Kotchasan\\KBase', 'cfg');
     $property->setAccessible(true);
     $appCfg = $property->getValue();
@@ -132,6 +133,9 @@ if (in_array('--database', $argv, true)) {
         check('identity persisted and ordinary role assigned', $user->microsoft_id === $identity['microsoft_id'] && $user->microsoft_tenant_id === $tenant && (int)$user->status===0 && empty($user->permission));
         $again=Index\Social\Model::authenticate($identity,'http://localhost/','Microsoft');
         check('repeat login uses same account', !empty($again['success']) && $again['user']['id']==$id);
+        $db->update('user',['id',$id],['status'=>1,'permission'=>',super_admin,']);
+        $admin=Index\Auth\Model::getUserById($id);
+        check('permission grants SuperAdmin independently of ID', Gcms\Api::isSuperAdmin($admin));
         $changed=$identity; $changed['username']='renamed-'.$identity['username'];
         $again=Index\Social\Model::authenticate($changed,'http://localhost/','Microsoft');
         check('email change retains account identity', !empty($again['success']) && $again['user']['id']==$id);

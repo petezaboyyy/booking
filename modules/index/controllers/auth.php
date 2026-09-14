@@ -197,7 +197,6 @@ class Controller extends ApiController
     /**
      * POST /index/auth/logout
      * Invalidate the current access token.
-     * If impersonating, restore to admin session instead.
      *
      * @param Request $request
      *
@@ -213,35 +212,6 @@ class Controller extends ApiController
             $accessToken = $this->getAccessTokenFromRequest($request);
 
             if ($accessToken) {
-                // Check if currently impersonating
-                $impersonateInfo = Model::isImpersonating($accessToken);
-
-                if ($impersonateInfo) {
-                    // Restore to admin session
-                    $clientIp = $request->getClientIp();
-                    $result = Model::restoreAdmin($accessToken, $clientIp);
-
-                    if ($result['success']) {
-                        // Set new admin token cookie
-                        $this->setAuthCookie('auth_token', $result['token'], Model::TOKEN_EXPIRY);
-
-                        if (isset($result['refresh_token'])) {
-                            $this->setAuthCookie('refresh_token', $result['refresh_token'], Model::REFRESH_TOKEN_EXPIRY);
-                        }
-
-                        // Return success with admin user data
-                        return $this->successResponse([
-                            'user' => $result['user'],
-                            'restored' => true,
-                            'actions' => [
-                                ['type' => 'notification', 'message' => 'Restored to admin session', 'variant' => 'success'],
-                                ['type' => 'redirect', 'url' => 'reload']
-                            ]
-                        ], 'Restored to admin session');
-                    }
-                }
-
-                // Normal logout (not impersonating)
                 $payload = Model::verifyToken($accessToken);
                 $userId = $payload['sub'] ?? null;
 
