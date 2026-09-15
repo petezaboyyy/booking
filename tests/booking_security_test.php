@@ -1,4 +1,9 @@
 <?php
+/** CLI only: this writes to the database. Never reachable over HTTP. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 /**
  * Regression tests for the booking permission / concurrency / query-count fixes.
  * Requires a live database with at least one active room and one user.

@@ -1,4 +1,9 @@
 <?php
+/** CLI only: this writes to the database. Never reachable over HTTP. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 /**
  * Boundary tests for the booking date-range and note-length limits.
  * Calls the controller's own validation so the rules are tested where they run.

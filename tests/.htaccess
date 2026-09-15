@@ -1,0 +1,3 @@
+# Test suites are CLI only. Each file also refuses a non-CLI SAPI;
+# this is the second lock, for servers that read .htaccess.
+Require all denied
