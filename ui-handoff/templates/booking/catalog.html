@@ -1,0 +1,177 @@
+<div class='roomly-dashboard roomly-rooms-page'>
+  <header class='roomly-topbar'>
+    <a class='roomly-brand' href='/' aria-label='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
+      <img class='roomly-brand-logo' src='/ui-handoff/images/logo.png' alt='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
+      <span data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</span>
+    </a>
+    <nav class='roomly-nav' aria-label='Main navigation'>
+      <a href='/'>
+        <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
+        <span data-i18n>Dashboard</span>
+      </a>
+      <a href='/my-bookings'>
+        <span class='roomly-menu-icon icon-list' aria-hidden='true'></span>
+        <span data-i18n>My bookings</span>
+      </a>
+      <a href='/booking'>
+        <span class='roomly-menu-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Book a room</span>
+      </a>
+      <a class='is-active' href='/rooms'>
+        <span class='roomly-menu-icon icon-office' aria-hidden='true'></span>
+        <span data-i18n>All rooms</span>
+      </a>
+    </nav>
+    <div class='roomly-user-actions'>
+      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='Switch language' aria-label='Switch language'>
+        <span class='roomly-language-icon icon-language' aria-hidden='true'></span>
+        <span class='roomly-language-option roomly-language-th'>TH</span>
+        <span class='roomly-language-divider' aria-hidden='true'>/</span>
+        <span class='roomly-language-option roomly-language-en'>EN</span>
+      </button>
+      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='Toggle theme' aria-label='Toggle theme'>
+        <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
+        <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
+      </button>
+      <div class='roomly-profile-data' data-component='api' data-endpoint='api/index/auth/me'>
+        <a class='roomly-profile' data-attr='href:&quot;profile?id=&quot; + data.id'>
+          <img class='roomly-avatar' data-attr='src:data.avatar,alt:data.name'>
+          <span class='roomly-profile-copy'>
+            <strong data-text='data.name'>User</strong>
+            <small data-i18n>Profile</small>
+          </span>
+        </a>
+      </div>
+      <a class='roomly-icon-button' href='/logout' title='{LNG_Logout}' aria-label='{LNG_Logout}'>
+        <span class='icon-signout' aria-hidden='true'></span>
+      </a>
+    </div>
+  </header>
+  <main class='roomly-content roomly-rooms-content'>
+    <div class='booking-catalog-page roomly-rooms-api' data-component='api' data-endpoint='api/booking/catalog/lists'>
+                <header class='roomly-page-heading roomly-rooms-heading'>
+                    <div>
+                        <h1 class="icon-office" data-i18n>All rooms</h1>
+                        <p data-i18n>Browse rooms and choose a room for your reservation</p>
+                    </div>
+                    <div class="header-actions roomly-rooms-header-actions">
+                        <a class="btn btn-warning icon-list" href="/my-bookings" data-i18n>My bookings</a>
+                        <a class="btn btn-primary icon-edit" href="/booking" data-i18n>Open booking form</a>
+                    </div>
+                </header>
+                <div class="content-body roomly-rooms-panel">
+                    <div class="booking-catalog-layout">
+                        <!-- Skeleton Loading Grid -->
+                        <section class="booking-catalog-grid booking-catalog-skeleton-grid" aria-hidden="true">
+                            <article class="booking-catalog-card is-skeleton">
+                                <div class="booking-catalog-card-media skeleton-shimmer"></div>
+                                <div class="booking-catalog-card-body">
+                                    <div style="display:flex;flex-direction:column;gap:0.5rem;height:3.5rem;">
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1.2rem;width:80%;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1rem;width:50%;"></div>
+                                    </div>
+                                    <div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:40%;margin-bottom:0.4rem;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:65%;"></div>
+                                    </div>
+                                </div>
+                                <div class="booking-catalog-actions">
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                </div>
+                            </article>
+                            <article class="booking-catalog-card is-skeleton">
+                                <div class="booking-catalog-card-media skeleton-shimmer"></div>
+                                <div class="booking-catalog-card-body">
+                                    <div style="display:flex;flex-direction:column;gap:0.5rem;height:3.5rem;">
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1.2rem;width:75%;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1rem;width:55%;"></div>
+                                    </div>
+                                    <div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:45%;margin-bottom:0.4rem;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:60%;"></div>
+                                    </div>
+                                </div>
+                                <div class="booking-catalog-actions">
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                </div>
+                            </article>
+                            <article class="booking-catalog-card is-skeleton">
+                                <div class="booking-catalog-card-media skeleton-shimmer"></div>
+                                <div class="booking-catalog-card-body">
+                                    <div style="display:flex;flex-direction:column;gap:0.5rem;height:3.5rem;">
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1.2rem;width:85%;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1rem;width:45%;"></div>
+                                    </div>
+                                    <div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:35%;margin-bottom:0.4rem;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:55%;"></div>
+                                    </div>
+                                </div>
+                                <div class="booking-catalog-actions">
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                </div>
+                            </article>
+                            <article class="booking-catalog-card is-skeleton">
+                                <div class="booking-catalog-card-media skeleton-shimmer"></div>
+                                <div class="booking-catalog-card-body">
+                                    <div style="display:flex;flex-direction:column;gap:0.5rem;height:3.5rem;">
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1.2rem;width:70%;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:1rem;width:60%;"></div>
+                                    </div>
+                                    <div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:50%;margin-bottom:0.4rem;"></div>
+                                        <div class="skeleton-shimmer skeleton-bar" style="height:0.9rem;width:70%;"></div>
+                                    </div>
+                                </div>
+                                <div class="booking-catalog-actions">
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                    <div class="skeleton-shimmer skeleton-btn-sm" style="flex:1;height:2.25rem;"></div>
+                                </div>
+                            </article>
+                        </section>
+                        <section class="booking-catalog-grid" data-if="items && items.length > 0" data-for="item in items">
+                            <template>
+                                <article class="booking-catalog-card" data-attr="data-id:item.id">
+                                    <a class="booking-catalog-card-trigger" href="/rooms" data-action="click.prevent:requestApi" data-api-url="api/booking/catalog/detail"
+                                       data-api-method="get" data-param-id="{id}">
+                                        <div class="booking-catalog-card-media" data-if="item.first_image_url">
+                                            <img src="{{item.first_image_url}}" alt="{{item.name}}" loading="lazy">
+                                            <span class="booking-catalog-status" data-class="is-active:item.is_active == 1"
+                                                  data-text="item.is_active == 1 ? '{LNG_Available}' : '{LNG_Unavailable}'"></span>
+                                        </div>
+                                        <div class="booking-catalog-card-media" data-if="!item.first_image_url">
+                                            <div class="booking-catalog-placeholder icon-office"></div>
+                                            <span class="booking-catalog-status" data-class="is-active:item.is_active == 1"
+                                                  data-text="item.is_active == 1 ? '{LNG_Available}' : '{LNG_Unavailable}'"></span>
+                                        </div>
+                                        <div class="booking-catalog-card-body">
+                                            <h2 class="two_lines" data-text="item.name"></h2>
+                                            <div>
+                                                <p class="booking-catalog-card-subtitle" data-text="item.room_number"></p>
+                                                <div class="booking-catalog-description">
+                                                    <span data-text="item.building"></span>
+                                                    <span data-text="item.seats ? item.seats + ' {LNG_Seats}' : ''"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <div class="booking-catalog-actions">
+                                        <button type="button" class="btn btn-secondary icon-search" data-action="click.prevent:requestApi" data-api-url="api/booking/catalog/detail"
+                                                data-api-method="get" data-param-id="{id}" data-i18n>View details</button>
+                                        <a class="btn btn-primary icon-office" data-attr="href:item.booking_url" data-i18n>Select this room</a>
+                                    </div>
+                                </article>
+                            </template>
+                        </section>
+                        <div class="booking-catalog-grid-empty" data-if="!items || items.length === 0">
+                            <span class="icon-office"></span>
+                            <p data-i18n>No rooms are available for booking right now</p>
+                        </div>
+                    </div>
+                </div>
+    </div>
+  </main>
+</div>
