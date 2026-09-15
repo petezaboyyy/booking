@@ -3125,6 +3125,61 @@ html[data-theme='dark'] .roomly-theme-sun {
   background: var(--roomly-surface-low);
 }
 
+.roomly-login-page .social-login-buttons.roomly-microsoft-only {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.roomly-login-page .roomly-microsoft-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 12px;
+  background: var(--roomly-surface-low, #f8fafc);
+  border: 1.5px solid #00a4ef;
+  color: #0078d4;
+  box-shadow: 0 2px 8px rgba(0, 164, 239, 0.12);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.roomly-login-page .roomly-microsoft-btn:hover:not(:disabled) {
+  background: #f0f9ff;
+  border-color: #0078d4;
+  box-shadow: 0 4px 14px rgba(0, 120, 212, 0.22);
+  transform: translateY(-1px);
+}
+
+.roomly-login-page .roomly-microsoft-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.roomly-login-page .roomly-microsoft-fieldset {
+  margin: 16px 0 0 0;
+  padding: 0;
+  border: none;
+}
+
+[data-theme='dark'] .roomly-login-page .roomly-microsoft-btn {
+  background: rgba(0, 164, 239, 0.1);
+  border-color: #00a4ef;
+  color: #5ecbf8;
+}
+
+[data-theme='dark'] .roomly-login-page .roomly-microsoft-btn:hover:not(:disabled) {
+  background: rgba(0, 164, 239, 0.2);
+}
+
 .roomly-login-register {
   margin-top: 22px;
   color: var(--roomly-muted);

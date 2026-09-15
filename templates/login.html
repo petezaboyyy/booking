@@ -18,59 +18,14 @@
           <h1 class="roomly-login-title" data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</h1>
           <p class="login-message" data-i18n>Welcome back! Please login to proceed.</p>
         </div>
-        <fieldset class="roomly-login-fields" data-if="!data.microsoft_only">
-          <div>
-            <label for="login_username" data-i18n>{LNG_Username}/{LNG_Email}</label>
-            <span class="form-control icon-email">
-              <input maxlength="50" type="text" id="login_username" name="username" autocomplete="username" autofocus data-persist="local" data-persist-key="login_username"
-                     data-persist-ttl-days="30">
-            </span>
-          </div>
-          <div>
-            <label for="login_password" data-i18n>Password</label>
-            <span class="form-control icon-password">
-              <input maxlength="50" type="password" id="login_password" name="password" autocomplete="current-password">
-            </span>
-          </div>
-          <div>
-            <div class="form-group roomly-login-options">
-              <div class="width50">
-                <!-- remember checkbox: example also marked to persist its state -->
-                <input type="checkbox" id="remember" class="switch" name="remember" value="1" data-persist="local" data-persist-key="login_remember">
-                <label for="remember" data-i18n>Remember Me</label>
-              </div>
-              <div class="width50 right" data-if="data.user_forgot === 1">
-                <a href="forgot" data-i18n>Forgot Password</a>
-              </div>
-            </div>
-          </div>
-        </fieldset>
-        <fieldset class="center roomly-login-submit" data-if="!data.microsoft_only">
-          <button type="submit" class="btn btn-primary fullwidth large icon-signin" data-i18n>Log in</button>
-        </fieldset>
-        <!-- Social Login Divider -->
-        <div class="social-divider" data-if="!data.microsoft_only">
-          <span data-i18n>Or continue with</span>
-        </div>
-        <!-- Microsoft SSO remains visible independently of public registration. -->
-        <fieldset class="center">
-          <div class="social-login-buttons">
-            <button type="button" data-attr="data-username:data.microsoft_login_url" class="btn icon-microsoft" data-social-provider="microsoft" aria-describedby="microsoft-login-status" disabled data-i18n>Sign in with Microsoft</button>
+
+        <!-- Microsoft SSO only -->
+        <fieldset class="center roomly-microsoft-fieldset">
+          <div class="social-login-buttons roomly-microsoft-only">
+            <button type="button" data-attr="data-username:data.microsoft_login_url" class="btn icon-microsoft roomly-microsoft-btn" data-social-provider="microsoft" aria-describedby="microsoft-login-status" disabled data-i18n>Sign in with Microsoft</button>
             <p id="microsoft-login-status" class="comment" data-microsoft-status role="status">Microsoft SSO ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p>
           </div>
         </fieldset>
-        <!-- Social Login Buttons -->
-        <fieldset class="center" data-if="!data.microsoft_only && (data.user_register === 1 || data.demo_mode === 1)">
-          <div class="social-login-buttons">
-            <div data-attr="data-username:data.google_client_id" data-social-provider="google"></div>
-            <button type="button" data-attr="data-username:data.line_channel_id" class="btn icon-line" data-social-provider="line" data-i18n>LINE</button>
-            <button type="button" data-attr="data-username:data.facebook_appId" class="btn icon-facebook" data-social-provider="facebook" data-i18n>Facebook</button>
-            <div data-attr="data-username:data.telegram_bot_username" data-social-provider="telegram"></div>
-          </div>
-        </fieldset>
-        <div class="center roomly-login-register" data-if="!data.microsoft_only && data.user_register === 1">
-          <span data-i18n>Don't have an account?</span> <a href="register" data-i18n>Sign up</a>
-        </div>
       </div>
     </section>
   </form>
