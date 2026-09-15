@@ -76,5 +76,6 @@ return array(
   'No rooms found' => 'No rooms found',
   'Room Booking System' => 'Room Booking System',
   'Faculty of Veterinary Medicine' => 'Faculty of Veterinary Medicine',
-  'Chiang Mai University' => 'Chiang Mai University'
+  'Chiang Mai University' => 'Chiang Mai University',
+  'Chiang Mai University • Faculty of Veterinary Medicine' => 'Chiang Mai University • Faculty of Veterinary Medicine'
 );
