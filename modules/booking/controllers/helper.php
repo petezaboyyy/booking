@@ -34,6 +34,23 @@ class Controller extends \Gcms\Controller
     public const CANCELLATION_ALWAYS = 4;
 
     /**
+     * Longest span, in days, a single reservation may cover.
+     * Bounds both the day-by-day expansion loops and the number of rows a
+     * single request can create.
+     */
+    public const MAX_BOOKING_RANGE_DAYS = 366;
+
+    /**
+     * Hard ceiling on occurrences produced for one reservation.
+     */
+    public const MAX_BOOKING_OCCURRENCES = 366;
+
+    /**
+     * Longest cancellation note that fits reservation_occurrence.cancellation_reason.
+     */
+    public const MAX_CANCELLATION_REASON_LENGTH = 255;
+
+    /**
      * Cached room galleries for the current request.
      *
      * @var array
@@ -354,6 +371,25 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * Status options a booker may be granted permanent-delete rights for.
+     * Approved bookings are left out: only officers may remove those.
+     *
+     * @return array
+     */
+    public static function getBookerDeleteStatusOptions(): array
+    {
+        $protected = self::getBookerProtectedStatuses();
+        $options = [];
+        foreach (Language::get('BOOKING_STATUS', []) as $key => $value) {
+            if (!in_array((int) $key, $protected, true)) {
+                $options[] = ['value' => (string) $key, 'text' => $value];
+            }
+        }
+
+        return $options;
+    }
+
+    /**
      * Return normalized status key.
      *
      * @param object|null $row
@@ -421,6 +457,38 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * Booking statuses shown on the public calendar.
+     * An empty result means "no filter configured" — show every status.
+     *
+     * @return array
+     */
+    public static function getCalendarStatuses(): array
+    {
+        $statuses = self::$cfg->booking_calendar_status ?? [];
+        if (!is_array($statuses)) {
+            $statuses = [$statuses];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static function ($status) {
+            return Controller::normalizeStatusId((int) $status, -1);
+        }, $statuses), static function ($status) {
+            return $status >= 0;
+        })));
+    }
+
+    /**
+     * Booking statuses a requester may never delete, whatever the settings say.
+     * An approved request is the room's record of a granted slot, so only an
+     * officer may remove it.
+     *
+     * @return array
+     */
+    public static function getBookerProtectedStatuses(): array
+    {
+        return [self::STATUS_APPROVED];
+    }
+
+    /**
      * Configured booking statuses that bookers may permanently delete.
      *
      * @return array
@@ -432,10 +500,11 @@ class Controller extends \Gcms\Controller
             $statuses = [$statuses];
         }
 
+        $protected = self::getBookerProtectedStatuses();
         $statuses = array_values(array_unique(array_filter(array_map(static function ($status) {
             return Controller::normalizeStatusId((int) $status, -1);
-        }, $statuses), static function ($status) {
-            return $status >= 0;
+        }, $statuses), static function ($status) use ($protected) {
+            return $status >= 0 && !in_array($status, $protected, true);
         })));
 
         return empty($statuses) ? [self::STATUS_CANCELLED_BY_REQUESTER] : $statuses;
@@ -487,9 +556,10 @@ class Controller extends \Gcms\Controller
             return false;
         }
 
+        // Once approved, only an officer may cancel the whole request or one
+        // concrete date. The requester must not alter the approved schedule.
         if (!in_array($row->status, [
             self::STATUS_PENDING_REVIEW,
-            self::STATUS_APPROVED,
             self::STATUS_RETURNED_FOR_EDIT
         ], true)) {
             return false;
@@ -527,7 +597,12 @@ class Controller extends \Gcms\Controller
             return false;
         }
 
-        return in_array($row->status, self::getBookerDeleteStatuses(), true);
+        $status = self::getStatusValue($row);
+        if (in_array($status, self::getBookerProtectedStatuses(), true)) {
+            return false;
+        }
+
+        return in_array($status, self::getBookerDeleteStatuses(), true);
     }
 
     /**
@@ -902,7 +977,8 @@ class Controller extends \Gcms\Controller
         if ($cursor === false || $last === false || $cursor > $last) {
             return false;
         }
-        while ($cursor <= $last) {
+        $daysLeft = self::MAX_BOOKING_RANGE_DAYS;
+        while ($cursor <= $last && $daysLeft-- > 0) {
             $date = date('Y-m-d', $cursor);
             $leftInterval = self::getBookingIntervalForDate($left, $date);
             $rightInterval = self::getBookingIntervalForDate($right, $date);
@@ -937,7 +1013,8 @@ class Controller extends \Gcms\Controller
             return false;
         }
 
-        while ($cursor <= $last) {
+        $daysLeft = self::MAX_BOOKING_RANGE_DAYS;
+        while ($cursor <= $last && $daysLeft-- > 0) {
             if (self::getBookingIntervalForDate($schedule, date('Y-m-d', $cursor)) !== null) {
                 return true;
             }
@@ -948,6 +1025,80 @@ class Controller extends \Gcms\Controller
         }
 
         return false;
+    }
+
+    /**
+     * Expand a recurring schedule into concrete, same-day occurrences.
+     * Excluded dates are compared using YYYY-MM-DD.
+     *
+     * @param array $schedule
+     * @param array|string|null $excludedDates
+     *
+     * @return array<int, array{begin:string,end:string,date:string}>
+     */
+    public static function buildBookingOccurrences(array $schedule, $excludedDates = []): array
+    {
+        if (is_string($excludedDates)) {
+            $excludedDates = explode(',', $excludedDates);
+        }
+        $excluded = [];
+        foreach (is_array($excludedDates) ? $excludedDates : [] as $date) {
+            $date = trim((string) $date);
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && date('Y-m-d', strtotime($date)) === $date) {
+                $excluded[$date] = true;
+            }
+        }
+
+        $cursor = strtotime($schedule['begin_date']);
+        $last = strtotime($schedule['end_date']);
+        if ($cursor === false || $last === false || $cursor > $last) {
+            return [];
+        }
+
+        // Defence in depth: validation rejects over-long ranges before we get
+        // here, but never let a stored or crafted range spin this loop.
+        $daysLeft = self::MAX_BOOKING_RANGE_DAYS;
+        $occurrences = [];
+        while ($cursor <= $last && $daysLeft-- > 0) {
+            $date = date('Y-m-d', $cursor);
+            $interval = self::getBookingIntervalForDate($schedule, $date);
+            if ($interval !== null && !isset($excluded[$date])) {
+                $occurrences[] = [
+                    'date' => $date,
+                    'begin' => $date.' '.$schedule['begin_time'],
+                    'end' => $date.' '.$schedule['end_time']
+                ];
+                if (count($occurrences) >= self::MAX_BOOKING_OCCURRENCES) {
+                    break;
+                }
+            }
+            $cursor = strtotime('+1 day', $cursor);
+            if ($cursor === false) {
+                break;
+            }
+        }
+
+        return $occurrences;
+    }
+
+    /**
+     * Number of calendar days a begin/end date pair spans, inclusive.
+     *
+     * @param string $beginDate YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
+     *
+     * @return int 0 when either date cannot be parsed
+     */
+    public static function countBookingRangeDays(string $beginDate, string $endDate): int
+    {
+        $begin = strtotime($beginDate.' 00:00:00');
+        $end = strtotime($endDate.' 00:00:00');
+        if ($begin === false || $end === false || $end < $begin) {
+            return 0;
+        }
+
+        // round() keeps the count right across any DST shift in the range.
+        return (int) round(($end - $begin) / 86400) + 1;
     }
 
     /**

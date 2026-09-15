@@ -8,6 +8,7 @@ namespace Booking\Booking;
 use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
+use Kotchasan\Language;
 
 class Controller extends ApiController
 {
@@ -93,11 +94,18 @@ class Controller extends ApiController
             $meta = [
                 'use' => $save['use'],
                 'accessories' => array_values(array_filter(array_map('intval', $save['accessories']))),
-                'recurrence_days' => $save['recurrence_days']
+                'recurrence_days' => $save['recurrence_days'],
+                'excluded_dates' => $save['excluded_dates']
             ];
-            unset($save['use'], $save['accessories'], $save['recurrence_days']);
+            unset($save['use'], $save['accessories'], $save['recurrence_days'], $save['excluded_dates']);
 
-            $id = Model::saveReservation($booking->id, $save, $meta);
+            $result = Model::saveReservation($booking->id, $save, $meta);
+            if (!empty($result['conflicts'])) {
+                return $this->formErrorResponse([
+                    'begin_date' => $this->formatConflictMessage($result['conflicts'])
+                ], 409);
+            }
+            $id = (int) $result['id'];
             \Index\Log\Model::add($id, 'booking', 'Save', 'Saved room booking: '.$id, $login->id);
 
             // Broadcast real-time update via Pusher
@@ -140,6 +148,10 @@ class Controller extends ApiController
             'recurrence_days' => $request
                 ->post('recurrence_days', [])
                 ->toInt(),
+            'excluded_dates' => Model::normalizeExcludedDates(
+                $request->post('excluded_dates')->toString()
+            ),
+            'version' => $request->post('version')->toInt(),
             'accessories' => $request->post('accessories', [])->toInt(),
             'comment' => $request->post('comment')->textarea(),
             'topic' => $request->post('topic')->topic(),
@@ -188,11 +200,21 @@ class Controller extends ApiController
                     $errors['end_time'] = 'End time must be greater than begin time';
                 }
 
+                // Every day in the range becomes an occurrence row and a day of
+                // loop work, so cap the span before anything expands it.
+                $rangeDays = Helper::countBookingRangeDays($save['begin_date'], $save['end_date']);
+                if ($rangeDays < 1 || $rangeDays > Helper::MAX_BOOKING_RANGE_DAYS) {
+                    $errors['end_date'] = Language::replace(
+                        'The reservation period must not exceed :days days',
+                        [':days' => Helper::MAX_BOOKING_RANGE_DAYS]
+                    );
+                }
+
                 if (!empty($errors)) {
                     return $errors;
                 }
 
-                $save['begin'] = $save['begin_date'].' '.$save['begin_time'].':01';
+                $save['begin'] = $save['begin_date'].' '.$save['begin_time'].':00';
                 $save['end'] = $save['end_date'].' '.$save['end_time'].':00';
 
                 $save['schedule_type'] = Helper::normalizeScheduleType(
@@ -233,12 +255,24 @@ class Controller extends ApiController
                     return $errors;
                 }
 
+                $save['excluded_dates'] = Model::normalizeExcludedDates($save['excluded_dates']);
+                $occurrences = Helper::buildBookingOccurrences($schedule, $save['excluded_dates']);
+                if (empty($occurrences)) {
+                    $errors['excluded_dates'] = 'At least one booking date must be selected';
+
+                    return $errors;
+                }
+                if (count($occurrences) > Helper::MAX_BOOKING_OCCURRENCES) {
+                    $errors['end_date'] = Language::replace(
+                        'A reservation cannot contain more than :days dates',
+                        [':days' => Helper::MAX_BOOKING_OCCURRENCES]
+                    );
+
+                    return $errors;
+                }
+
                 $save['id'] = $booking->id;
                 $save['member_id'] = $booking->member_id;
-
-                if (!Model::availability($save)) {
-                    $errors['begin_date'] = 'Booking are not available at select time';
-                }
 
                 unset($save['begin_date']);
                 unset($save['begin_time']);
@@ -263,6 +297,21 @@ class Controller extends ApiController
         }
 
         return $errors;
+    }
+
+    /**
+     * Explain exactly which requested dates conflict with approved bookings.
+     */
+    protected function formatConflictMessage(array $conflicts): string
+    {
+        $slots = array_map(static function ($conflict) {
+            return substr($conflict['begin'], 0, 10)
+                .' '.substr($conflict['begin'], 11, 5)
+                .'-'.substr($conflict['end'], 11, 5);
+        }, array_slice($conflicts, 0, 10));
+        $suffix = count($conflicts) > 10 ? ' (+'.(count($conflicts) - 10).')' : '';
+
+        return Language::get('Conflicts with an approved booking').': '.implode(', ', $slots).$suffix;
     }
 
     /**

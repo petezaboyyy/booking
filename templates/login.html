@@ -1,10 +1,19 @@
 <div class="auth-container">
+  <div class="auth-language-switcher">
+    <button class="lang-toggle btn dropdown" data-component="lang-toggle" data-locales="en,th" title="Switch language" aria-label="Switch language" aria-haspopup="true">
+      <span data-lang-label>EN</span>
+      <ul>
+        <li><a data-locale="th">TH</a></li>
+        <li><a data-locale="en">EN</a></li>
+      </ul>
+    </button>
+  </div>
   <div class="auth-card">
     <!-- Use FormManager: data-form identifies the form type, data-action is the endpoint, ajaxSubmit enables AJAX -->
     <form data-form="login" class="auth-form" novalidate action="api/index/auth/login" method="post" data-ajax-submit="true" data-redirect="/" data-auto-fill-intended-url="true"
           data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
       <div class="auth-header">
-        <a href="/" class="auth-logo" data-style="backgroundImage:url({{data.logo}})"></a>
+        <div class="auth-logo" data-style="backgroundImage:url({{data.logo}})" aria-hidden="true"></div>
         <h1 data-text="data.web_title" data-i18n></h1>
         <p class="login-message" data-i18n>Welcome back! Please login to proceed.</p>
       </div>
@@ -38,6 +47,10 @@
       <fieldset class="center" data-if="!data.microsoft_only">
         <button type="submit" class="btn btn-primary fullwidth large icon-signin" data-i18n>Log in</button>
       </fieldset>
+      <div class="guest-entry center">
+        <a href="/" class="btn btn-secondary outline fullwidth large icon-calendar guest-button" data-i18n>Continue as guest</a>
+        <p class="comment" data-i18n>View the booking calendar without signing in.</p>
+      </div>
       <!-- Social Login Divider -->
       <div class="social-divider" data-if="!data.microsoft_only">
         <span data-i18n>Or continue with</span>

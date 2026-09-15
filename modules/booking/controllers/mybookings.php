@@ -80,11 +80,17 @@ class Controller extends \Gcms\Table
      */
     protected function formatDatas(array $datas, $login = null): array
     {
+        $summaries = BookingModel::getOccurrenceSummaries(array_map(static function ($item) {
+            return (int) ($item->id ?? 0);
+        }, $datas));
+
         foreach ($datas as $item) {
             $item->can_edit = Helper::canEditBooking($item);
             $item->can_cancel = Helper::canCancelBookingByRequester($item);
             $item->first_image_url = Helper::getRoomFirstImageUrl((int) ($item->room_id ?? 0));
             $item->reservation_text = Helper::formatBookingTime($item);
+            $summary = $summaries[(int) $item->id] ?? ['active' => 0, 'total' => 0];
+            $item->occurrence_summary = $summary['active'].' / '.$summary['total'];
         }
 
         return $datas;
@@ -157,6 +163,7 @@ class Controller extends \Gcms\Table
         ApiController::validateMethod($request, 'POST');
 
         $id = $request->post('id')->toInt();
+        $version = $request->post('version')->toInt();
         $row = BookingModel::getRecord((int) $login->id, $id);
         if ($row === null) {
             return $this->errorResponse('No data available', 404);
@@ -165,7 +172,14 @@ class Controller extends \Gcms\Table
             return $this->errorResponse('This booking can no longer be cancelled', 403);
         }
 
-        BookingModel::updateStatus($id, Helper::STATUS_CANCELLED_BY_REQUESTER);
+        try {
+            // Re-checked under a row lock: an officer may approve between the
+            // check above and the write.
+            BookingModel::cancelByRequester($id, (int) $login->id, $version > 0 ? $version : null);
+        } catch (\Throwable $e) {
+            $code = (int) $e->getCode();
+            return $this->errorResponse($e->getMessage(), $code >= 400 && $code < 600 ? $code : 500);
+        }
         \Index\Log\Model::add($id, 'booking', 'Cancel', 'Cancelled room booking: '.$id, $login->id);
 
         // Broadcast real-time update via Pusher

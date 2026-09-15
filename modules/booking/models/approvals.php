@@ -117,6 +117,7 @@ class Model extends \Kotchasan\Model
     public static function remove(array $ids): bool
     {
         $db = \Kotchasan\DB::create();
+        $db->delete('reservation_occurrence', ['reservation_id', $ids], 0);
         $db->delete('reservation', ['id', $ids], 0);
         $db->delete('reservation_data', ['reservation_id', $ids], 0);
 

@@ -41,6 +41,8 @@ class Model extends \Kotchasan\Model
                 'end_time' => '',
                 'schedule_type' => Helper::SCHEDULE_DAILY_SLOT,
                 'recurrence_days' => [],
+                'excluded_dates' => [],
+                'version' => 0,
                 'use' => '',
                 'accessories' => [],
                 'canEdit' => true,
@@ -85,6 +87,7 @@ class Model extends \Kotchasan\Model
         $record->recurrence_days = Helper::normalizeRecurrenceDays(
             $meta['recurrence_days'] ?? ''
         );
+        $record->excluded_dates = self::normalizeExcludedDates($meta['excluded_dates'] ?? '');
         $record->canEdit = Helper::canEditBooking($record);
         $record->status_text = Helper::getStatusText($record);
 
@@ -198,6 +201,21 @@ class Model extends \Kotchasan\Model
         $recurrenceDays = Helper::normalizeRecurrenceDays(
             $row->recurrence_days ?? ''
         );
+        $activeDates = [];
+        $cancelledDates = [];
+        foreach (self::getOccurrences($id) as $occurrence) {
+            $text = Date::format($occurrence->begin, 'd M Y')
+                .' '.Date::format($occurrence->begin, 'H:i')
+                .'-'.Date::format($occurrence->end, 'H:i');
+            if (in_array((int) $occurrence->status, [
+                Helper::STATUS_CANCELLED_BY_REQUESTER,
+                Helper::STATUS_CANCELLED_BY_OFFICER
+            ], true)) {
+                $cancelledDates[] = $text;
+            } else {
+                $activeDates[] = $text;
+            }
+        }
         return [
             'id' => (int) $row->id,
             'member_id' => (int) $row->member_id,
@@ -234,7 +252,11 @@ class Model extends \Kotchasan\Model
             'approve' => (int) ($row->approve ?? 1),
             'closed' => (int) ($row->closed ?? 1),
             'created_at' => (string) ($row->created_at ?? ''),
-            'room_image_url' => Helper::getRoomFirstImageUrl((int) $row->room_id)
+            'room_image_url' => Helper::getRoomFirstImageUrl((int) $row->room_id),
+            'active_dates_text' => implode(', ', $activeDates),
+            'cancelled_dates_text' => implode(', ', $cancelledDates),
+            'occurrence_count' => count($activeDates) + count($cancelledDates),
+            'active_occurrence_count' => count($activeDates)
         ];
     }
 
@@ -271,20 +293,74 @@ class Model extends \Kotchasan\Model
      * @param array $save
      * @param array $meta
      *
-     * @return int
+     * @return array{id:int,conflicts:array}
      */
-    public static function saveReservation(int $id, array $save, array $meta): int
+    public static function saveReservation(int $id, array $save, array $meta): array
     {
-        $db = \Kotchasan\DB::create();
-        if ($id > 0) {
-            $db->update('reservation', ['id', $id], $save);
-        } else {
-            $id = (int) $db->insert('reservation', $save);
+        $db = static::createDB();
+        $schedule = Helper::buildBookingSchedule(
+            $save['begin'] ?? null,
+            $save['end'] ?? null,
+            $save['schedule_type'] ?? null,
+            $meta['recurrence_days'] ?? []
+        );
+        $occurrences = $schedule === null
+            ? []
+            : Helper::buildBookingOccurrences($schedule, $meta['excluded_dates'] ?? []);
+
+        if (empty($occurrences)) {
+            throw new \InvalidArgumentException('At least one booking date must be selected', 400);
         }
 
-        self::saveMeta($id, $meta);
+        $db->beginTransaction();
+        try {
+            self::lockRoom($db, (int) $save['room_id']);
 
-        return $id;
+            $expectedVersion = (int) ($save['version'] ?? 0);
+            if ($id > 0) {
+                $locked = self::lockReservation($db, $id);
+                if (!$locked) {
+                    throw new \RuntimeException('No data available', 404);
+                }
+                if ((int) $locked->version !== $expectedVersion) {
+                    throw new \RuntimeException('This booking was changed by another user. Please reload and try again', 409);
+                }
+            }
+
+            $conflicts = self::findApprovedConflicts((int) $save['room_id'], $occurrences, $id, $db);
+            if (!empty($conflicts)) {
+                $db->rollback();
+                return ['id' => $id, 'conflicts' => $conflicts];
+            }
+
+            $save['version'] = $id > 0 ? $expectedVersion + 1 : 1;
+            if ($id > 0) {
+                $db->update('reservation', ['id', $id], $save);
+            } else {
+                $id = (int) $db->insert('reservation', $save);
+            }
+
+            self::saveMetaWithDb($db, $id, $meta);
+            $db->delete('reservation_occurrence', ['reservation_id', $id], 0);
+            $now = date('Y-m-d H:i:s');
+            foreach ($occurrences as $occurrence) {
+                $db->insert('reservation_occurrence', [
+                    'reservation_id' => $id,
+                    'room_id' => (int) $save['room_id'],
+                    'begin' => $occurrence['begin'],
+                    'end' => $occurrence['end'],
+                    'status' => (int) $save['status'],
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ]);
+            }
+            $db->commit();
+
+            return ['id' => $id, 'conflicts' => []];
+        } catch (\Throwable $e) {
+            $db->rollback();
+            throw $e;
+        }
     }
 
     /**
@@ -294,10 +370,11 @@ class Model extends \Kotchasan\Model
      * @param int $status
      * @param array $fields
      * @param array $metaUpdates
+     * @param int|null $expectedVersion
      *
      * @return void
      */
-    public static function updateStatus(int $id, int $status, array $fields = [], array $metaUpdates = []): void
+    public static function updateStatus(int $id, int $status, array $fields = [], array $metaUpdates = [], ?int $expectedVersion = null): void
     {
         if ($id <= 0) {
             return;
@@ -307,19 +384,86 @@ class Model extends \Kotchasan\Model
             'status' => Helper::normalizeStatusId($status)
         ]);
 
-        \Kotchasan\DB::create()->update('reservation', ['id', $id], $save);
-
-        if (!empty($metaUpdates)) {
-            $meta = self::getMetaValues($id);
-            foreach ($metaUpdates as $name => $value) {
-                $value = is_array($value) ? implode(',', $value) : trim((string) $value);
-                if ($value === '') {
-                    unset($meta[$name]);
-                } else {
-                    $meta[$name] = $value;
-                }
+        $db = static::createDB();
+        $db->beginTransaction();
+        try {
+            $row = self::lockReservation($db, $id);
+            if (!$row) {
+                $db->rollback();
+                return;
             }
-            self::saveMeta($id, $meta);
+            if ($expectedVersion !== null && (int) ($row->version ?? 0) !== $expectedVersion) {
+                throw new \RuntimeException('This booking was changed by another user. Please reload and try again', 409);
+            }
+            $save['version'] = (int) ($row->version ?? 0) + 1;
+            $db->update('reservation', ['id', $id], $save);
+            $db->update('reservation_occurrence', ['reservation_id', $id], [
+                'status' => Helper::normalizeStatusId($status),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            if (!empty($metaUpdates)) {
+                $meta = self::getMetaValues($id);
+                foreach ($metaUpdates as $name => $value) {
+                    $value = is_array($value) ? implode(',', $value) : trim((string) $value);
+                    if ($value === '') {
+                        unset($meta[$name]);
+                    } else {
+                        $meta[$name] = $value;
+                    }
+                }
+                self::saveMetaWithDb($db, $id, $meta);
+            }
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * Cancel a booking on behalf of its requester.
+     *
+     * The eligibility check is repeated against the row locked inside the
+     * transaction, so a cancellation racing an officer's approval fails with
+     * 409 instead of quietly cancelling a booking that was just approved.
+     *
+     * @param int $id
+     * @param int $memberId
+     * @param int|null $expectedVersion
+     *
+     * @return void
+     */
+    public static function cancelByRequester(int $id, int $memberId, ?int $expectedVersion = null): void
+    {
+        $db = static::createDB();
+        $db->beginTransaction();
+        try {
+            $row = self::lockReservation($db, $id);
+            if (!$row || (int) $row->member_id !== $memberId) {
+                throw new \RuntimeException('No data available', 404);
+            }
+            $row->status = (int) $row->status;
+            if ($expectedVersion !== null && (int) ($row->version ?? 0) !== $expectedVersion) {
+                throw new \RuntimeException('This booking was changed by another user. Please reload and try again', 409);
+            }
+            if (!Helper::canCancelBookingByRequester($row)) {
+                throw new \RuntimeException('This booking can no longer be cancelled', 409);
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $db->update('reservation', ['id', $id], [
+                'status' => Helper::STATUS_CANCELLED_BY_REQUESTER,
+                'version' => (int) ($row->version ?? 0) + 1
+            ]);
+            $db->update('reservation_occurrence', ['reservation_id', $id], [
+                'status' => Helper::STATUS_CANCELLED_BY_REQUESTER,
+                'updated_at' => $now
+            ]);
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            throw $e;
         }
     }
 
@@ -357,6 +501,7 @@ class Model extends \Kotchasan\Model
         }
 
         $db = \Kotchasan\DB::create();
+        $db->delete('reservation_occurrence', ['reservation_id', $allowedIds], 0);
         $db->delete('reservation_data', ['reservation_id', $allowedIds], 0);
 
         return (int) $db->delete('reservation', [
@@ -376,6 +521,14 @@ class Model extends \Kotchasan\Model
     public static function saveMeta(int $id, array $meta): void
     {
         $db = \Kotchasan\DB::create();
+        self::saveMetaWithDb($db, $id, $meta);
+    }
+
+    /**
+     * Save metadata using an existing connection/transaction.
+     */
+    protected static function saveMetaWithDb(\Kotchasan\DB $db, int $id, array $meta): void
+    {
         $db->delete('reservation_data', ['reservation_id', $id], 0);
 
         foreach ($meta as $name => $value) {
@@ -439,35 +592,282 @@ class Model extends \Kotchasan\Model
             return false;
         }
 
-        $where = [
-            ['room_id', $save['room_id']],
-            Sql::create('(`status`='.(int) Helper::STATUS_APPROVED.' OR `approve`>1)'),
-            ['begin', '<=', $current['end_date'].' 23:59:59'],
-            ['end', '>=', $current['begin_date'].' 00:00:00']
-        ];
-        if ($save['id'] > 0) {
-            $where[] = ['id', '!=', $save['id']];
+        $occurrences = Helper::buildBookingOccurrences($current, $save['excluded_dates'] ?? []);
+        return !empty($occurrences) && empty(self::findApprovedConflicts(
+            (int) $save['room_id'],
+            $occurrences,
+            (int) ($save['id'] ?? 0)
+        ));
+    }
+
+    /**
+     * Return concrete dates that overlap approved occurrences.
+     */
+    public static function findApprovedConflicts(int $roomId, array $occurrences, int $excludeReservationId = 0, ?\Kotchasan\DB $db = null): array
+    {
+        if ($roomId <= 0 || empty($occurrences)) {
+            return [];
         }
-        $rows = static::createQuery()
-            ->select('id', 'begin', 'end', 'schedule_type')
-            ->from('reservation')
+        $begins = array_column($occurrences, 'begin');
+        $ends = array_column($occurrences, 'end');
+        $where = [
+            ['room_id', $roomId],
+            ['status', Helper::STATUS_APPROVED],
+            ['begin', '<', max($ends)],
+            ['end', '>', min($begins)]
+        ];
+        if ($excludeReservationId > 0) {
+            $where[] = ['reservation_id', '!=', $excludeReservationId];
+        }
+        $database = $db ? $db->getDatabase() : static::createDatabase();
+        $approved = $database->createQuery()
+            ->select('id', 'reservation_id', 'begin', 'end')
+            ->from('reservation_occurrence')
             ->where($where)
+            ->orderBy('begin')
             ->fetchAll();
 
-        foreach ($rows as $row) {
-            $meta = self::getMetaValues((int) $row->id);
-            $existing = Helper::buildBookingSchedule(
-                (string) $row->begin,
-                (string) $row->end,
-                Helper::getScheduleType($row, Helper::SCHEDULE_CONTINUOUS),
-                $meta['recurrence_days'] ?? []
-            );
-            if ($existing !== null && Helper::bookingSchedulesOverlap($current, $existing)) {
-                return false;
+        $conflicts = [];
+        foreach ($occurrences as $candidate) {
+            foreach ($approved as $existing) {
+                if ($candidate['begin'] < $existing->end && $candidate['end'] > $existing->begin) {
+                    $key = $candidate['begin'].'|'.$candidate['end'];
+                    $conflicts[$key] = [
+                        'date' => substr($candidate['begin'], 0, 10),
+                        'begin' => $candidate['begin'],
+                        'end' => $candidate['end'],
+                        'reservation_id' => (int) $existing->reservation_id
+                    ];
+                    break;
+                }
             }
         }
 
-        return true;
+        return array_values($conflicts);
+    }
+
+    /**
+     * Final approval. Room and request rows are locked so two approvals cannot
+     * claim the same room/time concurrently.
+     */
+    public static function approveReservation(int $id, int $expectedVersion, array $fields = []): array
+    {
+        $db = static::createDB();
+        $initial = self::getById($id);
+        if (!$initial) {
+            throw new \RuntimeException('No data available', 404);
+        }
+
+        $db->beginTransaction();
+        try {
+            self::lockRoom($db, (int) $initial->room_id);
+            $row = self::lockReservation($db, $id);
+            if (!$row || (int) $row->status !== Helper::STATUS_PENDING_REVIEW) {
+                throw new \RuntimeException('This booking has already been processed', 409);
+            }
+            if ((int) $row->version !== $expectedVersion) {
+                throw new \RuntimeException('This booking was changed by another user. Please reload and try again', 409);
+            }
+
+            $occurrences = self::getOccurrences($id, null, $db);
+            if (empty($occurrences)) {
+                throw new \RuntimeException('At least one booking date must be selected', 409);
+            }
+            $conflicts = self::findApprovedConflicts((int) $row->room_id, array_map(static function ($item) {
+                return ['begin' => (string) $item->begin, 'end' => (string) $item->end];
+            }, $occurrences), $id, $db);
+            if (!empty($conflicts)) {
+                $db->rollback();
+                return $conflicts;
+            }
+
+            $save = array_merge($fields, [
+                'status' => Helper::STATUS_APPROVED,
+                'version' => $expectedVersion + 1
+            ]);
+            $db->update('reservation', ['id', $id], $save);
+            $db->update('reservation_occurrence', ['reservation_id', $id], [
+                'status' => Helper::STATUS_APPROVED,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+            $db->commit();
+
+            return [];
+        } catch (\Throwable $e) {
+            $db->rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * Fetch occurrences for a parent reservation.
+     */
+    public static function getOccurrences(int $reservationId, ?int $status = null, ?\Kotchasan\DB $db = null): array
+    {
+        $where = [['reservation_id', $reservationId]];
+        if ($status !== null) {
+            $where[] = ['status', $status];
+        }
+        $database = $db ? $db->getDatabase() : static::createDatabase();
+        return $database->createQuery()
+            ->select()
+            ->from('reservation_occurrence')
+            ->where($where)
+            ->orderBy('begin')
+            ->fetchAll();
+    }
+
+    /**
+     * Return active/total occurrence counts for compact parent-row displays.
+     */
+    public static function getOccurrenceSummary(int $reservationId): array
+    {
+        $occurrences = self::getOccurrences($reservationId);
+        $activeStatuses = [
+            Helper::STATUS_PENDING_REVIEW,
+            Helper::STATUS_APPROVED,
+            Helper::STATUS_RETURNED_FOR_EDIT
+        ];
+        $active = 0;
+        foreach ($occurrences as $occurrence) {
+            if (in_array((int) $occurrence->status, $activeStatuses, true)) {
+                $active++;
+            }
+        }
+        return ['active' => $active, 'total' => count($occurrences)];
+    }
+
+    /**
+     * Active/total occurrence counts for many reservations in one query.
+     * Table listings call this once per page instead of once per row.
+     *
+     * @param array $reservationIds
+     *
+     * @return array<int, array{active:int,total:int}> keyed by reservation id
+     */
+    public static function getOccurrenceSummaries(array $reservationIds): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $reservationIds))));
+        $summaries = [];
+        foreach ($ids as $id) {
+            $summaries[$id] = ['active' => 0, 'total' => 0];
+        }
+        if (empty($ids)) {
+            return $summaries;
+        }
+
+        $activeStatuses = [
+            Helper::STATUS_PENDING_REVIEW,
+            Helper::STATUS_APPROVED,
+            Helper::STATUS_RETURNED_FOR_EDIT
+        ];
+        $rows = static::createQuery()
+            ->select('reservation_id', 'status', Sql::COUNT('id', 'total'))
+            ->from('reservation_occurrence')
+            ->where(['reservation_id', $ids])
+            ->groupBy(['reservation_id', 'status'])
+            ->fetchAll();
+
+        foreach ($rows as $row) {
+            $id = (int) $row->reservation_id;
+            if (!isset($summaries[$id])) {
+                $summaries[$id] = ['active' => 0, 'total' => 0];
+            }
+            $count = (int) $row->total;
+            $summaries[$id]['total'] += $count;
+            if (in_array((int) $row->status, $activeStatuses, true)) {
+                $summaries[$id]['active'] += $count;
+            }
+        }
+
+        return $summaries;
+    }
+
+    /**
+     * Cancel one approved occurrence while preserving the parent request.
+     */
+    public static function cancelOccurrence(int $reservationId, int $occurrenceId, int $memberId, string $reason, int $expectedVersion): bool
+    {
+        $initial = self::getById($reservationId);
+        if (!$initial) {
+            return false;
+        }
+        $db = static::createDB();
+        $db->beginTransaction();
+        try {
+            self::lockRoom($db, (int) $initial->room_id);
+            $row = self::lockReservation($db, $reservationId);
+            if (!$row || (int) $row->status !== Helper::STATUS_APPROVED || (int) $row->version !== $expectedVersion) {
+                throw new \RuntimeException('This booking was changed by another user. Please reload and try again', 409);
+            }
+            $occurrenceTable = $db->getTableName('reservation_occurrence');
+            $occurrence = $db->raw(
+                "SELECT * FROM `$occurrenceTable` WHERE `id`=:id AND `reservation_id`=:reservation_id FOR UPDATE",
+                [':id' => $occurrenceId, ':reservation_id' => $reservationId]
+            )->fetch();
+            if (!$occurrence || (int) $occurrence->status !== Helper::STATUS_APPROVED) {
+                throw new \RuntimeException('This booking date has already been cancelled', 409);
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $db->update('reservation_occurrence', ['id', $occurrenceId], [
+                'status' => Helper::STATUS_CANCELLED_BY_OFFICER,
+                'cancelled_by' => $memberId,
+                'cancelled_at' => $now,
+                'cancellation_reason' => $reason,
+                'updated_at' => $now
+            ]);
+            $active = $db->getDatabase()->createQuery()
+                ->select('id')
+                ->from('reservation_occurrence')
+                ->where([
+                    ['reservation_id', $reservationId],
+                    ['status', Helper::STATUS_APPROVED]
+                ])
+                ->first();
+            $parentSave = ['version' => $expectedVersion + 1];
+            if (!$active) {
+                $parentSave['status'] = Helper::STATUS_CANCELLED_BY_OFFICER;
+                $parentSave['reason'] = $reason;
+            }
+            $db->update('reservation', ['id', $reservationId], $parentSave);
+            $db->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $db->rollback();
+            throw $e;
+        }
+    }
+
+    protected static function lockRoom(\Kotchasan\DB $db, int $roomId): void
+    {
+        $table = $db->getTableName('rooms');
+        $row = $db->raw("SELECT `id` FROM `$table` WHERE `id`=:id AND `is_active`=1 FOR UPDATE", [':id' => $roomId])->fetch();
+        if (!$row) {
+            throw new \InvalidArgumentException('Please select an active room', 400);
+        }
+    }
+
+    protected static function lockReservation(\Kotchasan\DB $db, int $id)
+    {
+        $table = $db->getTableName('reservation');
+        return $db->raw("SELECT * FROM `$table` WHERE `id`=:id FOR UPDATE", [':id' => $id])->fetch();
+    }
+
+    public static function normalizeExcludedDates($dates): array
+    {
+        if (is_string($dates)) {
+            $dates = explode(',', $dates);
+        }
+        $result = [];
+        foreach (is_array($dates) ? $dates : [] as $date) {
+            $date = trim((string) $date);
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && date('Y-m-d', strtotime($date)) === $date) {
+                $result[$date] = $date;
+            }
+        }
+        ksort($result);
+        return array_values($result);
     }
 
     /**

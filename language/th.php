@@ -203,6 +203,8 @@ return array(
   'Booking' => 'การจอง',
   'Booking approvals' => 'การอนุมัติการจอง',
   'Booking are not available at select time' => 'ไม่สามารถจองได้ในเวลาที่เลือก',
+  'Booking date cancelled' => 'ยกเลิกวันจองแล้ว',
+  'Booking dates' => 'วันที่ต้องการจอง',
   'Booking date' => 'วันที่จอง',
   'Booking rules' => 'กฎการจอง',
   'Booking today' => 'การจองวันนี้',
@@ -214,6 +216,10 @@ return array(
     4 => 'ยกเลิกโดยเจ้าหน้าที่',
     5 => 'กลับไปแก้ไข'
   ),
+  'Cancel this date' => 'ยกเลิกวันนี้',
+  'Cannot approve because these dates are already booked' => 'ไม่สามารถอนุมัติได้ เนื่องจากวันต่อไปนี้มีการจองแล้ว',
+  'Confirm cancellation of this date' => 'ยืนยันการยกเลิกเฉพาะวันนี้',
+  'Conflicts with an approved booking' => 'ชนกับรายการจองที่อนุมัติแล้ว',
   'Books in the Same Category' => 'หนังสือในหมวดเดียวกัน',
   'Books Sold' => 'หนังสือที่ขายได้',
   'Bookshelf' => 'ชั้นหนังสือ',
@@ -440,6 +446,14 @@ return array(
     5 => 'ศ.',
     6 => 'ส.'
   ),
+  'Active / total dates' => 'วันที่ใช้งาน / ทั้งหมด',
+  'An approved date can be cancelled individually without cancelling the other dates' => 'แอดมินสามารถยกเลิกวันที่อนุมัติแล้วเฉพาะวัน โดยวันอื่นยังคงอยู่',
+  'At least one booking date must be selected' => 'กรุณาเลือกวันที่ต้องการจองอย่างน้อย 1 วัน',
+  'Selected booking dates' => 'วันที่เลือกจอง',
+  'Cancelled dates' => 'วันที่ยกเลิกแล้ว',
+  'No booking dates' => 'ไม่มีวันที่จอง',
+  'Selected dates' => 'วันที่เลือก',
+  'Uncheck dates that should not be included in this request' => 'นำเครื่องหมายออกจากวันที่ไม่ต้องการรวมในคำขอนี้',
   'Dateless' => 'ไม่มีวันหมดอายุ',
   'days' => 'วัน',
   'days used' => 'จำนวนวันที่ใช้',
@@ -1778,5 +1792,11 @@ return array(
   'Selected weekdays' => 'วันที่เลือกในแต่ละสัปดาห์',
   'Required when repeating on selected weekdays' => 'จำเป็นเมื่อเลือกทำซ้ำตามวันในสัปดาห์',
   'Selected weekdays do not occur in the reservation period' => 'วันที่เลือกไม่อยู่ภายในช่วงวันที่จอง',
-  'The selected time applies to each occurrence within the date range' => 'ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก'
+  'The selected time applies to each occurrence within the date range' => 'ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก',
+  'The reservation period must not exceed :days days' => 'ช่วงวันที่จองต้องไม่เกิน :days วัน',
+  'A reservation cannot contain more than :days dates' => 'การจอง 1 รายการมีวันจองได้ไม่เกิน :days วัน',
+  'The decision note must not exceed :length characters' => 'เหตุผลต้องมีความยาวไม่เกิน :length ตัวอักษร',
+  'This booking was changed by another user. Please reload and try again' => 'รายการนี้ถูกแก้ไขโดยผู้ใช้อื่น กรุณาโหลดหน้าใหม่แล้วลองอีกครั้ง',
+  'This booking can no longer be cancelled' => 'รายการนี้ไม่สามารถยกเลิกได้แล้ว',
+  'Decision note is required' => 'กรุณากรอกเหตุผล'
 );

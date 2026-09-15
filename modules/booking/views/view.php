@@ -67,6 +67,12 @@ class View extends \Kotchasan\KBase
         }
         $reservationText = !empty($index['reservation_text']) ? $index['reservation_text'] : $index['begin_text'].' - '.$index['end_text'];
         $content[] = '<tr><td class="item"><span class="icon-calendar">{LNG_Reservation period}</span></td><td class="item"> : </td><td class="item">'.$escape($reservationText).'</td></tr>';
+        if (!empty($index['active_dates_text'])) {
+            $content[] = '<tr><td class="item"><span class="icon-calendar">{LNG_Selected booking dates}</span></td><td class="item"> : </td><td class="item">'.$escape($index['active_dates_text']).'</td></tr>';
+        }
+        if (!empty($index['cancelled_dates_text'])) {
+            $content[] = '<tr><td class="item"><span class="icon-ban">{LNG_Cancelled dates}</span></td><td class="item"> : </td><td class="item">'.$escape($index['cancelled_dates_text']).'</td></tr>';
+        }
         $content[] = '<tr><td class="item"><span class="icon-group">{LNG_Attendees number}</span></td><td class="item"> : </td><td class="item">'.$escape($index['attendees']).'</td></tr>';
         if (!empty($index['use_text'])) {
             $content[] = '<tr><td class="item"><span class="icon-menus">{LNG_Use for}</span></td><td class="item"> : </td><td class="item">'.$escape($index['use_text']).'</td></tr>';

@@ -5,6 +5,7 @@
 
 namespace Booking\Approvals;
 
+use Booking\Booking\Model as BookingModel;
 use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
@@ -94,9 +95,15 @@ class Controller extends \Gcms\Table
      */
     protected function formatDatas(array $datas, $login = null): array
     {
+        $summaries = BookingModel::getOccurrenceSummaries(array_map(static function ($item) {
+            return (int) ($item->id ?? 0);
+        }, $datas));
+
         foreach ($datas as $item) {
             $item->first_image_url = Helper::getRoomFirstImageUrl((int) ($item->room_id ?? 0));
             $item->reservation_text = Helper::formatBookingTime($item);
+            $summary = $summaries[(int) $item->id] ?? ['active' => 0, 'total' => 0];
+            $item->occurrence_summary = $summary['active'].' / '.$summary['total'];
         }
 
         return $datas;

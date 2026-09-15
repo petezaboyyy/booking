@@ -38,6 +38,7 @@ class Model extends \Kotchasan\Model
                 'R.status',
                 'R.approve',
                 'R.closed',
+                'R.version',
                 'U.name member_name',
                 'U.username member_username',
                 'Room.name room_name',
@@ -60,6 +61,7 @@ class Model extends \Kotchasan\Model
         $row->accessories = BookingModel::csvToArray($meta['accessories'] ?? '');
         $row->accessories_text = Helper::formatAccessoryNames($meta['accessories'] ?? '');
         $row->recurrence_days = Helper::normalizeRecurrenceDays($meta['recurrence_days'] ?? '');
+        $row->excluded_dates = BookingModel::normalizeExcludedDates($meta['excluded_dates'] ?? '');
 
         return $row;
     }

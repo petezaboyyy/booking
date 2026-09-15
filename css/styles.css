@@ -408,6 +408,17 @@ a:hover {
   justify-content: center;
   background-image: var(--bg_image);
   background-size: cover;
+  position: relative;
+}
+.auth-language-switcher {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  z-index: 2;
+}
+.auth-language-switcher .lang-toggle {
+  min-width: 4.5rem;
+  justify-content: center;
 }
 .auth-card {
   width: 100%;
@@ -453,6 +464,16 @@ a:hover {
   align-items: center;
   justify-content: center;
   background-size: contain;
+}
+.guest-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: -0.25rem;
+}
+.guest-entry .comment {
+  margin: 0.5rem 0 0;
+  text-align: center;
 }
 .login-card h1 {
   font-weight: 700;

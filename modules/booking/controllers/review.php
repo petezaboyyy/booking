@@ -10,6 +10,7 @@ use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Date;
 use Kotchasan\Http\Request;
+use Kotchasan\Language;
 
 class Controller extends ApiController
 {
@@ -40,6 +41,19 @@ class Controller extends ApiController
 
             $canProcess = Model::canProcess($row);
             $canApproveAction = $canProcess && Helper::canApproveStep($login, $row);
+            $occurrences = array_map(static function ($occurrence) {
+                return [
+                    'id' => (int) $occurrence->id,
+                    'date' => substr((string) $occurrence->begin, 0, 10),
+                    'begin_time' => substr((string) $occurrence->begin, 11, 5),
+                    'end_time' => substr((string) $occurrence->end, 11, 5),
+                    'status' => (int) $occurrence->status,
+                    'status_text' => Helper::getStatusLabel((int) $occurrence->status),
+                    'cancellation_reason' => (string) ($occurrence->cancellation_reason ?? ''),
+                    'can_cancel' => (int) $row->status === Helper::STATUS_APPROVED
+                        && (int) $occurrence->status === Helper::STATUS_APPROVED
+                ];
+            }, BookingModel::getOccurrences((int) $row->id));
 
             return $this->successResponse([
                 'id' => (int) $row->id,
@@ -59,7 +73,10 @@ class Controller extends ApiController
                 'approval_reason' => (string) $row->reason,
                 'canProcess' => $canProcess,
                 'canApproveAction' => $canApproveAction,
-                'canCancelAction' => Helper::canCancelBookingByOfficer($row)
+                'canCancelAction' => Helper::canCancelBookingByOfficer($row),
+                'version' => (int) ($row->version ?? 1),
+                'occurrence_count' => count($occurrences),
+                'occurrences' => $occurrences
             ], 'Review data retrieved');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
@@ -115,6 +132,52 @@ class Controller extends ApiController
     }
 
     /**
+     * Cancel one date from an approved recurring reservation.
+     */
+    public function canceloccurrence(Request $request)
+    {
+        try {
+            ApiController::validateMethod($request, 'POST');
+            $this->validateCsrfToken($request);
+            $login = $this->authenticateRequest($request);
+            if (!$login || !Helper::canApproveRequests($login)) {
+                return $this->errorResponse('Permission required', 403);
+            }
+
+            $id = $request->post('id')->toInt();
+            $occurrenceId = $request->post('occurrence_id')->toInt();
+            $version = $request->post('version')->toInt();
+            $reason = trim($request->post('approval_reason')->textarea());
+            if ($reason === '') {
+                return $this->errorResponse('Decision note is required', 400);
+            }
+            if (mb_strlen($reason) > Helper::MAX_CANCELLATION_REASON_LENGTH) {
+                return $this->errorResponse(Language::replace(
+                    'The decision note must not exceed :length characters',
+                    [':length' => Helper::MAX_CANCELLATION_REASON_LENGTH]
+                ), 400);
+            }
+            if (!BookingModel::cancelOccurrence($id, $occurrenceId, (int) $login->id, $reason, $version)) {
+                return $this->errorResponse('No data available', 404);
+            }
+
+            \Index\Log\Model::add($id, 'booking', 'Cancel date', 'Cancelled one booking date: '.$occurrenceId, $login->id, $reason, [
+                'occurrence_id' => $occurrenceId
+            ]);
+            \Booking\Pusher\Model::trigger('private-booking', 'updated', [
+                'action' => 'cancel-occurrence',
+                'id' => $id,
+                'occurrence_id' => $occurrenceId,
+                'message' => 'Booking date cancelled'
+            ]);
+
+            return $this->redirectResponse('/booking-review?id='.$id, 'Booking date cancelled');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
+        }
+    }
+
+    /**
      * Shared decision handler.
      *
      * @param Request $request
@@ -141,6 +204,7 @@ class Controller extends ApiController
 
             $id = $request->post('id')->toInt();
             $approvalReason = trim($request->post('approval_reason')->textarea());
+            $expectedVersion = $request->post('version')->toInt();
 
             $row = Model::get($id);
             if ($row === null) {
@@ -152,15 +216,21 @@ class Controller extends ApiController
                     return $this->errorResponse('This booking can no longer be cancelled', 400);
                 }
             }
-            if (!Model::canProcess($row)) {
+            if (!$allowOfficerCancel && !Model::canProcess($row)) {
                 return $this->errorResponse('This booking has already been processed', 400);
             }
-            if (!Helper::canApproveStep($login, $row)) {
+            if (!$allowOfficerCancel && !Helper::canApproveStep($login, $row)) {
                 return $this->errorResponse('You are not allowed to approve this step', 403);
             }
 
             if ($requireReason && $approvalReason === '') {
                 return $this->errorResponse('Decision note is required', 400);
+            }
+            if (mb_strlen($approvalReason) > Helper::MAX_CANCELLATION_REASON_LENGTH) {
+                return $this->errorResponse(Language::replace(
+                    'The decision note must not exceed :length characters',
+                    [':length' => Helper::MAX_CANCELLATION_REASON_LENGTH]
+                ), 400);
             }
 
             $currentApprove = (int) ($row->approve ?? 1);
@@ -169,20 +239,6 @@ class Controller extends ApiController
             $save = [];
             $finalStatus = $status;
             if ($status === Helper::STATUS_APPROVED) {
-                if (!BookingModel::availability([
-                    'id' => (int) $row->id,
-                    'room_id' => (int) $row->room_id,
-                    'begin' => (string) $row->begin,
-                    'end' => (string) $row->end,
-                    'schedule_type' => Helper::getScheduleType(
-                        $row,
-                        Helper::SCHEDULE_CONTINUOUS
-                    ),
-                    'recurrence_days' => $row->recurrence_days ?? []
-                ])) {
-                    return $this->errorResponse('Booking are not available at select time', 400);
-                }
-
                 if ($currentApprove >= $closedLevel || \Gcms\Api::isAdmin($login)) {
                     $save['approve'] = $closedLevel;
                 } else {
@@ -196,7 +252,14 @@ class Controller extends ApiController
                 $save['reason'] = $approvalReason;
             }
 
-            BookingModel::updateStatus($id, $finalStatus, $save);
+            if ($finalStatus === Helper::STATUS_APPROVED) {
+                $conflicts = BookingModel::approveReservation($id, $expectedVersion, $save);
+                if (!empty($conflicts)) {
+                    return $this->errorResponse($this->formatConflictMessage($conflicts), 409);
+                }
+            } else {
+                BookingModel::updateStatus($id, $finalStatus, $save, [], $expectedVersion);
+            }
             \Index\Log\Model::add($id, 'booking', 'Status', $logTopic.': '.$id, $login->id, $approvalReason, [
                 'status' => $finalStatus
             ]);
@@ -215,5 +278,15 @@ class Controller extends ApiController
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }
+    }
+
+    protected function formatConflictMessage(array $conflicts): string
+    {
+        $slots = array_map(static function ($conflict) {
+            return substr($conflict['begin'], 0, 10)
+                .' '.substr($conflict['begin'], 11, 5)
+                .'-'.substr($conflict['end'], 11, 5);
+        }, array_slice($conflicts, 0, 10));
+        return Language::get('Cannot approve because these dates are already booked').': '.implode(', ', $slots);
     }
 }

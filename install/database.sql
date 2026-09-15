@@ -104,11 +104,32 @@ CREATE TABLE `{prefix}_reservation` (
   `end` datetime DEFAULT NULL,
   `schedule_type` varchar(20) NOT NULL DEFAULT 'daily-slot',
   `status` tinyint(1) NOT NULL,
-  `reason` varchar(128) DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
   `approve` tinyint(1) NOT NULL,
   `closed` tinyint(1) NOT NULL,
-  `department` varchar(10) DEFAULT NULL
+  `department` varchar(10) DEFAULT NULL,
+  `version` int(10) unsigned NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `{prefix}_reservation_occurrence`
+--
+
+CREATE TABLE `{prefix}_reservation_occurrence` (
+  `id` bigint(20) unsigned NOT NULL,
+  `reservation_id` int(11) NOT NULL,
+  `room_id` int(11) NOT NULL,
+  `begin` datetime NOT NULL,
+  `end` datetime NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 0,
+  `cancelled_by` int(11) DEFAULT NULL,
+  `cancelled_at` datetime DEFAULT NULL,
+  `cancellation_reason` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -119,7 +140,7 @@ CREATE TABLE `{prefix}_reservation` (
 CREATE TABLE `{prefix}_reservation_data` (
   `reservation_id` int(11) NOT NULL,
   `name` varchar(20) NOT NULL,
-  `value` varchar(150) NOT NULL
+  `value` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -266,6 +287,15 @@ ALTER TABLE `{prefix}_reservation`
   ADD KEY `status` (`status`);
 
 --
+-- Indexes for table `{prefix}_reservation_occurrence`
+--
+ALTER TABLE `{prefix}_reservation_occurrence`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_reservation_occurrence` (`reservation_id`,`begin`,`end`),
+  ADD KEY `idx_occurrence_availability` (`room_id`,`status`,`begin`,`end`),
+  ADD KEY `idx_occurrence_reservation` (`reservation_id`,`status`,`begin`);
+
+--
 -- Indexes for table `{prefix}_reservation_data`
 --
 ALTER TABLE `{prefix}_reservation_data`
@@ -327,6 +357,12 @@ ALTER TABLE `{prefix}_login_attempt`
 --
 ALTER TABLE `{prefix}_reservation`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `{prefix}_reservation_occurrence`
+--
+ALTER TABLE `{prefix}_reservation_occurrence`
+  MODIFY `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `{prefix}_rooms`

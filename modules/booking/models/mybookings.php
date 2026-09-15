@@ -36,6 +36,7 @@ class Model extends \Kotchasan\Model
                 'R.schedule_type',
                 'RecurrenceDays.value recurrence_days',
                 'R.status',
+                'R.version',
                 'R.created_at',
                 'Room.name room_name',
                 'Room.color room_color',
