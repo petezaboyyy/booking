@@ -2772,17 +2772,32 @@ html[data-theme='dark'] .roomly-theme-sun {
   min-height: 680px;
   overflow: hidden;
   padding: 44px 40px;
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(4, 14, 28, 0.06) 0%,
-      rgba(4, 14, 28, 0.20) 35%,
-      rgba(3, 10, 22, 0.65) 65%,
-      rgba(2, 7, 18, 0.92) 86%,
-      rgba(1, 5, 14, 0.98) 100%
-    ),
-    url('/images/login-visual-building.jpg?v=20260916-2') center center / cover no-repeat;
+  background-color: #071526;
   color: #fff;
+  isolation: isolate;
+}
+
+.roomly-login-visual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/images/login-visual-building.jpg?v=20260916-3') center center / cover no-repeat;
+  opacity: 0.75;
+  z-index: 0;
+}
+
+.roomly-login-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(3, 12, 26, 0.2) 0%,
+    rgba(3, 12, 26, 0.42) 40%,
+    rgba(2, 8, 18, 0.82) 72%,
+    rgba(1, 5, 14, 0.98) 100%
+  );
+  z-index: 1;
 }
 
 .roomly-login-brand,
