@@ -2718,9 +2718,9 @@ html[data-theme='dark'] .roomly-theme-sun {
   position: fixed;
   inset: 0;
   background-image: var(--roomly-login-bg-image);
-  background-repeat: repeat;
-  background-position: center top;
-  background-size: 500px auto;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
   opacity: var(--roomly-login-bg-opacity);
   pointer-events: none;
   z-index: -1;
