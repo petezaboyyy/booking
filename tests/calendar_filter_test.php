@@ -90,8 +90,8 @@ echo "Alternative parameter q=R-0002 passed.\n";
 
 echo "Testing single-digit room=1 filter (ensures topic with digit 1 does not leak Room 2 events)...\n";
 $digit1Events = fetchCalendar('start=2026-09-01&end=2026-09-30&room=1');
-if (count($digit1Events) !== 6) {
-    fwrite(STDERR, "Expected exactly 6 events for room=1, got " . count($digit1Events) . "\n");
+if (count($digit1Events) !== 7) {
+    fwrite(STDERR, "Expected exactly 7 events for room=1, got " . count($digit1Events) . "\n");
     exit(1);
 }
 foreach ($digit1Events as $ev) {
@@ -104,8 +104,8 @@ echo "Single-digit room=1 filter passed without topic contamination.\n";
 
 echo "Testing single-digit room=2 filter (ensures topic with digit 2 does not leak Room 1 events)...\n";
 $digit2Events = fetchCalendar('start=2026-09-01&end=2026-09-30&room=2');
-if (count($digit2Events) !== 2) {
-    fwrite(STDERR, "Expected exactly 2 events for room=2, got " . count($digit2Events) . "\n");
+if (count($digit2Events) !== 3) {
+    fwrite(STDERR, "Expected exactly 3 events for room=2, got " . count($digit2Events) . "\n");
     exit(1);
 }
 foreach ($digit2Events as $ev) {

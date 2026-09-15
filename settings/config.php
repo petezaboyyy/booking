@@ -29,14 +29,12 @@ return array (
     3 => 3,
     4 => 4,
   ),
-  'booking_approve_level' => 1,
+  'booking_approve_level' => 0,
   'booking_approve_status' => 
   array (
-    1 => 1,
   ),
   'booking_approve_department' => 
   array (
-    1 => '',
   ),
   'activate_user' => 0,
   'demo_mode' => 0,

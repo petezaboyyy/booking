@@ -27,6 +27,7 @@ html[data-theme='dark']:not([data-ui-role='admin']) .footer {
   border-color: rgba(151, 180, 211, .16);
 }
 
+:root,
 .roomly-dashboard {
   --roomly-primary: #006591;
   --roomly-secondary: #006686;
@@ -52,6 +53,11 @@ html[data-theme='dark']:not([data-ui-role='admin']) .footer {
   --ec-text: var(--roomly-text);
   --ec-text-secondary: var(--roomly-muted);
   --ec-weekend-bg: var(--roomly-surface-low);
+  --z-index-loading: 1000000;
+  --z-index-modal: 1000005;
+}
+
+.roomly-dashboard {
   min-height: 100vh;
   background:
     radial-gradient(circle at 84% -8%, var(--roomly-glow), transparent 31rem),
@@ -60,6 +66,7 @@ html[data-theme='dark']:not([data-ui-role='admin']) .footer {
   transition: background-color .35s ease, color .35s ease;
 }
 
+[data-theme='dark'],
 [data-theme='dark'] .roomly-dashboard {
   --roomly-primary: #75d1ff;
   --roomly-secondary: #5ed7ee;

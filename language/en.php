@@ -70,5 +70,8 @@ return array(
   'Clear filter' => 'Clear filter',
   'ระบบจองห้องคณะสัตวแพทยศาสตร์' => 'Faculty of Veterinary Medicine Room Reservation',
   'Faculty of Veterinary Medicine Room Reservation' => 'Faculty of Veterinary Medicine Room Reservation',
-  'Roomly' => 'Faculty of Veterinary Medicine Room Reservation'
+  'Roomly' => 'Faculty of Veterinary Medicine Room Reservation',
+  'Room booking calendar' => 'Room booking calendar',
+  'Select or search room...' => 'Select or search room...',
+  'No rooms found' => 'No rooms found'
 );

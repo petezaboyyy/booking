@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @filesource modules/booking/controllers/booking.php
  */
@@ -254,7 +254,7 @@ class Controller extends ApiController
 
             if ($booking->id > 0 && $booking->status === Helper::STATUS_RETURNED_FOR_EDIT) {
                 // comes from editing return to pending approval status again.
-                $save['status'] = Helper::STATUS_PENDING_REVIEW;
+                $save['status'] = Helper::getApprovalLevelCount() === 0 ? Helper::STATUS_APPROVED : Helper::STATUS_PENDING_REVIEW;
             } else {
                 $save['status'] = $booking->status;
                 $save['closed'] = $booking->closed;

@@ -107,7 +107,7 @@
                           <select id="room_id" name="room_id" data-options-key="room_id" data-attr="value:room_id" required>
                             <option value="" data-placeholder="true" selected></option>
                           </select>
-                          <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
+                          <span class="roomly-select-arrow icon-chevron-down icon-down" aria-hidden="true"></span>
                         </span>
                       </div>
                       <div class="roomly-field-wrap">
@@ -137,7 +137,7 @@
                           <select id="use" name="use" data-options-key="use" data-attr="value:use">
                             <option value="" data-placeholder="true" selected></option>
                           </select>
-                          <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
+                          <span class="roomly-select-arrow icon-chevron-down icon-down" aria-hidden="true"></span>
                         </span>
                       </div>
                     </div>
@@ -209,7 +209,7 @@
                             <option value="daily-slot" data-i18n>Every day</option>
                             <option value="weekly-slot" data-i18n>Selected weekdays</option>
                           </select>
-                          <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
+                          <span class="roomly-select-arrow icon-chevron-down icon-down" aria-hidden="true"></span>
                         </span>
                       </div>
 
@@ -313,9 +313,6 @@
                   <span class='roomly-summary-badge' data-i18n>Summary</span>
                   <h3 class='roomly-summary-title' data-i18n>Reservation details</h3>
                 </div>
-                <div class='roomly-summary-icon-bubble' aria-hidden='true'>
-                  <span class='icon-calendar'></span>
-                </div>
               </div>
 
               <!-- Room Preview Card -->
@@ -385,13 +382,49 @@
                 </ul>
               </div>
 
-              <a class='roomly-summary-browse-btn' href='/rooms'>
-                <span class='icon-search' aria-hidden='true'></span>
-                <span data-i18n>All rooms</span>
-              </a>
+              <button type='button' class='roomly-summary-browse-btn roomly-summary-calendar-btn' id='btn-open-calendar-modal'>
+                <span class='icon-calendar' aria-hidden='true'></span>
+                <span data-i18n>Room booking calendar</span>
+              </button>
             </aside>
           </div>
         </div>
       </form>
+
+      <!-- Room Booking Calendar Modal Popup -->
+      <div id='roomly-calendar-modal' class='roomly-modal-backdrop' aria-hidden='true' role='dialog' aria-labelledby='roomly-modal-calendar-title'>
+        <div class='roomly-modal-dialog roomly-calendar-modal-dialog'>
+          <header class='roomly-modal-header'>
+            <div class='roomly-modal-title-wrap'>
+              <span class='roomly-modal-title-icon icon-calendar' aria-hidden='true'></span>
+              <div>
+                <h3 id='roomly-modal-calendar-title' class='roomly-modal-title' data-i18n>Reservation calendar</h3>
+                <p class='roomly-modal-subtitle' data-i18n>Check room schedule to avoid overlap</p>
+              </div>
+            </div>
+            <button type='button' class='roomly-modal-close-btn' id='btn-close-calendar-modal' aria-label='Close'>&times;</button>
+          </header>
+          <div class='roomly-modal-body'>
+            <div class='roomly-calendar-filter-bar'>
+              <div class='roomly-calendar-filter-wrap'>
+                <span class='roomly-calendar-filter-icon icon-search' aria-hidden='true'></span>
+                <input type='text' id='modal_calendar_room_filter' data-calendar-filter class='roomly-calendar-filter-input' placeholder='ค้นหาห้อง หรือเลขห้อง...' data-i18n='Filter by room number or name...' autocomplete='off'>
+                <button type='button' class='roomly-calendar-filter-clear' data-calendar-filter-clear aria-label='Clear filter' style='display:none;'>&times;</button>
+              </div>
+            </div>
+            <div id='modal-roomly-calendar'
+                 class='roomly-calendar'
+                 data-api='api/booking/calendar'
+                 data-on-event-click-api='api/booking/view?id={id}'
+                 data-view='month'
+                 data-show-today='true'
+                 data-show-view-switcher='true'
+                 data-show-period-picker='true'
+                 data-show-filter='true'
+                 data-filter-target='#modal_calendar_room_filter'>
+            </div>
+          </div>
+        </div>
+      </div>
   </main>
 </div>

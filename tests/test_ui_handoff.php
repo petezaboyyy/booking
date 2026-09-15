@@ -16,6 +16,7 @@ $files = [
     'language/en.php',
     'images/logo.png',
     'js/main.js',
+    'js/components/GallerySlideshow.js',
     'index.html'
 ];
 

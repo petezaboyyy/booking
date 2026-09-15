@@ -832,45 +832,57 @@ class EmbeddedDateTime {
     // Get first day of month and number of days
     const firstDay = new Date(this.currentYear, this.currentMonth, 1);
     const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
 
-    // Create 6 weeks of days (42 days total)
-    for (let i = 0; i < 42; i++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
+    // Calculate exact number of slots needed to complete the weeks
+    const totalCells = Math.ceil((startDayOfWeek + daysInMonth) / 7) * 7;
 
-      const dayElement = document.createElement('button');
-      dayElement.type = 'button';
-      dayElement.className = 'calendar-day';
-      dayElement.textContent = currentDate.getDate();
+    for (let i = 0; i < totalCells; i++) {
+      if (i < startDayOfWeek) {
+        // Leading blank placeholder before Day 1
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day other-month empty';
+        emptyCell.setAttribute('aria-hidden', 'true');
+        this.calendarGrid.appendChild(emptyCell);
+      } else if (i < startDayOfWeek + daysInMonth) {
+        // Current month day
+        const dayNum = i - startDayOfWeek + 1;
+        const currentDate = new Date(this.currentYear, this.currentMonth, dayNum);
 
-      // Add classes for styling
-      if (currentDate.getMonth() !== this.currentMonth) {
-        dayElement.classList.add('other-month');
-      }
+        const dayElement = document.createElement('button');
+        dayElement.type = 'button';
+        dayElement.className = 'calendar-day';
+        dayElement.textContent = String(dayNum);
 
-      if (this._isSameDate(currentDate, new Date())) {
-        dayElement.classList.add('today');
-      }
+        if (this._isSameDate(currentDate, new Date())) {
+          dayElement.classList.add('today');
+        }
 
-      if (this.selectedDate && this._isSameDate(currentDate, this.selectedDate)) {
-        dayElement.classList.add('selected');
-      }
+        if (this.selectedDate && this._isSameDate(currentDate, this.selectedDate)) {
+          dayElement.classList.add('selected');
+        }
 
-      // Check if date is disabled
-      if (this._isDateDisabled(currentDate)) {
-        dayElement.disabled = true;
-        dayElement.classList.add('disabled');
+        // Check if date is disabled
+        if (this._isDateDisabled(currentDate)) {
+          dayElement.disabled = true;
+          dayElement.classList.add('disabled');
+        } else {
+          dayElement.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent dropdown from closing
+            this.selectDate(currentDate);
+          });
+        }
+
+        this.calendarGrid.appendChild(dayElement);
       } else {
-        dayElement.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation(); // Prevent dropdown from closing
-          this.selectDate(currentDate);
-        });
+        // Trailing blank placeholder after last day of month
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day other-month empty';
+        emptyCell.setAttribute('aria-hidden', 'true');
+        this.calendarGrid.appendChild(emptyCell);
       }
-
-      this.calendarGrid.appendChild(dayElement);
     }
   }
 
