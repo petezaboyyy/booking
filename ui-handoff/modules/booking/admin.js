@@ -379,61 +379,61 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260915-user-ui-1';
+const ROOMLY_ROLE_UI_VERSION = '20260911-vet-logo';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
         const user = authManager?.getUser?.() || authManager?.state?.user;
-        const usesAdminUi = window.BookingUiRole?.usesAdminUi(user)
-            ?? Number(user?.status) === 1;
+        const isAdmin = typeof window.BookingUiRole?.usesAdminUi === 'function'
+            ? window.BookingUiRole.usesAdminUi(user)
+            : Number(user?.status) === 1;
         const route = RouterManager.routes?.get(routePath);
 
         if (route) {
-            const selectedTemplate = usesAdminUi ? adminTemplate : memberTemplate;
-            const templateRoot = usesAdminUi ? '/templates/' : '/ui-handoff/templates/';
+            const selectedTemplate = isAdmin ? adminTemplate : memberTemplate;
             route.template = window.location.origin
-                + templateRoot + selectedTemplate
+                + '/templates/' + selectedTemplate
                 + '?v=' + ROOMLY_ROLE_UI_VERSION;
-            route.title = usesAdminUi ? adminTitle : memberTitle;
+            route.title = isAdmin ? adminTitle : memberTitle;
         }
 
-        document.documentElement.dataset.uiRole = usesAdminUi ? 'admin' : 'member';
+        document.documentElement.dataset.uiRole = isAdmin ? 'admin' : 'member';
         return true;
     };
 }
 
 EventManager.on('router:initialized', () => {
     RouterManager.register('/rooms', {
-        template: window.location.origin + '/ui-handoff/templates/booking/catalog.html?v=' + ROOMLY_ROLE_UI_VERSION,
+        template: window.location.origin + '/templates/booking/catalog.html?v=' + ROOMLY_ROLE_UI_VERSION,
         title: '{LNG_All rooms}',
         beforeEnter: roleTemplateGuard(
             '/rooms',
             'booking/catalog.html',
-            'booking/catalog.html',
+            'booking/catalog-admin.html',
             '{LNG_All rooms}'
         ),
         requireAuth: true
     });
 
     RouterManager.register('/my-bookings', {
-        template: window.location.origin + '/ui-handoff/templates/booking/my-bookings.html?v=' + ROOMLY_ROLE_UI_VERSION,
+        template: window.location.origin + '/templates/booking/my-bookings.html?v=' + ROOMLY_ROLE_UI_VERSION,
         title: '{LNG_My bookings}',
         beforeEnter: roleTemplateGuard(
             '/my-bookings',
             'booking/my-bookings.html',
-            'booking/my-bookings.html',
+            'booking/my-bookings-admin.html',
             '{LNG_My bookings}'
         ),
         requireAuth: true
     });
 
     RouterManager.register('/booking', {
-        template: window.location.origin + '/ui-handoff/templates/booking/booking-recurring.html?v=' + ROOMLY_ROLE_UI_VERSION,
+        template: window.location.origin + '/templates/booking/booking-recurring.html?v=' + ROOMLY_ROLE_UI_VERSION,
         title: '{LNG_Book a room}',
         beforeEnter: roleTemplateGuard(
             '/booking',
             'booking/booking-recurring.html',
-            'booking/booking-recurring.html',
+            'booking/booking-recurring-admin.html',
             '{LNG_Book a room}'
         ),
         requireAuth: true
@@ -471,7 +471,7 @@ EventManager.on('router:initialized', () => {
     });
 
     RouterManager.register('/', {
-        template: window.location.origin + '/ui-handoff/templates/index.html?v=' + ROOMLY_ROLE_UI_VERSION,
+        template: window.location.origin + '/templates/index.html?v=' + ROOMLY_ROLE_UI_VERSION,
         title: '{LNG_Dashboard}',
         beforeEnter: roleTemplateGuard(
             '/',
@@ -686,7 +686,6 @@ function initBookingForm(element, data) {
     const roomIdInput = element.querySelector('#room_id');
     const attendeesInput = element.querySelector('#attendees');
     const topicInput = element.querySelector('#topic');
-    const useInput = element.querySelector('#use');
     const beginDateInput = element.querySelector('#begin_date');
     const beginTimeInput = element.querySelector('#begin_time');
     const endDateInput = element.querySelector('#end_date');
@@ -764,6 +763,7 @@ function initBookingForm(element, data) {
                 }
             }
         }
+        const useInput = element.querySelector('#use');
         if (useInput) {
             if (useInput.options && useInput.options.length > 0) {
                 const firstOpt = useInput.options[0];
@@ -798,17 +798,8 @@ function initBookingForm(element, data) {
         }
     };
 
-    const syncTopicFromUse = () => {
-        if (!topicInput || !useInput) return;
-        const selectedOption = useInput.selectedOptions?.[0];
-        topicInput.value = useInput.value
-            ? (selectedOption?.textContent?.trim() || useInput.value)
-            : '';
-    };
-
     const updateLiveSummary = () => {
         ensureSelectPlaceholders();
-        syncTopicFromUse();
         // 1. Room Name & Room Image (1/4 of summary card)
         if (roomIdInput) {
             const selectedOpt = roomIdInput.selectedOptions?.[0];
@@ -930,13 +921,6 @@ function initBookingForm(element, data) {
     if (topicInput) {
         topicInput.addEventListener('input', updateLiveSummary);
     }
-    const onUseChange = () => {
-        syncTopicFromUse();
-        updateLiveSummary();
-    };
-    if (useInput) {
-        useInput.addEventListener('change', onUseChange);
-    }
     if (beginDateInput) {
         beginDateInput.addEventListener('change', updateLiveSummary);
     }
@@ -960,7 +944,7 @@ function initBookingForm(element, data) {
     const requiredInputs = [
         roomIdInput,
         attendeesInput,
-        useInput,
+        topicInput,
         beginDateInput,
         beginTimeInput,
         endDateInput,
@@ -1507,14 +1491,13 @@ function initBookingForm(element, data) {
             roomCombobox.sync();
         }
         ensureSelectPlaceholders();
-        syncTopicFromUse();
         clearInitialErrors();
         updateLiveSummary();
     };
     if (roomIdInput) {
         roomIdInput.addEventListener('optionschanged', onOptionsChanged);
     }
-    const useSelect = useInput;
+    const useSelect = element.querySelector('#use');
     if (useSelect) {
         useSelect.addEventListener('optionschanged', onOptionsChanged);
     }
@@ -1703,7 +1686,6 @@ function initBookingForm(element, data) {
         if (roomIdInput) roomIdInput.removeEventListener('change', updateLiveSummary);
         if (attendeesInput) attendeesInput.removeEventListener('input', updateLiveSummary);
         if (topicInput) topicInput.removeEventListener('input', updateLiveSummary);
-        if (useInput) useInput.removeEventListener('change', onUseChange);
         if (beginDateInput) beginDateInput.removeEventListener('change', updateLiveSummary);
         if (beginTimeInput) beginTimeInput.removeEventListener('input', updateLiveSummary);
         if (endDateInput) endDateInput.removeEventListener('change', updateLiveSummary);

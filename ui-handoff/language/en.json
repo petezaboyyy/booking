@@ -4,7 +4,8 @@
         "Approved",
         "Rejected",
         "Canceled by customer",
-        "Canceled by the officer"
+        "Canceled by the officer",
+        "Returned for edit"
     ],
     "DATE_FORMAT": "d M Y, H:i",
     "DATE_LONG": [
@@ -61,14 +62,14 @@
     "now": "Just now",
     "TIME_FORMAT": "H:i",
     "YEAR_OFFSET": 0,
-    "Filter by room number or name...": "Filter by room number or name...",
-    "Search room or number...": "Filter room or number...",
-    "Filter room or number...": "Filter room or number...",
     "Clear filter": "Clear filter",
-    "ระบบจองห้องคณะสัตวแพทยศาสตร์": "Faculty of Veterinary Medicine Room Reservation",
     "Faculty of Veterinary Medicine Room Reservation": "Faculty of Veterinary Medicine Room Reservation",
-    "Roomly": "Faculty of Veterinary Medicine Room Reservation",
+    "Filter by room number or name...": "Filter by room number or name...",
+    "Filter room or number...": "Filter room or number...",
+    "No rooms found": "No rooms found",
     "Room booking calendar": "Room booking calendar",
+    "Roomly": "Faculty of Veterinary Medicine Room Reservation",
+    "Search room or number...": "Filter room or number...",
     "Select or search room...": "Select or search room...",
-    "No rooms found": "No rooms found"
+    "ระบบจองห้องคณะสัตวแพทยศาสตร์": "Faculty of Veterinary Medicine Room Reservation"
 }

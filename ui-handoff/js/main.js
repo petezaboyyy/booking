@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         translations: `${currentDir}language`
       },
 
+      // Route templates must reflect permission and action changes immediately.
+      template: {
+        cache: false
+      },
+
       // Enable framework-level auth so AuthManager will initialize before RouterManager
       auth: {
         enabled: true,
@@ -74,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         enabled: true,
         defaultTheme: 'light',
         storageKey: 'crm_theme',
-        systemPreference: true, // Follow system preference until the user chooses a theme
+        systemPreference: false, // Not use system color scheme preference
 
         // Smooth transitions
         transition: {
@@ -126,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             requireAuth: true
           },
           '/login': {
-            template: window.location.origin + '/templates/login.html?v=20260911-vet-login',
+            template: 'login.html',
             title: '{LNG_Login}',
             requireGuest: true,
             requireAuth: false
@@ -283,7 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const scripts = [
         `${currentDir}js/components/sidebar.js`,
         `${currentDir}js/components/topbar.js`,
-        `${currentDir}js/components/SocialLogin.js`
+        `${currentDir}js/components/SocialLogin.js?v=20260912-microsoft-sso-3`
       ];
 
       // Dynamically load all component scripts
@@ -811,7 +816,7 @@ function initThemeSettingsAssistant(element, data) {
       return;
     }
 
-    setBusyButton(suggestButton, Now.translate('{LNG_Generating}โ€ฆ'), true);
+    setBusyButton(suggestButton, Now.translate('{LNG_Generating}…'), true);
     try {
       const response = await ApiService.post('api/index/settings/suggestTheme', {
         theme_prompt: prompt
@@ -999,7 +1004,6 @@ function copyToClipboard(cell, rawValue, rowData, attributes) {
   }
 }
 
-
 /**
  * Initialize Pusher WebSocket for real-time updates across the app
  */
@@ -1106,11 +1110,11 @@ async function initPusher() {
         }
       });
 
-      // 4. Auto-refresh TableComponent instances (e.g. My Bookings, Approvals, Rooms)
-      document.querySelectorAll('table[data-component="table"]').forEach(table => {
-        const inst = window.TableComponent?.getInstance(table);
-        if (inst && window.TableComponent?.refresh) {
-          TableComponent.refresh(inst);
+      // 4. Auto-refresh table data (e.g. My Bookings, Approvals, Rooms)
+      document.querySelectorAll('table[data-table]').forEach(table => {
+        const tableId = table.dataset.table;
+        if (tableId && window.TableManager?.loadTableData) {
+          TableManager.loadTableData(tableId, {force: true});
         }
       });
 
@@ -1131,3 +1135,4 @@ async function initPusher() {
     console.warn('[Pusher] Initialization error:', err);
   }
 }
+

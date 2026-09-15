@@ -577,10 +577,6 @@
   margin-bottom: 18px;
 }
 
-.roomly-topic-row > .roomly-topic-field-wrap {
-  grid-column: 1 / -1;
-}
-
 .roomly-field-wrap {
   min-width: 0;
 }

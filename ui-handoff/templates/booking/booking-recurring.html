@@ -2,7 +2,7 @@
 <div class='roomly-dashboard roomly-booking-page'>
   <header class='roomly-topbar'>
     <a class='roomly-brand' href='/' aria-label='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
-      <img class='roomly-brand-logo' src='/ui-handoff/images/logo.png' alt='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
+      <img class='roomly-brand-logo' src='/images/logo.png' alt='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
       <span data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</span>
     </a>
     <nav class='roomly-nav' aria-label='Main navigation'>
@@ -43,9 +43,6 @@
           </span>
         </a>
       </div>
-      <a class='roomly-icon-button' href='/logout' title='{LNG_Logout}' aria-label='{LNG_Logout}'>
-        <span class='icon-signout' aria-hidden='true'></span>
-      </a>
     </div>
   </header>
 
@@ -123,18 +120,25 @@
                       </div>
                     </div>
 
-                    <div class="form-group roomly-form-grid-2 roomly-topic-row">
-                      <div class="roomly-field-wrap roomly-topic-field-wrap">
-                        <label for="use">
+                    <div class="form-group roomly-form-grid-2">
+                      <div class="roomly-field-wrap">
+                        <label for="topic">
                           <span data-i18n>Topic</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
                         </label>
+                        <span class="form-control">
+                          <input type="text" id="topic" name="topic" data-attr="value:topic" maxlength="150" placeholder="ระบุหัวข้อการประชุม เช่น สรุปผลการดำเนินงานประจำไตรมาส" required>
+                        </span>
+                      </div>
+                      <div class="roomly-field-wrap">
+                        <label for="use">
+                          <span data-i18n>Use for</span>
+                        </label>
                         <span class="form-control roomly-select-btn">
-                          <select id="use" name="use" data-options-key="use" data-attr="value:use" required>
+                          <select id="use" name="use" data-options-key="use" data-attr="value:use">
                             <option value="" data-placeholder="true" selected></option>
                           </select>
                           <span class="roomly-select-arrow icon-chevron-down icon-down" aria-hidden="true"></span>
                         </span>
-                        <input type="hidden" id="topic" name="topic" data-attr="value:topic">
                       </div>
                     </div>
                   </div>
