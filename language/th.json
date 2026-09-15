@@ -1825,5 +1825,10 @@
     "Specify reservation date, time and repetition": "ระบุวัน เวลา และการทำซ้ำของการใช้งานห้อง",
     "View all rooms": "ดูห้องทั้งหมด",
     "Welcome back": "ยินดีต้อนรับกลับ",
-    "ระบบจองห้องคณะสัตวแพทยศาสตร์": "ระบบจองห้องคณะสัตวแพทยศาสตร์"
+    "ระบบจองห้องคณะสัตวแพทยศาสตร์": "ระบบจองห้องคณะสัตวแพทยศาสตร์",
+    "Room booking system of the Faculty of Veterinary Medicine": "ระบบจองห้องของคณะสัตวแพทยศาสตร์",
+    "Chiang Mai University": "มหาวิทยาลัยเชียงใหม่",
+    "Use your Chiang Mai University account": "ใช้บัญชีมหาวิทยาลัยเชียงใหม่ของคุณ",
+    "Sign in with Microsoft": "เข้าสู่ระบบด้วยบัญชี CMU",
+    "or": "หรือ"
 }

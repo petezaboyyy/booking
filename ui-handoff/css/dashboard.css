@@ -3186,49 +3186,205 @@ html[data-theme='dark'] .roomly-theme-sun {
   }
 }
 
-/* Compact login after removing the promotional panel */
+/* ------------------------------------------------------------------
+   Login: brand panel on the left, the two ways in on the right.
+   Supersedes the earlier "compact login" block that collapsed the shell
+   to a single 520px column while .roomly-login-visual had no markup.
+   ------------------------------------------------------------------ */
 .roomly-login-page {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.roomly-login-page .roomly-login-shell {
-  display: block;
-  width: min(520px, 100%);
-  min-height: min(760px, calc(100vh - 56px));
+/* Brand only: logo, system name, university. Centred in the panel. */
+.roomly-login-visual {
+  align-items: center;
+  justify-content: center;
+  padding: 64px 56px;
 }
 
-.roomly-login-page .roomly-login-panel {
-  min-height: min(760px, calc(100vh - 56px));
-  border-radius: inherit;
+.roomly-login-visual-brand {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  text-align: center;
 }
 
-.roomly-login-page .roomly-login-mobile-brand {
+.roomly-login-visual-logo {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(0, 28, 48, .22);
+}
+
+.roomly-login-visual-logo img {
+  display: block;
+  width: auto;
+  height: 76px;
+}
+
+.roomly-login-visual-name h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(26px, 2.5vw, 34px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.roomly-login-visual-name p {
+  margin: 14px 0 0;
+  color: rgba(238, 250, 255, .82);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* The primary way in. Full width of the card, not a small outlined chip. */
+.roomly-login-page .roomly-login-sso {
+  margin-top: 4px;
+}
+
+.roomly-login-page .social-login-buttons .icon-microsoft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 58px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--roomly-primary);
+  box-shadow: 0 10px 24px rgba(0, 101, 145, .28);
+  color: var(--roomly-on-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.roomly-login-page .social-login-buttons .icon-microsoft::before {
+  width: 30px;
+  height: 30px;
+  padding: 7px;
+  border-radius: 8px;
+  background-color: #fff;
+  background-size: 7px 7px;
+  background-origin: content-box;
+  box-sizing: border-box;
+}
+
+.roomly-login-page .social-login-buttons .icon-microsoft:hover:not([disabled]),
+.roomly-login-page .social-login-buttons .icon-microsoft:focus-visible {
+  background-color: #00506f;
+  color: var(--roomly-on-primary);
+}
+
+.roomly-login-page .social-login-buttons .icon-microsoft[disabled] {
+  box-shadow: none;
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.roomly-login-page .social-login-buttons [data-microsoft-status] {
+  margin: 10px 0 0;
+  color: var(--roomly-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* The second way in. */
+.roomly-login-guest {
+  margin-top: 26px;
+  text-align: center;
+}
+
+.roomly-login-guest-divider {
+  position: relative;
+  display: block;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.roomly-login-guest-divider::before {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--roomly-outline);
+  content: '';
+}
+
+.roomly-login-guest-divider span {
+  position: relative;
+  padding: 0 14px;
+  background: var(--roomly-surface);
+  color: var(--roomly-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.roomly-login-page .roomly-login-guest-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--roomly-outline);
+  border-radius: 14px;
+  background: var(--roomly-surface);
+  color: var(--roomly-text);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.roomly-login-page .roomly-login-guest-btn:hover,
+.roomly-login-page .roomly-login-guest-btn:focus-visible {
+  border-color: var(--roomly-primary);
+  background: var(--roomly-surface-low);
+  color: var(--roomly-primary);
+}
+
+.roomly-login-guest .comment {
+  margin: 12px 0 0;
+  color: var(--roomly-muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 @media (max-width: 760px) {
+  /* .roomly-login-visual is already display:none here, so the card carries
+     the brand on its own and fills the screen. */
   .roomly-login-page .roomly-login-shell,
   .roomly-login-page .roomly-login-panel {
     min-height: 100vh;
   }
 
   .roomly-login-mobile-brand {
-    font-size: 14px;
+    flex-direction: column;
     gap: 8px;
     margin-bottom: 20px;
+    font-size: 14px;
   }
 
   .roomly-login-mobile-brand .roomly-brand-logo,
   .roomly-login-page .roomly-login-brand-logo {
-    height: 50px;
-    max-width: 175px;
+    height: 62px;
+    max-width: 200px;
   }
 
-  .roomly-login-mobile-brand span,
   .roomly-login-page .roomly-login-title,
   .roomly-login-page .roomly-login-header h1 {
-    font-size: 19px;
+    font-size: 24px;
   }
 }

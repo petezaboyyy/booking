@@ -1,6 +1,18 @@
 <div class="roomly-login-page">
   <form data-form="login" class="auth-form roomly-login-shell" novalidate action="api/index/auth/login" method="post" data-ajax-submit="true" data-redirect="/" data-auto-fill-intended-url="true"
         data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
+    <!-- Brand panel. Hidden below 760px, where .roomly-login-mobile-brand takes over. -->
+    <aside class="roomly-login-visual">
+      <div class="roomly-login-visual-brand">
+        <span class="roomly-login-visual-logo">
+          <img src="/ui-handoff/images/logo.png" alt="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
+        </span>
+        <div class="roomly-login-visual-name">
+          <h2 data-i18n>Room booking system of the Faculty of Veterinary Medicine</h2>
+          <p data-i18n>Chiang Mai University</p>
+        </div>
+      </div>
+    </aside>
     <section class="roomly-login-panel">
       <div class="roomly-login-utilities">
         <button class="roomly-language-toggle" type="button" data-roomly-language-toggle aria-label="Switch language">
@@ -12,11 +24,11 @@
       </div>
       <div class="roomly-login-form-card">
         <div class="auth-header roomly-login-header">
-          <a href="/" class="roomly-login-brand" aria-label="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
+          <a href="/" class="roomly-login-mobile-brand" aria-label="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
             <img class="roomly-brand-logo roomly-login-brand-logo" src="/ui-handoff/images/logo.png" alt="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
           </a>
-          <h1 class="roomly-login-title" data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</h1>
-          <p class="login-message" data-i18n>Welcome back! Please login to proceed.</p>
+          <h1 class="roomly-login-title" data-i18n>Log in</h1>
+          <p class="login-message" data-i18n>Use your Chiang Mai University account</p>
         </div>
       <fieldset class="roomly-login-fields" data-if="!data.microsoft_only">
         <div>
@@ -55,12 +67,17 @@
       <!-- Microsoft SSO stays visible independently of public registration, and is the
            only way in when microsoft_only is set. SocialLogin.js enables the button once
            microsoft_login_url arrives and looks for [data-microsoft-status] as a sibling. -->
-      <fieldset class="center">
+      <fieldset class="center roomly-login-sso">
         <div class="social-login-buttons">
           <button type="button" data-attr="data-username:data.microsoft_login_url" class="btn icon-microsoft" data-social-provider="microsoft" aria-describedby="microsoft-login-status" disabled data-i18n>Sign in with Microsoft</button>
           <p id="microsoft-login-status" class="comment" data-microsoft-status role="status">Microsoft SSO ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p>
         </div>
       </fieldset>
+      <div class="roomly-login-guest">
+        <span class="roomly-login-guest-divider"><span data-i18n>or</span></span>
+        <a href="/" class="btn roomly-login-guest-btn icon-calendar" data-i18n>Continue as guest</a>
+        <p class="comment" data-i18n>View the booking calendar without signing in.</p>
+      </div>
       <!-- Social Login Buttons -->
       <fieldset class="center" data-if="!data.microsoft_only && (data.user_register === 1 || data.demo_mode === 1)">
         <div class="social-login-buttons">

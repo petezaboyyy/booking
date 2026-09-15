@@ -1800,5 +1800,10 @@ return array(
   'The decision note must not exceed :length characters' => 'เหตุผลต้องมีความยาวไม่เกิน :length ตัวอักษร',
   'This booking was changed by another user. Please reload and try again' => 'รายการนี้ถูกแก้ไขโดยผู้ใช้อื่น กรุณาโหลดหน้าใหม่แล้วลองอีกครั้ง',
   'This booking can no longer be cancelled' => 'รายการนี้ไม่สามารถยกเลิกได้แล้ว',
-  'Decision note is required' => 'กรุณากรอกเหตุผล'
+  'Decision note is required' => 'กรุณากรอกเหตุผล',
+  'Room booking system of the Faculty of Veterinary Medicine' => 'ระบบจองห้องของคณะสัตวแพทยศาสตร์',
+  'Chiang Mai University' => 'มหาวิทยาลัยเชียงใหม่',
+  'Use your Chiang Mai University account' => 'ใช้บัญชีมหาวิทยาลัยเชียงใหม่ของคุณ',
+  'Sign in with Microsoft' => 'เข้าสู่ระบบด้วยบัญชี CMU',
+  'or' => 'หรือ'
 );
