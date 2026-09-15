@@ -2704,6 +2704,29 @@ html[data-theme='dark'] .roomly-theme-sun {
   --roomly-on-primary: #fff;
   --roomly-login-bg-image: url('/images/login-bg-light.jpg');
   --roomly-login-bg-opacity: 0.22;
+  --roomly-visual-bg: #f5f3ec;
+  --roomly-visual-image: url('/images/login-visual-light.jpg?v=20260916-themed-1');
+  --roomly-visual-opacity: 0.95;
+  --roomly-visual-top-overlay: linear-gradient(
+    to bottom,
+    rgba(245, 243, 236, 0.45) 0%,
+    rgba(245, 243, 236, 0.15) 20%,
+    transparent 45%
+  );
+  --roomly-visual-bottom-overlay: linear-gradient(
+    to top,
+    rgba(245, 243, 236, 0.96) 0%,
+    rgba(245, 243, 236, 0.88) 28%,
+    rgba(245, 243, 236, 0.45) 55%,
+    transparent 75%
+  );
+  --roomly-visual-badge-bg: #7ec8f8;
+  --roomly-visual-badge-text: #07213d;
+  --roomly-visual-title: #061d36;
+  --roomly-visual-subtitle: #2c4a6f;
+  --roomly-visual-line: #0284c7;
+  --roomly-visual-text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  --roomly-visual-sub-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
   position: relative;
   min-height: 100vh;
   padding: 28px;
@@ -2739,6 +2762,29 @@ html[data-theme='dark'] .roomly-theme-sun {
   --roomly-on-primary: #002033;
   --roomly-login-bg-image: url('/images/login-bg-dark.jpg');
   --roomly-login-bg-opacity: 0.25;
+  --roomly-visual-bg: #071322;
+  --roomly-visual-image: url('/images/login-visual-dark.jpg?v=20260916-themed-1');
+  --roomly-visual-opacity: 0.95;
+  --roomly-visual-top-overlay: linear-gradient(
+    to bottom,
+    rgba(5, 14, 26, 0.45) 0%,
+    rgba(5, 14, 26, 0.15) 20%,
+    transparent 45%
+  );
+  --roomly-visual-bottom-overlay: linear-gradient(
+    to top,
+    rgba(4, 11, 20, 0.96) 0%,
+    rgba(4, 11, 20, 0.82) 30%,
+    rgba(4, 11, 20, 0.35) 55%,
+    transparent 75%
+  );
+  --roomly-visual-badge-bg: #7ec8f8;
+  --roomly-visual-badge-text: #07213d;
+  --roomly-visual-title: #ffffff;
+  --roomly-visual-subtitle: rgba(230, 242, 255, 0.92);
+  --roomly-visual-line: #7ec8f8;
+  --roomly-visual-text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+  --roomly-visual-sub-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
 }
 
 .roomly-login-page,
@@ -2774,39 +2820,33 @@ html[data-theme='dark'] .roomly-theme-sun {
   min-height: 680px;
   overflow: hidden;
   padding: 48px 44px 44px;
-  background-color: #071526;
-  color: #fff;
+  background-color: var(--roomly-visual-bg);
+  color: var(--roomly-visual-title);
   isolation: isolate;
+  transition: background-color .3s ease;
 }
 
 .roomly-login-visual::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: url('/images/login-visual-building.jpg?v=20260916-final-1') center center / cover no-repeat;
-  opacity: 0.92;
+  background-image: var(--roomly-visual-image);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: var(--roomly-visual-opacity);
   z-index: 0;
+  transition: opacity .3s ease, background-image .3s ease;
 }
 
 .roomly-login-visual::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(12, 24, 40, 0.8) 0%,
-    rgba(12, 24, 40, 0.35) 28%,
-    transparent 50%
-  ),
-  linear-gradient(
-    to top,
-    rgba(7, 16, 28, 0.95) 0%,
-    rgba(7, 16, 28, 0.78) 30%,
-    rgba(7, 16, 28, 0.35) 55%,
-    transparent 75%
-  );
+  background: var(--roomly-visual-top-overlay), var(--roomly-visual-bottom-overlay);
   z-index: 1;
   pointer-events: none;
+  transition: background .3s ease;
 }
 
 .roomly-login-brand,
@@ -3341,39 +3381,43 @@ html[data-theme='dark'] .roomly-theme-sun {
   padding: 6px 18px;
   font-size: 15px;
   font-weight: 700;
-  background: #7ec8f8;
-  color: #07213d;
+  background: var(--roomly-visual-badge-bg);
+  color: var(--roomly-visual-badge-text);
   margin-bottom: 12px;
   letter-spacing: 0.01em;
   line-height: 1.3;
+  transition: background-color .3s ease, color .3s ease;
 }
 
 .roomly-login-visual-title {
-  color: #fff;
+  color: var(--roomly-visual-title);
   font-size: clamp(28px, 2.6vw, 36px);
   font-weight: 700;
   letter-spacing: 0.015em;
   line-height: 1.25;
   margin: 0 0 8px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  text-shadow: var(--roomly-visual-text-shadow);
+  transition: color .3s ease, text-shadow .3s ease;
 }
 
 .roomly-login-visual-subtitle {
-  color: rgba(230, 242, 255, 0.92);
+  color: var(--roomly-visual-subtitle);
   font-size: 15.5px;
   font-weight: 400;
   letter-spacing: 0.015em;
   line-height: 1.4;
   margin: 0;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  text-shadow: var(--roomly-visual-sub-shadow);
+  transition: color .3s ease, text-shadow .3s ease;
 }
 
 .roomly-login-visual-line {
   width: 100%;
   height: 2px;
-  background: #7ec8f8;
+  background: var(--roomly-visual-line);
   border-radius: 2px;
   margin-top: 14px;
+  transition: background-color .3s ease;
 }
 
 /* The primary way in. Full width of the card, not a small outlined chip. */
