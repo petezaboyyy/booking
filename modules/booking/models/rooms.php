@@ -5,6 +5,8 @@
 
 namespace Booking\Rooms;
 
+use Booking\Helper\Controller as Helper;
+
 class Model extends \Kotchasan\Model
 {
     /**
@@ -14,9 +16,9 @@ class Model extends \Kotchasan\Model
      *
      * @return \Kotchasan\QueryBuilder\QueryBuilderInterface
      */
-    public static function toDataTable($params)
+    public static function toDataTable($params, $login = null)
     {
-        return static::createQuery()
+        $query = static::createQuery()
             ->select(
                 'R.id',
                 'R.name',
@@ -31,5 +33,12 @@ class Model extends \Kotchasan\Model
             ->join('rooms_meta Building', [['Building.room_id', 'R.id'], ['Building.name', 'building']], 'LEFT')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT');
+
+        $roomScope = Helper::getBookingRoomScope($login);
+        if ($roomScope !== null) {
+            $query->where(['R.id', $roomScope]);
+        }
+
+        return $query;
     }
 }

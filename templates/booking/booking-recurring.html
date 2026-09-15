@@ -50,18 +50,13 @@
               </div>
               <div class="form-group">
                 <div class="width50">
-                  <label for="topic" data-i18n>Topic</label>
-                  <span class="form-control icon-file">
-                    <input type="text" id="topic" name="topic" data-attr="value:topic" maxlength="150">
-                  </span>
-                </div>
-                <div class="width50">
-                  <label for="use" data-i18n>Use for</label>
+                  <label for="use" data-i18n>Topic</label>
                   <span class="form-control icon-menus">
-                    <select id="use" name="use" data-options-key="use" data-attr="value:use">
+                    <select id="use" name="use" data-options-key="use" data-attr="value:use" required>
                       <option value="" data-i18n>Please select</option>
                     </select>
                   </span>
+                  <input type="hidden" id="topic" name="topic" data-attr="value:topic">
                 </div>
               </div>
               <div class="form-group">

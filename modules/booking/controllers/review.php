@@ -38,6 +38,9 @@ class Controller extends ApiController
             if ($row === null) {
                 return $this->redirectResponse('/404', 'No data available', 404);
             }
+            if (!Helper::isRoomInBookingScope($login, (int) $row->room_id)) {
+                return $this->errorResponse('Forbidden', 403);
+            }
 
             $canProcess = Model::canProcess($row);
             $canApproveAction = $canProcess && Helper::canApproveStep($login, $row);
@@ -209,6 +212,9 @@ class Controller extends ApiController
             $row = Model::get($id);
             if ($row === null) {
                 return $this->errorResponse('No data available', 404);
+            }
+            if (!Helper::isRoomInBookingScope($login, (int) $row->room_id)) {
+                return $this->errorResponse('Permission required', 403);
             }
 
             if ($allowOfficerCancel) {

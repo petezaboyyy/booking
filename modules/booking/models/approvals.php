@@ -5,6 +5,8 @@
 
 namespace Booking\Approvals;
 
+use Booking\Helper\Controller as Helper;
+
 class Model extends \Kotchasan\Model
 {
     /**
@@ -35,7 +37,16 @@ class Model extends \Kotchasan\Model
             $where[] = ['R.begin', '<=', $params['to'].' 23:59:59'];
         }
 
-        if ($login && !\Gcms\Api::isAdmin($login)) {
+        $roomScope = Helper::getBookingRoomScope($login);
+        if ($roomScope !== null) {
+            $where[] = ['R.room_id', $roomScope];
+        }
+
+        if (
+            $login
+            && !\Gcms\Api::isAdmin($login)
+            && !\Gcms\Api::hasPermission($login, 'can_manage_booking', false)
+        ) {
             $approvalSteps = \Booking\Helper\Controller::getApprovalSteps();
             if (!empty($approvalSteps)) {
                 $loginDepartment = isset($login->metas['department'][0]) ? trim((string) $login->metas['department'][0]) : '';

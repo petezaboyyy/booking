@@ -1,0 +1,66 @@
+<aside data-component="sidebar"></aside>
+<div class="main-content">
+    <div>
+        <header data-component="topbar"></header>
+        <main class="content">
+            <div class="card-groups">
+                <header>
+                    <div>
+                        <h1 class="icon-calendar" data-i18n>Reservation calendar</h1>
+                        <p data-i18n>List of approved room reservations</p>
+                    </div>
+                </header>
+                <div class="content-body">
+                    <section class="ggrid" data-component="api" data-endpoint="api/booking/statistics">
+                        <!-- Skeleton Stat Cards -->
+                        <div class="block3 stat-card is-skeleton" aria-hidden="true">
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 14px; width: 60%; margin-bottom: 0.75rem;"></div>
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 32px; width: 35%;"></div>
+                        </div>
+                        <div class="block3 stat-card is-skeleton" aria-hidden="true">
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 14px; width: 65%; margin-bottom: 0.75rem;"></div>
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 32px; width: 35%;"></div>
+                        </div>
+                        <div class="block3 stat-card is-skeleton" aria-hidden="true">
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 14px; width: 50%; margin-bottom: 0.75rem;"></div>
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 32px; width: 35%;"></div>
+                        </div>
+                        <div class="block3 stat-card is-skeleton" aria-hidden="true">
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 14px; width: 70%; margin-bottom: 0.75rem;"></div>
+                            <div class="skeleton-shimmer skeleton-bar" style="height: 32px; width: 35%;"></div>
+                        </div>
+                        <a class="block3 stat-card" href="/my-bookings?status=0" data-if="my">
+                            <div class="stat-header icon-loading" data-i18n>Pending review</div>
+                            <div class="stat-value" data-text="my.pending">0</div>
+                        </a>
+                        <a class="block3 stat-card" href="/my-bookings?status=5" data-if="my">
+                            <div class="stat-header icon-edit" data-i18n>Returned for edit</div>
+                            <div class="stat-value" data-text="my.returned">0</div>
+                        </a>
+                        <a class="block3 stat-card" href="/my-bookings?status=1" data-if="my">
+                            <div class="stat-header icon-valid" data-i18n>Approved</div>
+                            <div class="stat-value" data-text="my.approved">0</div>
+                        </a>
+                        <a class="block3 stat-card" href="/approvals?status=0" data-if="approvals">
+                            <div class="stat-header icon-verfied" data-i18n>Requests to review</div>
+                            <div class="stat-value" data-text="approvals.pending">0</div>
+                        </a>
+                    </section>
+                    <div class="roomly-calendar-filter-bar">
+                        <div class="roomly-calendar-filter-wrap">
+                            <span class="roomly-calendar-filter-icon icon-search" aria-hidden="true"></span>
+                            <input type="text" id="calendar_room_filter" data-calendar-filter class="roomly-calendar-filter-input" placeholder="ค้นหาห้อง หรือเลขห้อง..." data-i18n="Filter by room number or name..." autocomplete="off">
+                            <button type="button" class="roomly-calendar-filter-clear" data-calendar-filter-clear aria-label="Clear filter" style="display:none;">&times;</button>
+                        </div>
+                    </div>
+                    <div data-event-calendar data-component="eventcalendar" data-api="api/booking/calendar" data-on-event-click-api="api/booking/view?id={id}" data-view="month" data-show-today="true"
+                         data-show-view-switcher="true" data-show-period-picker="true" data-show-filter="true" data-filter-target="#calendar_room_filter">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <footer class="footer">
+        <p class="center">&copy; 2026 Admin Framework - Powered by <a href="https://nowjs.net">Now.js</a></p>
+    </footer>
+</div>

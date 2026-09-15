@@ -5,6 +5,7 @@
 
 namespace Booking\Room;
 
+use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
 
@@ -30,7 +31,12 @@ class Controller extends ApiController
                 return $this->errorResponse('Permission required', 403);
             }
 
-            $data = Model::get($request->get('id', 0)->toInt());
+            $id = $request->get('id', 0)->toInt();
+            if (!Helper::isRoomInBookingScope($login, $id)) {
+                return $this->errorResponse('Permission required', 403);
+            }
+
+            $data = Model::get($id);
             if ($data === null) {
                 return $this->redirectResponse('/404', 'No data available', 404);
             }
@@ -74,6 +80,9 @@ class Controller extends ApiController
             }
 
             $id = $request->post('id', 0)->toInt();
+            if (!Helper::isRoomInBookingScope($login, $id)) {
+                return $this->errorResponse('Permission required', 403);
+            }
             if ($id > 0 && Model::getRecord($id) === null) {
                 return $this->errorResponse('No data available', 404);
             }
@@ -161,6 +170,9 @@ class Controller extends ApiController
             $json = json_decode($request->post('id')->toString());
             if (!$json || !isset($json->id, $json->file)) {
                 return $this->errorResponse('No data available', 404);
+            }
+            if (!Helper::isRoomInBookingScope($login, (int) $json->id)) {
+                return $this->errorResponse('Permission required', 403);
             }
             if (Model::getRecord((int) $json->id) === null) {
                 return $this->errorResponse('No data available', 404);
