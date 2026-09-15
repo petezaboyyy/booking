@@ -5,6 +5,7 @@
 
 namespace Booking\Rooms;
 
+use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
 
@@ -51,7 +52,7 @@ class Controller extends \Gcms\Table
      */
     protected function toDataTable($params, $login = null)
     {
-        return Model::toDataTable($params);
+        return Model::toDataTable($params, $login);
     }
 
     /**
@@ -85,7 +86,12 @@ class Controller extends \Gcms\Table
             return $this->errorResponse('Failed to process request', 403);
         }
 
-        $room = \Booking\Room\Model::get($request->post('id')->toInt());
+        $id = $request->post('id')->toInt();
+        if (!Helper::isRoomInBookingScope($login, $id)) {
+            return $this->errorResponse('Permission required', 403);
+        }
+
+        $room = \Booking\Room\Model::get($id);
         if ($room === null) {
             return $this->errorResponse('No data available', 404);
         }
@@ -116,6 +122,11 @@ class Controller extends \Gcms\Table
         }
 
         $ids = $request->request('ids', [])->toInt();
+        foreach ($ids as $id) {
+            if (!Helper::isRoomInBookingScope($login, (int) $id)) {
+                return $this->errorResponse('Permission required', 403);
+            }
+        }
         $removeCount = \Booking\Room\Model::remove($ids);
         if (empty($removeCount)) {
             return $this->errorResponse('Delete action failed', 400);
@@ -147,7 +158,12 @@ class Controller extends \Gcms\Table
             return $this->errorResponse('Failed to process request', 403);
         }
 
-        $room = \Booking\Room\Model::toggleActive($request->post('id')->toInt());
+        $id = $request->post('id')->toInt();
+        if (!Helper::isRoomInBookingScope($login, $id)) {
+            return $this->errorResponse('Permission required', 403);
+        }
+
+        $room = \Booking\Room\Model::toggleActive($id);
         if ($room === null) {
             return $this->errorResponse('Room not found', 404);
         }

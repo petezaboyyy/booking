@@ -45,7 +45,8 @@ class Model extends \Kotchasan\Model
                 'social' => 'user',
                 'active' => 1,
                 'metas' => [
-                    'department' => empty(self::$cfg->default_department) ? [] : [self::$cfg->default_department]
+                    'department' => empty(self::$cfg->default_department) ? [] : [self::$cfg->default_department],
+                    'booking_rooms' => []
                 ]
             ];
         }

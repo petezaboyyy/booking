@@ -114,7 +114,7 @@ class Controller extends \Gcms\Controller
 
     /**
      * Determine the approver level available to this login.
-     * -1 means admin approval access, 0 means no approval access.
+     * -1 means unrestricted approval access, 0 means no approval access.
      *
      * @param object|null $login
      *
@@ -125,12 +125,16 @@ class Controller extends \Gcms\Controller
         if (!$login) {
             return 0;
         }
+        if (
+            ApiController::isAdmin($login)
+            || ApiController::hasPermission($login, 'can_manage_booking', false)
+        ) {
+            return -1;
+        }
+
         $steps = self::getApprovalSteps();
         if (empty($steps)) {
             return 0;
-        }
-        if (ApiController::isAdmin($login)) {
-            return -1;
         }
 
         $loginDepartment = isset($login->metas['department'][0]) ? trim((string) $login->metas['department'][0]) : '';
@@ -161,13 +165,16 @@ class Controller extends \Gcms\Controller
         if (!$login) {
             return false;
         }
+        if (
+            ApiController::isAdmin($login)
+            || ApiController::hasPermission($login, 'can_manage_booking', false)
+        ) {
+            return true;
+        }
+
         $steps = self::getApprovalSteps();
         if (empty($steps)) {
             return false;
-        }
-
-        if (ApiController::isAdmin($login)) {
-            return true;
         }
 
         $approve = is_array($request) ? ($request['approve'] ?? 1) : ($request->approve ?? 1);
@@ -186,7 +193,8 @@ class Controller extends \Gcms\Controller
     }
 
     /**
-     * Permission helper for approval workflow.
+     * Permission helper for approval workflow. Booking managers can approve
+     * without matching a configured status or department.
      *
      * @param object|null $login
      *
@@ -200,8 +208,8 @@ class Controller extends \Gcms\Controller
     /**
      * Check whether the login should be allowed into approval pages.
      *
-     * Approval-area access should follow the configured step rules: the login
-     * must match a configured approver status and, when configured, department.
+     * Approval-area access follows the configured step rules, unless the login
+     * has the explicit booking-management permission.
      *
      * @param object|null $login
      *
@@ -212,14 +220,16 @@ class Controller extends \Gcms\Controller
         if (!$login) {
             return false;
         }
+        if (
+            ApiController::isAdmin($login)
+            || ApiController::hasPermission($login, 'can_manage_booking', false)
+        ) {
+            return true;
+        }
 
         $steps = self::getApprovalSteps();
         if (empty($steps)) {
             return false;
-        }
-
-        if (ApiController::isAdmin($login)) {
-            return true;
         }
 
         return self::canApproveRequests($login);
@@ -283,19 +293,107 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * Metadata key containing the rooms a booking manager may manage.
+     */
+    public const META_BOOKING_ROOMS = 'booking_rooms';
+
+    /**
+     * Normalize room IDs from a request or user metadata.
+     *
+     * @param mixed $roomIds
+     *
+     * @return array<int>
+     */
+    public static function normalizeRoomIds($roomIds): array
+    {
+        $roomIds = is_array($roomIds) ? $roomIds : [$roomIds];
+        $normalized = [];
+
+        foreach ($roomIds as $roomId) {
+            if (is_numeric($roomId) && (int) $roomId > 0) {
+                $normalized[(int) $roomId] = true;
+            }
+        }
+
+        $roomIds = array_keys($normalized);
+        sort($roomIds, SORT_NUMERIC);
+
+        return $roomIds;
+    }
+
+    /**
+     * Get the room scope for a booking manager.
+     *
+     * A null scope means all rooms. This preserves existing behavior for
+     * administrators, non-manager approvers, and managers without a selection.
+     *
+     * @param object|null $login
+     *
+     * @return array<int>|null
+     */
+    public static function getBookingRoomScope($login): ?array
+    {
+        if (
+            !$login ||
+            ApiController::isAdmin($login) ||
+            !ApiController::hasPermission($login, 'can_manage_booking', false)
+        ) {
+            return null;
+        }
+
+        $metas = isset($login->metas) && is_array($login->metas) ? $login->metas : [];
+        $roomIds = self::normalizeRoomIds($metas[self::META_BOOKING_ROOMS] ?? []);
+
+        return empty($roomIds) ? null : $roomIds;
+    }
+
+    /**
+     * Check whether a room is inside the login's booking-management scope.
+     *
+     * @param object|null $login
+     * @param int $roomId
+     *
+     * @return bool
+     */
+    public static function isRoomInBookingScope($login, int $roomId): bool
+    {
+        $scope = self::getBookingRoomScope($login);
+
+        return $scope === null || in_array($roomId, $scope, true);
+    }
+
+    /**
+     * Return room options limited to the login's booking-management scope.
+     *
+     * @param object|null $login
+     * @param bool $activeOnly
+     *
+     * @return array
+     */
+    public static function getBookingRoomOptions($login, bool $activeOnly = false): array
+    {
+        return self::getRoomOptions($activeOnly, null, self::getBookingRoomScope($login));
+    }
+
+    /**
      * Vehicle options.
      *
      * @param bool $activeOnly
      * @param int|null $includeId
+     * @param array<int>|null $roomIds
      *
      * @return array
      */
-    public static function getRoomOptions(bool $activeOnly = true, ?int $includeId = null): array
+    public static function getRoomOptions(bool $activeOnly = true, ?int $includeId = null, ?array $roomIds = null): array
     {
         $query = \Kotchasan\Model::createQuery()
             ->select('R.id', 'R.name', 'R.is_active')
             ->from('rooms R')
             ->orderBy('R.name');
+
+        if ($roomIds !== null) {
+            $query->where(['R.id', self::normalizeRoomIds($roomIds)]);
+        }
 
         if ($activeOnly) {
             if ($includeId !== null && $includeId > 0) {

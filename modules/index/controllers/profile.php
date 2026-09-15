@@ -10,6 +10,7 @@
 
 namespace Index\Profile;
 
+use Booking\Helper\Controller as BookingHelper;
 use Gcms\Api as ApiController;
 use Index\UserRepository\Model as UserRepository;
 use Kotchasan\File;
@@ -91,6 +92,7 @@ class Controller extends ApiController
                     'status' => \Gcms\Controller::getUserStatusOptions(),
                     'active' => \Gcms\Controller::getUserActiveOptions(),
                     'permission' => \Gcms\Controller::getPermissionOptions(),
+                    'booking_rooms' => BookingHelper::getRoomOptions(false),
                     'department' => \Gcms\Category::init()->toOptions('department')
                 ]
             ], 'User details retrieved');
@@ -141,6 +143,9 @@ class Controller extends ApiController
             if ($isSuperAdmin) {
                 $permission = $request->post('permission', [])->filter('a-z0-9_');
                 $save['permission'] = empty($permission) ? '' : ','.implode(',', $permission).',';
+                $roomIds = BookingHelper::normalizeRoomIds($request->post('booking_rooms', [])->toInt());
+                $validRoomIds = array_map('intval', array_column(BookingHelper::getRoomOptions(false), 'value'));
+                $save['metas'][BookingHelper::META_BOOKING_ROOMS] = array_values(array_intersect($roomIds, $validRoomIds));
             } elseif ($login->id != $user->id) {
                 // Not an admin, can only edit myself.
                 return $this->errorResponse('You can only edit your own profile', 403);
