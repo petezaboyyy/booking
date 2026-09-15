@@ -2704,6 +2704,26 @@ html[data-theme='dark'] .roomly-theme-sun {
   --roomly-on-primary: #fff;
   --roomly-login-bg-image: url('/images/login-bg-light.jpg');
   --roomly-login-bg-opacity: 0.22;
+  --roomly-visual-bg: #f8f6f0;
+  --roomly-visual-image: url('/images/login-visual-sketch-light.png?v=20260916-sketch-1');
+  --roomly-visual-opacity: 0.38;
+  --roomly-visual-fade: linear-gradient(
+    to bottom,
+    rgba(248, 246, 240, 0.05) 0%,
+    rgba(248, 246, 240, 0.35) 45%,
+    rgba(248, 246, 240, 0.85) 75%,
+    rgba(248, 246, 240, 0.98) 100%
+  );
+  --roomly-visual-radial-fade: radial-gradient(
+    ellipse 120% 90% at 50% 60%,
+    rgba(248, 246, 240, 0.92) 0%,
+    rgba(248, 246, 240, 0.6) 50%,
+    transparent 80%
+  );
+  --roomly-visual-title-main: #00567e;
+  --roomly-visual-title-sub: #071c33;
+  --roomly-visual-sub: #3d5670;
+  --roomly-visual-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
   position: relative;
   min-height: 100vh;
   padding: 28px;
@@ -2739,6 +2759,26 @@ html[data-theme='dark'] .roomly-theme-sun {
   --roomly-on-primary: #002033;
   --roomly-login-bg-image: url('/images/login-bg-dark.jpg');
   --roomly-login-bg-opacity: 0.25;
+  --roomly-visual-bg: #071526;
+  --roomly-visual-image: url('/images/login-visual-sketch-dark.jpg?v=20260916-sketch-1');
+  --roomly-visual-opacity: 0.42;
+  --roomly-visual-fade: linear-gradient(
+    to bottom,
+    rgba(3, 12, 26, 0.1) 0%,
+    rgba(3, 12, 26, 0.35) 40%,
+    rgba(2, 8, 18, 0.82) 75%,
+    rgba(1, 5, 14, 0.98) 100%
+  );
+  --roomly-visual-radial-fade: radial-gradient(
+    ellipse 120% 90% at 50% 60%,
+    rgba(2, 7, 16, 0.75) 0%,
+    rgba(2, 7, 16, 0.45) 50%,
+    transparent 80%
+  );
+  --roomly-visual-title-main: #ffffff;
+  --roomly-visual-title-sub: #ffffff;
+  --roomly-visual-sub: rgba(225, 240, 255, 0.95);
+  --roomly-visual-shadow: 0 3px 12px rgba(0, 0, 0, 0.85);
 }
 
 .roomly-login-page,
@@ -2772,32 +2812,32 @@ html[data-theme='dark'] .roomly-theme-sun {
   min-height: 680px;
   overflow: hidden;
   padding: 44px 40px;
-  background-color: #071526;
-  color: #fff;
+  background-color: var(--roomly-visual-bg);
+  color: var(--roomly-visual-title-sub);
   isolation: isolate;
+  transition: background-color .3s ease;
 }
 
 .roomly-login-visual::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: url('/images/login-visual-building.jpg?v=20260916-3') center center / cover no-repeat;
-  opacity: 0.75;
+  background-image: var(--roomly-visual-image);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: var(--roomly-visual-opacity);
   z-index: 0;
+  transition: opacity .3s ease;
 }
 
 .roomly-login-visual::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(3, 12, 26, 0.2) 0%,
-    rgba(3, 12, 26, 0.42) 40%,
-    rgba(2, 8, 18, 0.82) 72%,
-    rgba(1, 5, 14, 0.98) 100%
-  );
+  background: var(--roomly-visual-fade);
   z-index: 1;
+  pointer-events: none;
 }
 
 .roomly-login-brand,
@@ -3338,12 +3378,7 @@ html[data-theme='dark'] .roomly-theme-sun {
   max-width: 540px;
   text-align: center;
   padding: 24px 20px 0;
-  background: radial-gradient(
-    ellipse 120% 90% at 50% 60%,
-    rgba(2, 7, 16, 0.75) 0%,
-    rgba(2, 7, 16, 0.45) 50%,
-    transparent 80%
-  );
+  background: var(--roomly-visual-radial-fade);
 }
 
 .roomly-login-visual-name h2 {
@@ -3355,10 +3390,10 @@ html[data-theme='dark'] .roomly-theme-sun {
   display: block;
   font-size: clamp(21px, 2.0vw, 26px);
   font-weight: 600;
-  color: #fff;
+  color: var(--roomly-visual-title-main);
   letter-spacing: 0.035em;
   line-height: 1.45;
-  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.85);
+  text-shadow: var(--roomly-visual-shadow);
   margin-bottom: 6px;
 }
 
@@ -3366,20 +3401,20 @@ html[data-theme='dark'] .roomly-theme-sun {
   display: block;
   font-size: clamp(26px, 2.5vw, 33px);
   font-weight: 700;
-  color: #fff;
+  color: var(--roomly-visual-title-sub);
   letter-spacing: 0.035em;
   line-height: 1.35;
-  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.85);
+  text-shadow: var(--roomly-visual-shadow);
 }
 
 .roomly-login-visual-name p {
   margin: 14px 0 0;
-  color: rgba(225, 240, 255, 0.95);
+  color: var(--roomly-visual-sub);
   font-size: 18.5px;
   font-weight: 500;
   letter-spacing: 0.03em;
   line-height: 1.45;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  text-shadow: var(--roomly-visual-shadow);
 }
 
 /* The primary way in. Full width of the card, not a small outlined chip. */
