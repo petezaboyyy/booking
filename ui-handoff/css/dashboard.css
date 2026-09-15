@@ -3398,126 +3398,25 @@ html[data-theme='dark'] .roomly-theme-sun {
   }
 }
 
-/* ------------------------------------------------------------------
-   Public calendar (/calendar). Standalone chrome: no sidebar or topbar,
-   because those render a signed-in user's menu.
-   ------------------------------------------------------------------ */
-.roomly-guest-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 88% 12%, rgba(42, 164, 211, .13), transparent 28rem),
-    radial-gradient(circle at 4% 94%, rgba(0, 101, 145, .08), transparent 24rem),
-    var(--roomly-background);
-  color: var(--roomly-text);
-  font-family: 'Noto Sans Thai', 'Kanit', Tahoma, sans-serif;
-}
-
-.roomly-guest-topbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px clamp(16px, 4vw, 40px);
-  border-bottom: 1px solid var(--roomly-outline);
-  background: var(--roomly-surface);
-}
-
-.roomly-guest-brand {
+/* A visitor arrives as Guest (id 0) and needs a way in where a member has
+   their profile and sign-out. */
+.roomly-topbar-login {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  color: var(--roomly-text);
-  text-decoration: none;
-}
-
-.roomly-guest-brand .roomly-brand-logo {
-  width: auto;
-  height: 44px;
-}
-
-.roomly-guest-brand span {
-  display: grid;
-  gap: 2px;
-}
-
-.roomly-guest-brand strong {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.roomly-guest-brand small {
-  color: var(--roomly-muted);
-  font-size: 13px;
-}
-
-.roomly-guest-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.roomly-guest-page .roomly-guest-login {
-  height: 42px;
-  padding: 0 20px;
-  border: 0;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
   border-radius: 11px;
   background: var(--roomly-primary);
   color: var(--roomly-on-primary);
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.roomly-guest-content {
-  flex: 1 1 auto;
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  padding: clamp(20px, 3vw, 34px) clamp(16px, 4vw, 40px) 40px;
-}
-
-.roomly-guest-heading h1 {
-  margin: 0;
-  font-size: clamp(22px, 2.4vw, 30px);
-  font-weight: 700;
-  letter-spacing: -.03em;
-}
-
-.roomly-guest-heading p {
-  margin: 8px 0 0;
-  color: var(--roomly-muted);
-  font-size: 15px;
-}
-
-.roomly-guest-calendar {
-  margin-top: 22px;
-  padding: clamp(12px, 2vw, 22px);
-  border: 1px solid var(--roomly-card-border);
-  border-radius: 20px;
-  background: var(--roomly-surface);
-  box-shadow: var(--roomly-panel-shadow);
-}
-
-.roomly-guest-footer {
-  padding: 18px;
-  border-top: 1px solid var(--roomly-outline);
-  color: var(--roomly-muted);
-  font-size: 13px;
-  text-align: center;
-}
-
-.roomly-guest-footer p {
-  margin: 0;
-}
-
-@media (max-width: 560px) {
-  .roomly-guest-brand strong {
-    font-size: 13px;
-  }
-
-  .roomly-guest-brand .roomly-brand-logo {
-    height: 36px;
-  }
+.roomly-topbar-login:hover,
+.roomly-topbar-login:focus-visible {
+  background: var(--roomly-secondary);
+  color: var(--roomly-on-primary);
 }

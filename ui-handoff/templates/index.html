@@ -33,29 +33,40 @@
         <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
         <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
       </button>
+      <!-- Anonymous visitors come through here as Guest (id 0): they get a way
+           in instead of a profile link and a sign-out they cannot use. -->
       <div class='roomly-profile-data' data-component='api' data-endpoint='api/index/auth/me'>
-        <a class='roomly-profile' data-attr='href:&quot;profile?id=&quot; + data.id'>
+        <a class='roomly-profile' data-if='data.id > 0' data-attr='href:&quot;profile?id=&quot; + data.id'>
           <img class='roomly-avatar' data-attr='src:data.avatar,alt:data.name'>
           <span class='roomly-profile-copy'>
             <strong data-text='data.name'>User</strong>
             <small data-i18n>Profile</small>
           </span>
         </a>
+        <a class='roomly-icon-button' data-if='data.id > 0' href='/logout' title='{LNG_Logout}' aria-label='{LNG_Logout}'>
+          <span class='icon-signout' aria-hidden='true'></span>
+        </a>
+        <a class='roomly-topbar-login icon-signin' data-if='data.id === 0' href='/login' data-i18n>Log in</a>
       </div>
-      <a class='roomly-icon-button' href='/logout' title='{LNG_Logout}' aria-label='{LNG_Logout}'>
-        <span class='icon-signout' aria-hidden='true'></span>
-      </a>
     </div>
   </header>
   <main class='roomly-content'>
     <section class='roomly-hero' data-component='api' data-endpoint='api/index/auth/me'>
-      <div>
+      <div data-if='data.id > 0'>
         <h1><span data-i18n>Welcome back</span>, <span data-text='data.name'>User</span>!</h1>
         <p data-i18n>Manage your room reservations and view the latest schedule.</p>
       </div>
-      <a class='roomly-primary-action' href='/booking'>
+      <div data-if='data.id === 0'>
+        <h1 data-i18n>Reservation calendar</h1>
+        <p data-i18n>You are viewing as a guest. Log in to book a room.</p>
+      </div>
+      <a class='roomly-primary-action' data-if='data.id > 0' href='/booking'>
         <span class='roomly-inline-icon icon-new' aria-hidden='true'></span>
         <span data-i18n>Quick booking</span>
+      </a>
+      <a class='roomly-primary-action' data-if='data.id === 0' href='/login'>
+        <span class='roomly-inline-icon icon-signin' aria-hidden='true'></span>
+        <span data-i18n>Log in</span>
       </a>
     </section>
     <section class='roomly-stat-grid' data-component='api' data-endpoint='api/booking/statistics' aria-label='Booking statistics'>

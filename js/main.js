@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           enabled: true,
           autoGuard: true,
           defaultRequireAuth: true,
-          publicPaths: ['/login', '/404', '/calendar'],
+          publicPaths: ['/', '/login', '/404'],
           guestOnlyPaths: ['/login'],
           redirects: {
             unauthenticated: '/login',
@@ -124,24 +124,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         routes: {
+          // Public: a visitor lands here as Guest and sees the calendar.
+          // api/index/auth/me already answers anonymous callers with a Guest
+          // user, and every booking endpoint refuses them.
           '/': {
             template: 'index.html',
             title: '{LNG_Dashboard}',
             requireGuest: false,
-            requireAuth: true
-          },
-          '/login': {
-            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260915-guest-1',
-            title: '{LNG_Login}',
-            requireGuest: true,
             requireAuth: false
           },
-          // Where "Continue as guest" lands. Not requireGuest: a signed-in user
-          // following the link should still see the calendar, not be bounced.
-          '/calendar': {
-            template: window.location.origin + '/ui-handoff/templates/booking/calendar-guest.html?v=20260915-guest-1',
-            title: '{LNG_Reservation calendar}',
-            requireGuest: false,
+          '/login': {
+            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260915-guest-2',
+            title: '{LNG_Login}',
+            requireGuest: true,
             requireAuth: false
           },
           '/forgot': {
