@@ -3253,6 +3253,14 @@ html[data-theme='dark'] .roomly-theme-sun {
   margin-top: 4px;
 }
 
+/* The .social-login-buttons grid above is two columns, sized for the optional
+   provider row (Google, LINE, Facebook, Telegram). The SSO fieldset holds a
+   single button that has to fill the card, so it opts out of the grid —
+   without this the button lands in column one at half width, hard left. */
+.roomly-login-page .roomly-login-sso .social-login-buttons {
+  display: block;
+}
+
 .roomly-login-page .social-login-buttons .icon-microsoft {
   display: flex;
   align-items: center;
@@ -3271,6 +3279,7 @@ html[data-theme='dark'] .roomly-theme-sun {
 }
 
 .roomly-login-page .social-login-buttons .icon-microsoft::before {
+  flex: 0 0 auto;
   width: 30px;
   height: 30px;
   padding: 7px;
@@ -3386,5 +3395,129 @@ html[data-theme='dark'] .roomly-theme-sun {
   .roomly-login-page .roomly-login-title,
   .roomly-login-page .roomly-login-header h1 {
     font-size: 24px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Public calendar (/calendar). Standalone chrome: no sidebar or topbar,
+   because those render a signed-in user's menu.
+   ------------------------------------------------------------------ */
+.roomly-guest-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(42, 164, 211, .13), transparent 28rem),
+    radial-gradient(circle at 4% 94%, rgba(0, 101, 145, .08), transparent 24rem),
+    var(--roomly-background);
+  color: var(--roomly-text);
+  font-family: 'Noto Sans Thai', 'Kanit', Tahoma, sans-serif;
+}
+
+.roomly-guest-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px clamp(16px, 4vw, 40px);
+  border-bottom: 1px solid var(--roomly-outline);
+  background: var(--roomly-surface);
+}
+
+.roomly-guest-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--roomly-text);
+  text-decoration: none;
+}
+
+.roomly-guest-brand .roomly-brand-logo {
+  width: auto;
+  height: 44px;
+}
+
+.roomly-guest-brand span {
+  display: grid;
+  gap: 2px;
+}
+
+.roomly-guest-brand strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.roomly-guest-brand small {
+  color: var(--roomly-muted);
+  font-size: 13px;
+}
+
+.roomly-guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roomly-guest-page .roomly-guest-login {
+  height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--roomly-primary);
+  color: var(--roomly-on-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.roomly-guest-content {
+  flex: 1 1 auto;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(20px, 3vw, 34px) clamp(16px, 4vw, 40px) 40px;
+}
+
+.roomly-guest-heading h1 {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+}
+
+.roomly-guest-heading p {
+  margin: 8px 0 0;
+  color: var(--roomly-muted);
+  font-size: 15px;
+}
+
+.roomly-guest-calendar {
+  margin-top: 22px;
+  padding: clamp(12px, 2vw, 22px);
+  border: 1px solid var(--roomly-card-border);
+  border-radius: 20px;
+  background: var(--roomly-surface);
+  box-shadow: var(--roomly-panel-shadow);
+}
+
+.roomly-guest-footer {
+  padding: 18px;
+  border-top: 1px solid var(--roomly-outline);
+  color: var(--roomly-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.roomly-guest-footer p {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .roomly-guest-brand strong {
+    font-size: 13px;
+  }
+
+  .roomly-guest-brand .roomly-brand-logo {
+    height: 36px;
   }
 }

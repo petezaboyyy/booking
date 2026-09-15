@@ -6,6 +6,7 @@
 namespace Booking\View;
 
 use Booking\Booking\Model as BookingModel;
+use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
 
@@ -26,6 +27,19 @@ class Controller extends ApiController
             $data = BookingModel::getDetailData($request->get('id')->toInt());
             if ($data === null) {
                 return $this->errorResponse('No data available', 404);
+            }
+
+            // The public calendar links here, so this endpoint answers guests.
+            // They get what the calendar already shows them and nothing more:
+            // no requester identity, no contact handles, no internal notes.
+            if (!$this->authenticateRequest($request)) {
+                $visible = Helper::getCalendarStatuses();
+                if (!empty($visible) && !in_array((int) ($data['status'] ?? -1), $visible, true)) {
+                    return $this->errorResponse('No data available', 404);
+                }
+                foreach (['member_id', 'member_name', 'member_email', 'member_line_uid', 'member_telegram_id', 'reason', 'comment', 'created_at', 'approve', 'closed'] as $field) {
+                    unset($data[$field]);
+                }
             }
 
             return $this->successResponse([

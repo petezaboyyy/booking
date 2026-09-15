@@ -1,0 +1,38 @@
+<!-- Public calendar. No sidebar or topbar: those render the signed-in user's
+     menu, and this page is reachable without an account. -->
+<div class="roomly-guest-page">
+  <header class="roomly-guest-topbar">
+    <a href="/" class="roomly-guest-brand" aria-label="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
+      <img class="roomly-brand-logo" src="/ui-handoff/images/logo.png" alt="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
+      <span>
+        <strong data-i18n>Room booking system of the Faculty of Veterinary Medicine</strong>
+        <small data-i18n>Chiang Mai University</small>
+      </span>
+    </a>
+    <div class="roomly-guest-actions">
+      <button class="roomly-language-toggle" type="button" data-roomly-language-toggle aria-label="Switch language">
+        <span class="roomly-language-icon icon-language"></span><span class="roomly-language-option roomly-language-th">TH</span><span class="roomly-language-divider">/</span><span class="roomly-language-option roomly-language-en">EN</span>
+      </button>
+      <button class="roomly-icon-button roomly-theme-toggle" type="button" data-roomly-theme-toggle aria-label="Toggle theme">
+        <span class="roomly-theme-glyph roomly-theme-moon icon-night"></span><span class="roomly-theme-glyph roomly-theme-sun icon-day"></span>
+      </button>
+      <a href="/login" class="btn btn-primary icon-signin roomly-guest-login" data-i18n>Log in</a>
+    </div>
+  </header>
+
+  <main class="roomly-guest-content">
+    <div class="roomly-guest-heading">
+      <h1 data-i18n>Reservation calendar</h1>
+      <p data-i18n>You are viewing as a guest. Log in to book a room.</p>
+    </div>
+    <div class="roomly-guest-calendar">
+      <div data-event-calendar data-api="api/booking/calendar" data-on-event-click-api="api/booking/view?id={reservationId}" data-view="month" data-show-today="true"
+           data-show-view-switcher="true" data-show-period-picker="true">
+      </div>
+    </div>
+  </main>
+
+  <footer class="roomly-guest-footer">
+    <p data-i18n>Chiang Mai University</p>
+  </footer>
+</div>

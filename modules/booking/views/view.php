@@ -50,7 +50,10 @@ class View extends \Kotchasan\KBase
         }
 
         $content[] = '<table class="fullwidth">';
-        $content[] = '<tr><td class="item"><span class="icon-user">{LNG_Name}</span></td><td class="item"> : </td><td class="item">'.$escape($index['member_name']).'</td></tr>';
+        // Absent for guests: the public view strips the requester's identity.
+        if (!empty($index['member_name'])) {
+            $content[] = '<tr><td class="item"><span class="icon-user">{LNG_Name}</span></td><td class="item"> : </td><td class="item">'.$escape($index['member_name']).'</td></tr>';
+        }
         $roomText = $escape($index['room_name']);
         if (!empty($index['room_number'])) {
             $roomText .= ' ('.$escape($index['room_number']).')';
