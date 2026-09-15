@@ -201,9 +201,11 @@ CREATE TABLE `{prefix}_user` (
   `country` varchar(2) DEFAULT 'TH',
   `created_at` datetime DEFAULT NULL,
   `active` tinyint(1) DEFAULT 1,
-  `social` enum('user','facebook','google','line','telegram') DEFAULT 'user',
+  `social` enum('user','facebook','google','line','telegram','microsoft') DEFAULT 'user',
   `line_uid` varchar(33) DEFAULT NULL,
   `telegram_id` varchar(20) DEFAULT NULL,
+  `microsoft_id` varchar(64) DEFAULT NULL,
+  `microsoft_tenant_id` varchar(36) DEFAULT NULL,
   `activatecode` varchar(64) DEFAULT NULL,
   `visited` int(11) NOT NULL DEFAULT 0,
   `website` varchar(255) DEFAULT NULL,
@@ -293,6 +295,7 @@ ALTER TABLE `{prefix}_user`
   ADD KEY `activatecode` (`activatecode`),
   ADD KEY `line_uid` (`line_uid`),
   ADD KEY `telegram_id` (`telegram_id`),
+  ADD UNIQUE KEY `microsoft_identity` (`microsoft_tenant_id`, `microsoft_id`),
   ADD KEY `idx_status` (`active`,`status`);
 
 --

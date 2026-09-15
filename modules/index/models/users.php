@@ -98,10 +98,6 @@ class Model extends \Kotchasan\Model
         $remove_ids = [];
         // Delete file
         foreach ((array) $ids as $id) {
-            if ($id == 1) {
-                continue;
-            }
-
             // The name of the folder where the files of the member you want to delete are stored.
             foreach (self::$cfg->member_images as $item => $value) {
                 $img = ROOT_PATH.DATA_FOLDER.$item.'/'.$id.self::$cfg->stored_img_type;

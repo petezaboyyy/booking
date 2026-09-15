@@ -80,11 +80,16 @@ class Controller extends ApiController
             'require_terms_acceptance' => self::$cfg->require_terms_acceptance,
             'facebook_appId' => self::$cfg->facebook_appId,
             'google_client_id' => self::$cfg->google_client_id,
+            'microsoft_client_id' => self::$cfg->microsoft_client_id,
+            'microsoft_tenant' => self::$cfg->microsoft_tenant,
+            'microsoft_allowed_domains' => self::$cfg->microsoft_allowed_domains,
+            'microsoft_redirect_uri' => self::$cfg->microsoft_redirect_uri,
+            'microsoft_secret_status' => empty(self::$cfg->microsoft_client_secret) ? 'Not configured' : 'Configured',
             'demo_mode' => self::$cfg->demo_mode,
             'cache_expire' => self::$cfg->cache_expire,
             'default_department' => self::$cfg->default_department,
-            'force_https' => self::$cfg->force_https,
-            'two_factor_enabled' => self::$cfg->two_factor_enabled,
+            'force_https' => self::$cfg->force_https ?? false,
+            'two_factor_enabled' => self::$cfg->two_factor_enabled ?? false,
             'max_login_attempts' => self::$cfg->max_login_attempts,
             'lockout_duration' => self::$cfg->lockout_duration
         ];
@@ -594,6 +599,36 @@ class Controller extends ApiController
             if (isset($body[$key])) {
                 $config->$key = Text::topic($body[$key]);
             }
+        }
+
+        foreach (['microsoft_client_id', 'microsoft_tenant'] as $key) {
+            if (isset($body[$key])) {
+                $value = strtolower(trim((string) $body[$key]));
+                if ($value !== '' && !\Gcms\MicrosoftOAuth::guid($value)) {
+                    $ret[$key] = 'Enter a valid Microsoft GUID (single tenant only)';
+                } else {
+                    $config->$key = $value;
+                }
+            }
+        }
+        if (isset($body['microsoft_allowed_domains'])) {
+            try {
+                $config->microsoft_allowed_domains = implode(', ', \Gcms\MicrosoftOAuth::domains($body['microsoft_allowed_domains']));
+            } catch (\Throwable $e) {
+                $ret['microsoft_allowed_domains'] = 'Enter exact email domains separated by commas';
+            }
+        }
+        if (isset($body['microsoft_redirect_uri'])) {
+            $value = trim((string) $body['microsoft_redirect_uri']);
+            if ($value !== '' && !\Gcms\MicrosoftOAuth::validRedirect($value)) {
+                $ret['microsoft_redirect_uri'] = 'Enter the HTTPS callback URL ending in /microsoft/callback.php';
+            } else {
+                $config->microsoft_redirect_uri = $value;
+            }
+        }
+        // Empty means preserve. Secrets are never returned by settings GET.
+        if (!empty($body['microsoft_client_secret'])) {
+            $config->microsoft_client_secret = trim((string) $body['microsoft_client_secret']);
         }
 
         if (isset($body['google_client_id'])) {

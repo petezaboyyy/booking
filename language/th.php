@@ -211,7 +211,8 @@ return array(
     1 => 'อนุมัติ',
     2 => 'ไม่อนุมัติ',
     3 => 'ยกเลิกโดยผู้จอง',
-    4 => 'ยกเลิกโดยเจ้าหน้าที่'
+    4 => 'ยกเลิกโดยเจ้าหน้าที่',
+    5 => 'กลับไปแก้ไข'
   ),
   'Books in the Same Category' => 'หนังสือในหมวดเดียวกัน',
   'Books Sold' => 'หนังสือที่ขายได้',
@@ -747,6 +748,7 @@ return array(
   'Leave Balance Overview' => 'ภาพรวมยอดคงเหลือการลา',
   'Leave balance summary is not available' => 'ไม่สามารถแสดงสรุปยอดคงเหลือการลาได้',
   'Leave blank to keep existing' => 'เว้นว่างไว้หากไม่ต้องการเปลี่ยนแปลง',
+  'Leave blank to allow managing all rooms.' => 'เว้นว่างไว้เพื่ออนุญาตให้จัดการได้ทุกห้อง',
   'Leave conditions' => 'เงื่อนไขการลา',
   'Leave dates' => 'วันที่ลา',
   'Leave Details' => 'รายละเอียดการลา',
@@ -795,7 +797,6 @@ return array(
   'Log in to Telegram to request an ID' => 'เข้าระบบ Telegram เพื่อขอ ID',
   'Login' => 'เข้าสู่ระบบ',
   'Login as' => 'เข้าระบบเป็น',
-  'Login as User' => 'เข้าสู่ระบบเป็นสมาชิก',
   'Login by' => 'เข้าระบบโดย',
   'Login information' => 'ข้อมูลการเข้าระบบ',
   'Login Message' => 'ข้อความการเข้าสู่ระบบ',
@@ -1105,10 +1106,6 @@ return array(
   'Please provide details or reasons for your leave request' => 'กรุณาให้รายละเอียดหรือเหตุผลสำหรับคำขอลาหยุดของคุณ',
   'Please provide the names of accompanying persons, one name per line, without numbering.' => 'กรุณาระบุรายชื่อผู้ร่วมเดินทาง 1 บรรทัดต่อ 1 ชื่อ โดยไม่ต้องใส่ลำดับที่นำหน้า',
   'Please select' => 'กรุณาเลือก',
-  'Please select a room' => 'กรุณาเลือกห้อง',
-  'Please select purpose' => 'ใช้สำหรับ',
-  'Select accessories' => 'เลือกอุปกรณ์เสริม',
-  'Select accessories (Hold Ctrl to select multiple)' => 'เลือกอุปกรณ์เสริม (กด Ctrl ค้างเพื่อเลือกหลายรายการ)',
   'Please select :name at least one item' => 'กรุณาเลือก :name อย่างน้อย 1 รายการ',
   'Please select a file' => 'กรุณาเลือกไฟล์',
   'Please select an action' => 'กรุณาเลือกการดำเนินการ',
@@ -1295,6 +1292,7 @@ return array(
   'Room name' => 'ชื่อห้อง',
   'Room No.' => 'หมายเลขห้อง',
   'Rooms' => 'ห้อง',
+  'Rooms for booking management' => 'ห้องที่อนุญาตให้จัดการการจอง',
   'Route Guards' => 'การป้องกันเส้นทาง',
   'Route guards and middleware' => 'การควบคุมเส้นทางด้วย Middleware',
   'Route Middleware' => 'มิดเดิลแวร์สำหรับเส้นทาง',
@@ -1782,12 +1780,5 @@ return array(
   'Selected weekdays' => 'วันที่เลือกในแต่ละสัปดาห์',
   'Required when repeating on selected weekdays' => 'จำเป็นเมื่อเลือกทำซ้ำตามวันในสัปดาห์',
   'Selected weekdays do not occur in the reservation period' => 'วันที่เลือกไม่อยู่ภายในช่วงวันที่จอง',
-  'The selected time applies to each occurrence within the date range' => 'ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก',
-  'Filter by room number or name...' => 'ค้นหาห้อง หรือเลขห้อง...',
-  'Search room or number...' => 'ค้นหาห้อง หรือเลขห้อง...',
-  'Filter room or number...' => 'ค้นหาห้อง หรือเลขห้อง...',
-  'Clear filter' => 'ล้างตัวกรอง',
-  'ระบบจองห้องคณะสัตวแพทยศาสตร์' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
-  'Faculty of Veterinary Medicine Room Reservation' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
-  'Roomly' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์'
+  'The selected time applies to each occurrence within the date range' => 'ระบบจะใช้ช่วงเวลานี้กับแต่ละครั้งที่เกิดขึ้นภายในช่วงวันที่เลือก'
 );

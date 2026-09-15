@@ -135,6 +135,15 @@ const SocialLoginComponent = {
     const provider = element.dataset.socialProvider;
     const config = element.dataset.username;
 
+    // Keep Microsoft discoverable even before SSO is configured.
+    if (provider === 'microsoft') {
+      element.style.display = '';
+      element.disabled = !config || config.trim() === '';
+      const status = element.parentElement.querySelector('[data-microsoft-status]');
+      if (status) status.hidden = !element.disabled;
+      if (element.disabled) return null;
+    }
+
     // No config = hide element
     if (!config || config.trim() === '') {
       element.style.display = 'none';
@@ -186,6 +195,13 @@ const SocialLoginComponent = {
       case 'google':
         this.initGoogleProvider(instance);
         break;
+      case 'microsoft': {
+        instance.element.style.display = '';
+        const clickHandler = () => this.handleMicrosoftLogin(instance);
+        instance.element.addEventListener('click', clickHandler);
+        instance.handlers.click = clickHandler;
+        break;
+      }
       case 'line':
         this.initLineProvider(instance);
         break;
@@ -480,6 +496,12 @@ const SocialLoginComponent = {
   /**
    * Handle LINE OAuth redirect
    */
+  handleMicrosoftLogin(instance) {
+    const url = new URL(instance.config, window.location.href);
+    url.searchParams.set('intended_url', document.querySelector('[name=intended_url]')?.value || '/');
+    window.location.assign(url.href);
+  },
+
   handleLineLogin(instance) {
     const {config} = instance;
 

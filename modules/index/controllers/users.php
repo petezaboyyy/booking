@@ -65,7 +65,7 @@ class Controller extends \Gcms\Table
     protected function checkAuthorization(Request $request, $login)
     {
         // Check if user is admin
-        if (!ApiController::isSuperAdmin($login)) {
+        if (!ApiController::isAdmin($login)) {
             return $this->errorResponse('Forbidden', 403);
         }
 
@@ -154,7 +154,7 @@ class Controller extends \Gcms\Table
      */
     protected function handleDeleteAction(Request $request, $login)
     {
-        if (!ApiController::isSuperAdmin($login)) {
+        if (!ApiController::isAdmin($login)) {
             return $this->errorResponse('Failed to process request', 403);
         }
 
@@ -185,7 +185,7 @@ class Controller extends \Gcms\Table
     {
         $id = $request->post('id')->toInt();
 
-        if (!ApiController::isSuperAdmin($login) && $id !== $login->id) {
+        if (!ApiController::isAdmin($login) && $id !== $login->id) {
             return $this->errorResponse('Failed to process request', 403);
         }
 
@@ -220,10 +220,6 @@ class Controller extends \Gcms\Table
         $baseUrl = !empty($referrer) ? substr($referrer, 0, strrpos($referrer, '/') + 1) : WEB_URL;
 
         foreach ($ids as $id) {
-            if ($id == 1) {
-                continue;
-            }
-
             $user = \Index\Profile\Model::get($id);
             if ($user && !empty($user->username)) {
                 $result = \Index\Forgot\Model::execute($user->id, $user->username, $baseUrl);
@@ -268,8 +264,7 @@ class Controller extends \Gcms\Table
         }
 
         $users = \Kotchasan\DB::create()->select('user', [
-            ['id', $ids],
-            ['id', '!=', 1]
+            ['id', $ids]
         ], [], ['id', 'username', 'name']);
 
         if (empty($users)) {
@@ -320,8 +315,7 @@ class Controller extends \Gcms\Table
         // Update users
         $editCount = \Kotchasan\DB::create()
             ->update('user', [
-                ['id', $ids],
-                ['id', '!=', 1]
+                ['id', $ids]
             ], ['active' => 1, 'activatecode' => '']);
 
         // Log the action
@@ -424,7 +418,6 @@ class Controller extends \Gcms\Table
         // Update users
         $editCount = \Kotchasan\DB::create()->update('user', [
             ['id', $ids],
-            ['id', '!=', 1],
             ['active', 1]
         ], ['active' => 0]);
 
@@ -433,82 +426,6 @@ class Controller extends \Gcms\Table
 
         // Redirect to the same page with a success message
         return $this->redirectResponse('reload', 'Deactivated '.$editCount.' user(s)', 200, 0, 'table');
-    }
-
-    /**
-     * Handle impersonate action - Login as user (SuperAdmin only)
-     *
-     * @param Request $request
-     * @param object $login
-     *
-     * @return Response
-     */
-    protected function handleImpersonateAction(Request $request, $login)
-    {
-        // Only SuperAdmin can impersonate
-        if (!ApiController::isSuperAdmin($login)) {
-            return $this->errorResponse('Only SuperAdmin can impersonate users', 403);
-        }
-
-        // Get target user ID
-        $id = $request->post('id')->toInt();
-
-        if (empty($id)) {
-            return $this->errorResponse('User ID required', 400);
-        }
-
-        // Cannot impersonate yourself
-        if ($id == $login->id) {
-            return $this->errorResponse('Cannot impersonate yourself', 400);
-        }
-
-        // Get client IP
-        $clientIp = $request->getClientIp();
-
-        // Call impersonate function
-        $result = \Index\Auth\Model::impersonateUser($login->id, $id, $clientIp);
-
-        if (!$result['success']) {
-            return $this->errorResponse($result['message'], 400);
-        }
-
-        // Set new token cookie (same pattern as auth controller login)
-        $this->setAuthCookie('auth_token', $result['token'], \Index\Auth\Model::TOKEN_EXPIRY);
-
-        // Return success with user data and redirect
-        return $this->successResponse([
-            'user' => $result['user'],
-            'impersonating' => true,
-            'actions' => [
-                ['type' => 'notification', 'message' => 'Login as '.$result['user']['name'], 'variant' => 'info'],
-                ['type' => 'redirect', 'url' => '/']
-            ]
-        ], 'Impersonation started');
-    }
-
-    /**
-     * Set authentication cookie
-     *
-     * @param string $name Cookie name
-     * @param string $value Cookie value
-     * @param int $expiry Expiry time in seconds
-     */
-    private function setAuthCookie($name, $value, $expiry)
-    {
-        $options = [
-            'expires' => time() + $expiry,
-            'path' => '/',
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ];
-
-        // Enable secure cookie if HTTPS
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
-            $options['secure'] = true;
-            $options['samesite'] = 'Strict';
-        }
-
-        setcookie($name, $value, $options);
     }
 
     /**

@@ -69,6 +69,11 @@ class Controller extends ApiController
                     }
                 }
 
+                $roomScope = Helper::getBookingRoomScope($login);
+                if ($roomScope !== null) {
+                    $q->where(['room_id', $roomScope]);
+                }
+
                 $row = $q->first();
                 $approvals['pending'] = (int) ($row ? $row->count : 0);
             }

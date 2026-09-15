@@ -19,6 +19,10 @@ RewriteCond %{REQUEST_URI} !^/api/
 RewriteRule ^(.*)$ index.html [L,QSA]
 
 <IfModule mod_headers.c>
+  # Revalidate SPA templates so removed controls are not left in the browser cache.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
   # CORS headers for API requests
   <If "%{REQUEST_URI} =~ m#^.*/api/#">
     Header always set Access-Control-Allow-Origin "*"

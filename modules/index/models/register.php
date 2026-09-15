@@ -313,6 +313,11 @@ class Model extends \Kotchasan\Model
             'created_at' => date('Y-m-d H:i:s')
         ];
 
+        if (($data['social'] ?? '') === 'microsoft') {
+            $save['microsoft_id'] = $data['microsoft_id'];
+            $save['microsoft_tenant_id'] = $data['microsoft_tenant_id'];
+        }
+
         // 3. User Status: Set status and social login type
         $save['status'] = isset($data['status']) ? (int) $data['status'] : self::getDefaultUserStatus();
         $save['social'] = isset($data['social']) ? $data['social'] : 'user';
@@ -324,6 +329,10 @@ class Model extends \Kotchasan\Model
 
         // 5. Permissions: Set user permissions
         $save['permission'] = self::preparePermissions($permission);
+        if (($data['social'] ?? '') === 'microsoft') {
+            $save['status'] = 0;
+            $save['permission'] = '';
+        }
 
         // 6. Metadata: Keep meta fields in their source shape for repository persistence
         if (!empty($user_meta)) {

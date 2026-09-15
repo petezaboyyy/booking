@@ -20,6 +20,30 @@ namespace Gcms;
 class Config extends \Kotchasan\Config
 {
     /**
+     * Load normal application settings, then let deployment environment
+     * variables override Microsoft SSO values. Secrets therefore do not need
+     * to be committed to settings/config.php.
+     */
+    protected function __construct()
+    {
+        parent::__construct();
+
+        $microsoftEnvironment = [
+            'microsoft_client_id' => 'BOOKING_MICROSOFT_CLIENT_ID',
+            'microsoft_client_secret' => 'BOOKING_MICROSOFT_CLIENT_SECRET',
+            'microsoft_tenant' => 'BOOKING_MICROSOFT_TENANT',
+            'microsoft_allowed_domains' => 'BOOKING_MICROSOFT_ALLOWED_DOMAINS',
+            'microsoft_redirect_uri' => 'BOOKING_MICROSOFT_REDIRECT_URI'
+        ];
+        foreach ($microsoftEnvironment as $property => $environmentName) {
+            $value = getenv($environmentName);
+            if ($value !== false && trim($value) !== '') {
+                $this->{$property} = trim($value);
+            }
+        }
+    }
+
+    /**
      * กำหนดอายุของแคช (วินาที)
      * 0 หมายถึงไม่มีการใช้งานแคช
      *
@@ -68,6 +92,11 @@ class Config extends \Kotchasan\Config
      * @var string
      */
     public $google_client_id = '';
+    public $microsoft_client_id = '';
+    public $microsoft_client_secret = '';
+    public $microsoft_tenant = '';
+    public $microsoft_allowed_domains = '';
+    public $microsoft_redirect_uri = '';
     /**
      * รายชื่อฟิลด์จากตารางสมาชิก สำหรับตรวจสอบการ login
      *

@@ -79,7 +79,7 @@ class Controller extends \Gcms\Table
     {
         return [
             'status' => Helper::getStatusOptions(),
-            'room_id' => Helper::getRoomOptions(false),
+            'room_id' => Helper::getBookingRoomOptions($login),
             'member_id' => \Index\Users\Model::toOptions()
         ];
     }
@@ -137,6 +137,11 @@ class Controller extends \Gcms\Table
     {
         $id = $request->post('id')->toInt();
         if ($id <= 0 || !Helper::canApproveRequests($login)) {
+            return $this->errorResponse('Permission required', 403);
+        }
+
+        $booking = \Booking\Review\Model::get($id);
+        if (!$booking || !Helper::isRoomInBookingScope($login, (int) $booking->room_id)) {
             return $this->errorResponse('Permission required', 403);
         }
 

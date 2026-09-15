@@ -163,10 +163,15 @@ class Controller extends \Kotchasan\KBase
             $errors['name'] = Language::get('Name is required');
         }
 
+        if (($data['social'] ?? '') === 'microsoft'
+            && (!\Gcms\MicrosoftOAuth::guid($data['microsoft_id'] ?? '') || !\Gcms\MicrosoftOAuth::guid($data['microsoft_tenant_id'] ?? ''))) {
+            $errors['social'] = 'Invalid Microsoft identity';
+        }
+
         // 2. Validate social provider type
         if (empty($data['social'])) {
             $errors['social'] = 'Social provider type is required';
-        } elseif (!in_array($data['social'], ['google', 'facebook', 'line', 'telegram'])) {
+        } elseif (!in_array($data['social'], ['google', 'facebook', 'line', 'telegram', 'microsoft'])) {
             $errors['social'] = 'Invalid social provider type';
         }
 

@@ -106,6 +106,10 @@ class Controller extends ApiController
             // Validate request method
             ApiController::validateMethod($request, 'POST');
 
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
+
             // Validate CSRF token
             $this->validateCsrfToken($request);
 
@@ -193,7 +197,6 @@ class Controller extends ApiController
     /**
      * POST /index/auth/logout
      * Invalidate the current access token.
-     * If impersonating, restore to admin session instead.
      *
      * @param Request $request
      *
@@ -209,35 +212,6 @@ class Controller extends ApiController
             $accessToken = $this->getAccessTokenFromRequest($request);
 
             if ($accessToken) {
-                // Check if currently impersonating
-                $impersonateInfo = Model::isImpersonating($accessToken);
-
-                if ($impersonateInfo) {
-                    // Restore to admin session
-                    $clientIp = $request->getClientIp();
-                    $result = Model::restoreAdmin($accessToken, $clientIp);
-
-                    if ($result['success']) {
-                        // Set new admin token cookie
-                        $this->setAuthCookie('auth_token', $result['token'], Model::TOKEN_EXPIRY);
-
-                        if (isset($result['refresh_token'])) {
-                            $this->setAuthCookie('refresh_token', $result['refresh_token'], Model::REFRESH_TOKEN_EXPIRY);
-                        }
-
-                        // Return success with admin user data
-                        return $this->successResponse([
-                            'user' => $result['user'],
-                            'restored' => true,
-                            'actions' => [
-                                ['type' => 'notification', 'message' => 'Restored to admin session', 'variant' => 'success'],
-                                ['type' => 'redirect', 'url' => 'reload']
-                            ]
-                        ], 'Restored to admin session');
-                    }
-                }
-
-                // Normal logout (not impersonating)
                 $payload = Model::verifyToken($accessToken);
                 $userId = $payload['sub'] ?? null;
 
@@ -479,6 +453,9 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'POST');
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
             $this->validateCsrfToken($request);
 
             // Check if forgot password is enabled
@@ -539,6 +516,9 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'POST');
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
             $this->validateCsrfToken($request);
 
             // Check if forgot password is enabled
@@ -590,6 +570,9 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'POST');
+            if (\Gcms\MicrosoftOAuth::microsoftOnly()) {
+                return $this->errorResponse('Microsoft sign-in is required.', 403);
+            }
             $this->validateCsrfToken($request);
 
             // Check if registration is enabled
@@ -724,7 +707,8 @@ class Controller extends ApiController
             $settings = [
                 'user_register' => !empty(self::$cfg->user_register),
                 'user_forgot' => !empty(self::$cfg->user_forgot),
-                'activate_user' => !empty(self::$cfg->activate_user)
+                'activate_user' => !empty(self::$cfg->activate_user),
+                'microsoft_only' => \Gcms\MicrosoftOAuth::microsoftOnly()
             ];
 
             return $this->successResponse($settings, 'Settings retrieved');

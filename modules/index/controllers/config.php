@@ -46,6 +46,7 @@ class Controller extends ApiController
         'facebook_appId',
         'google_client_id',
         'line_channel_id',
+        'microsoft_client_id',
         'payment_methods',
         'transportation',
         'promptpay_id',
@@ -79,6 +80,10 @@ class Controller extends ApiController
                 $config[$key] = self::$cfg->$key;
             }
         }
+
+        $config['microsoft_login_url'] = \Gcms\MicrosoftOAuth::configured(self::$cfg)
+            ? \Gcms\MicrosoftOAuth::baseUrl(self::$cfg->microsoft_redirect_uri).'microsoft/login.php' : '';
+        $config['microsoft_only'] = \Gcms\MicrosoftOAuth::microsoftOnly();
 
         // Add logo URL if exists
         $img = DATA_FOLDER.'images/logo'.self::$cfg->stored_img_type;

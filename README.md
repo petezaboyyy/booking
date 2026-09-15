@@ -163,3 +163,7 @@ route สำคัญของระบบจองห้อง
 - `npm run dev` สำหรับพัฒนา frontend ด้วย Vite
 - `npm run build` สำหรับ build asset ทั้งชุด
 - `npm run build:<target>` สำหรับ build เฉพาะ bundle
+
+## Microsoft SSO
+
+รองรับ Microsoft Entra ID แบบ Single tenant พร้อม PKCE, ตรวจ ID token และจำกัดโดเมนอีเมล ตั้งค่าได้ใน General Settings → Microsoft SSO ดูขั้นตอน migration และ Entra ที่ [คู่มือ Microsoft SSO](microsoft/README.md)

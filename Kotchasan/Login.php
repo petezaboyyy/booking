@@ -266,7 +266,16 @@ class Login extends KBase
     public static function isSuperAdmin($login = null)
     {
         $login = $login ?? self::isMember();
-        return $login && $login->id === 1 ? $login : null;
+        if (!$login || (int) ($login->status ?? 0) !== 1) {
+            return null;
+        }
+
+        $permissions = is_array($login->permission ?? null)
+            ? $login->permission
+            : explode(',', trim((string) ($login->permission ?? ''), " \t\n\r\0\x0B,"));
+        $permissions = array_map('trim', $permissions);
+
+        return in_array('super_admin', $permissions, true) ? $login : null;
     }
 
     /**

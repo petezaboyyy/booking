@@ -76,7 +76,7 @@ class Api extends \Kotchasan\ApiController
     }
 
     /**
-     * Role helper: SuperAdmin (id=1) is always allowed.
+     * Role helper: SuperAdmin is granted explicitly by permission.
      *
      * @param object $login
      *
@@ -84,7 +84,10 @@ class Api extends \Kotchasan\ApiController
      */
     public static function isSuperAdmin($login)
     {
-        return $login && isset($login->id) && (int) $login->id === 1;
+        return $login
+            && isset($login->status)
+            && (int) $login->status === 1
+            && self::hasPermission($login, 'super_admin', false);
     }
 
     /**

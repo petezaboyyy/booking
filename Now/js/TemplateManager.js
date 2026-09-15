@@ -175,6 +175,7 @@ const TemplateManager = {
 
     const response = await window.http.get(url.toString(), {
       throwOnError: false,
+      cache: 'no-store',
       headers: {
         'Accept': 'text/html'
       }
