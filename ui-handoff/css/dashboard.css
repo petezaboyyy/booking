@@ -2752,30 +2752,30 @@ html[data-theme='dark'] .roomly-theme-sun {
 [data-theme='dark'] .roomly-login-page {
   --roomly-primary: #75d1ff;
   --roomly-secondary: #5ed7ee;
-  --roomly-background: #131d38;
+  --roomly-background: #0e1826;
   --roomly-surface: #101c2c;
-  --roomly-surface-low: #111f33;
-  --roomly-surface-container: #17324c;
+  --roomly-surface-low: #0c1622;
+  --roomly-surface-container: #152538;
   --roomly-text: #edf6ff;
   --roomly-muted: #a9b9ca;
   --roomly-outline: rgba(151, 180, 211, .2);
   --roomly-on-primary: #002033;
-  --roomly-login-bg-image: url('/images/login-bg-dark.jpg');
-  --roomly-login-bg-opacity: 0.25;
-  --roomly-visual-bg: #071322;
+  --roomly-login-bg-image: url('/images/login-bg-dark.jpg?v=20260916-darknavy-1');
+  --roomly-login-bg-opacity: 0.28;
+  --roomly-visual-bg: #0b1420;
   --roomly-visual-image: url('/images/login-visual-dark.jpg?v=20260916-themed-1');
   --roomly-visual-opacity: 0.95;
   --roomly-visual-top-overlay: linear-gradient(
     to bottom,
-    rgba(5, 14, 26, 0.45) 0%,
-    rgba(5, 14, 26, 0.15) 20%,
+    rgba(11, 20, 32, 0.45) 0%,
+    rgba(11, 20, 32, 0.15) 20%,
     transparent 45%
   );
   --roomly-visual-bottom-overlay: linear-gradient(
     to top,
-    rgba(4, 11, 20, 0.96) 0%,
-    rgba(4, 11, 20, 0.82) 30%,
-    rgba(4, 11, 20, 0.35) 55%,
+    rgba(11, 20, 32, 0.96) 0%,
+    rgba(11, 20, 32, 0.82) 30%,
+    rgba(11, 20, 32, 0.35) 55%,
     transparent 75%
   );
   --roomly-visual-badge-bg: #7ec8f8;
