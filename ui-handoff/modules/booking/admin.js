@@ -379,7 +379,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260911-vet-logo';
+const ROOMLY_ROLE_UI_VERSION = '20260915-occurrences-5';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -905,6 +905,10 @@ function initBookingForm(element, data) {
         }
         updateLiveSummary();
     };
+
+    // Staff screens render templates/booking/booking-recurring.html, which
+    // carries the per-date picker this UI has no markup for.
+    const occurrencePickerCleanup = initOccurrencePicker(element, data);
 
     if (scheduleType) {
         scheduleType.addEventListener('change', scheduleChange);
@@ -1681,6 +1685,7 @@ function initBookingForm(element, data) {
         }
         validationCleanups.forEach(cleanup => cleanup());
         pickerBadges.forEach(badge => badge.removeEventListener('click', onAnyBadgeClick));
+        occurrencePickerCleanup();
         if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
         if (recurrenceDays) recurrenceDays.removeEventListener('change', updateLiveSummary);
         if (roomIdInput) roomIdInput.removeEventListener('change', updateLiveSummary);
@@ -1868,3 +1873,221 @@ function initBookingForm(element, data) {
         }
     }
 })();
+
+/**
+ * Per-date controls for a recurring request: the "uncheck dates you do not
+ * want" picker on the booking form. Ported from modules/booking/admin.js,
+ * which index.html no longer loads — the two files share top-level const
+ * names, so only one booking script can run.
+ *
+ * Returns a no-op when the template has no picker (the member UI), so it is
+ * safe to call from initBookingForm unconditionally.
+ */
+function initOccurrencePicker(element, data) {
+    const scheduleType = element.querySelector('#schedule_type');
+    const recurrenceDays = element.querySelector('#recurrence_days');
+    const beginDate = element.querySelector('#begin_date');
+    const endDate = element.querySelector('#end_date');
+    const beginTime = element.querySelector('#begin_time');
+    const endTime = element.querySelector('#end_time');
+    const excludedInput = element.querySelector('#excluded_dates');
+    const preview = element.querySelector('#booking_occurrence_preview');
+    const result = element.querySelector('#result_excluded_dates');
+    if (!scheduleType || !recurrenceDays || !beginDate || !endDate || !excludedInput || !preview) {
+        return () => {};
+    }
+
+    // Mirrors Helper::MAX_BOOKING_RANGE_DAYS — rendering one checkbox per day
+    // of a multi-year range would lock up the page.
+    const MAX_BOOKING_RANGE_DAYS = 366;
+
+    const parseExcluded = value => new Set(
+        (Array.isArray(value) ? value : String(value || '').split(','))
+            .map(item => String(item).trim())
+            .filter(item => /^\d{4}-\d{2}-\d{2}$/.test(item))
+    );
+    const excluded = parseExcluded(data?.excluded_dates ?? excludedInput.value);
+
+    // The staff template calls this through data-on-load, which hands over the loaded
+    // booking. The member template uses data-script, which fires with route params only
+    // and gets its values from data-binding afterwards — so pick up whatever landed in
+    // the hidden input since the last pass. Union, never remove: the checkbox handler
+    // keeps the input and this set in step, so the only new values are the bound ones.
+    const adoptBoundExclusions = () => {
+        parseExcluded(excludedInput.value).forEach(date => excluded.add(date));
+    };
+    const parseDate = value => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+        return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
+    };
+    const formatDate = date => [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+    ].join('-');
+    const selectedWeekdays = () => new Set(
+        Array.from(recurrenceDays.selectedOptions).map(option => Number(option.value))
+    );
+
+    const renderOccurrences = () => {
+        adoptBoundExclusions();
+        const first = parseDate(beginDate.value);
+        const last = parseDate(endDate.value);
+        preview.replaceChildren();
+        if (!first || !last || first > last) {
+            // Leave the hidden input alone: on an edit this runs once before the dates
+            // are bound, and clearing here would drop the saved exclusions. The server
+            // ignores excluded dates that fall outside the schedule anyway.
+            if (result) result.textContent = '';
+            return;
+        }
+
+        const rangeDays = Math.floor((last.getTime() - first.getTime()) / 86400000) + 1;
+        if (rangeDays > MAX_BOOKING_RANGE_DAYS) {
+            excludedInput.value = '';
+            if (result) {
+                result.textContent = Now.translate('The reservation period must not exceed :days days')
+                    .replace(':days', MAX_BOOKING_RANGE_DAYS);
+                result.classList.add('error');
+            }
+            return;
+        }
+
+        const weekly = scheduleType.value === 'weekly-slot';
+        const weekdays = selectedWeekdays();
+        const availableDates = [];
+        const cursor = new Date(first.getTime());
+        while (cursor <= last) {
+            if (!weekly || weekdays.has(cursor.getDay())) {
+                availableDates.push(formatDate(cursor));
+            }
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        const availableSet = new Set(availableDates);
+        Array.from(excluded).forEach(date => {
+            if (!availableSet.has(date)) excluded.delete(date);
+        });
+        excludedInput.value = Array.from(excluded).sort().join(',');
+
+        availableDates.forEach(date => {
+            const item = document.createElement('div');
+            item.className = `booking-occurrence-item${excluded.has(date) ? ' is-excluded' : ''}`;
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = !excluded.has(date);
+            checkbox.id = `occurrence_${date.replaceAll('-', '')}`;
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            const dateObject = parseDate(date);
+            const dateLabel = dateObject
+                ? dateObject.toLocaleDateString(document.documentElement.lang || undefined, {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+                })
+                : date;
+            label.textContent = `${dateLabel} ${beginTime?.value || ''}-${endTime?.value || ''}`;
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) excluded.delete(date);
+                else excluded.add(date);
+                item.classList.toggle('is-excluded', !checkbox.checked);
+                excludedInput.value = Array.from(excluded).sort().join(',');
+                updateSummary(availableDates.length);
+            });
+            item.append(checkbox, label);
+            preview.appendChild(item);
+        });
+        updateSummary(availableDates.length);
+    };
+
+    const updateSummary = total => {
+        if (!result) return;
+        const selected = Math.max(0, total - excluded.size);
+        result.textContent = `${Now.translate('Selected dates')}: ${selected} / ${total}`;
+        result.classList.toggle('error', total > 0 && selected === 0);
+    };
+
+    // The surrounding initBookingForm owns showing/hiding the weekday group,
+    // so this only needs to redraw the date list.
+    const onScheduleChange = () => renderOccurrences();
+
+    scheduleType.addEventListener('change', onScheduleChange);
+    [beginDate, endDate, beginTime, endTime, recurrenceDays].filter(Boolean).forEach(input => {
+        input.addEventListener('change', renderOccurrences);
+        input.addEventListener('input', renderOccurrences);
+    });
+    // Data-binding writes the date fields without firing input events, so redraw once the
+    // page reports it finished loading.
+    EventManager.on('page:loaded', renderOccurrences);
+    renderOccurrences();
+
+    return () => {
+        scheduleType.removeEventListener('change', onScheduleChange);
+        [beginDate, endDate, beginTime, endTime, recurrenceDays].filter(Boolean).forEach(input => {
+            input.removeEventListener('change', renderOccurrences);
+            input.removeEventListener('input', renderOccurrences);
+        });
+        EventManager.off?.('page:loaded', renderOccurrences);
+    };
+}
+
+function initBookingReview(element, data) {
+    const container = element.querySelector('#booking_review_occurrences');
+    if (!container) return () => {};
+
+    const occurrences = Array.isArray(data?.occurrences) ? data.occurrences : [];
+    container.replaceChildren();
+    if (occurrences.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'comment';
+        empty.textContent = Now.translate('No booking dates');
+        container.appendChild(empty);
+        return () => {};
+    }
+
+    occurrences.forEach(occurrence => {
+        const item = document.createElement('div');
+        item.className = `booking-occurrence-item${occurrence.status === 4 ? ' is-cancelled' : ''}`;
+
+        const details = document.createElement('span');
+        details.className = 'booking-occurrence-details';
+        const date = document.createElement('strong');
+        date.textContent = occurrence.date;
+        const time = document.createElement('small');
+        time.textContent = `${occurrence.begin_time}-${occurrence.end_time} · ${Now.translate(occurrence.status_text)}`;
+        details.append(date, time);
+        if (occurrence.cancellation_reason) {
+            const reason = document.createElement('small');
+            reason.textContent = occurrence.cancellation_reason;
+            details.appendChild(reason);
+        }
+        item.appendChild(details);
+
+        // The review endpoint is restricted to approvers and the cancellation
+        // endpoint validates permission again. Use the concrete status here so
+        // data-binding coercion cannot hide the action for an approved date.
+        if (Number(occurrence.status) === 1) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-danger icon-delete booking-occurrence-cancel';
+            button.title = Now.translate('Cancel this date');
+            button.textContent = Now.translate('Cancel this date');
+            button.dataset.action = 'click.prevent:requestApi';
+            button.dataset.apiUrl = 'api/booking/review/canceloccurrence';
+            button.dataset.apiMethod = 'post';
+            button.dataset.paramId = String(data.id);
+            button.dataset.paramOccurrenceId = String(occurrence.id);
+            button.dataset.paramVersion = String(data.version);
+            button.dataset.paramApprovalReason = '{approval_reason}';
+            button.dataset.requiredFields = 'approval_reason';
+            button.dataset.requiredMessage = 'Decision note is required';
+            button.dataset.confirm = 'Confirm cancellation of this date';
+            button.dataset.loadingText = 'Cancelling';
+            button.dataset.notifySuccess = 'true';
+            item.appendChild(button);
+        }
+        container.appendChild(item);
+    });
+
+    return () => {};
+}
+

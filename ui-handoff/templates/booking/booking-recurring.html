@@ -48,7 +48,7 @@
 
   <main class='roomly-content roomly-booking-content'>
       <form class='roomly-booking-form' data-form="booking" data-load-api="api/booking/booking/get" data-load-query-params="true" data-ajax-submit="true" action="api/booking/booking/save" method="post"
-            autocomplete="off" data-script="initBookingForm" novalidate>
+            autocomplete="off" data-script="initBookingForm" data-on-load="initBookingForm" novalidate>
         <div class="card-groups roomly-booking-shell">
           <header class='roomly-page-heading roomly-booking-heading'>
             <div>
@@ -229,6 +229,18 @@
                       <span class="roomly-tip-icon icon-info" aria-hidden="true"></span>
                       <span data-i18n>The selected time applies to each occurrence within the date range</span>
                     </div>
+
+                    <!-- Per-date picker. initOccurrencePicker() in
+                         ui-handoff/modules/booking/admin.js fills the preview and keeps the
+                         hidden input in sync; it needs all three ids to activate. Styles come
+                         from templates/booking/style.css, which index.html loads last. -->
+                    <div class="roomly-field-wrap booking-occurrence-selector">
+                      <label data-i18n>Booking dates</label>
+                      <div class="comment" data-i18n>Uncheck dates that should not be included in this request</div>
+                      <div id="booking_occurrence_preview" class="booking-occurrence-preview"></div>
+                      <div id="result_excluded_dates" class="comment"></div>
+                      <input type="hidden" id="excluded_dates" name="excluded_dates" data-attr="value:excluded_dates">
+                    </div>
                   </div>
 
                   <!-- Section 3: Accessories & Notes -->
@@ -386,6 +398,7 @@
                 </button>
               </div>
               <input type="hidden" name="id" data-attr="value:id">
+              <input type="hidden" name="version" data-attr="value:version">
             </fieldset>
           </div>
         </div>
@@ -415,7 +428,7 @@
             <div id='modal-roomly-calendar'
                  class='roomly-calendar'
                  data-api='api/booking/calendar'
-                 data-on-event-click-api='api/booking/view?id={id}'
+                 data-on-event-click-api='api/booking/view?id={reservationId}'
                  data-view='month'
                  data-show-today='true'
                  data-show-view-switcher='true'

@@ -4,6 +4,55 @@
   gap: 0.75rem;
   min-width: 0;
 }
+.booking-occurrence-selector {
+  margin-top: 1rem;
+}
+.booking-occurrence-preview,
+.booking-review-occurrences {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  max-height: 20rem;
+  overflow: auto;
+  padding: 0.2rem;
+}
+.booking-review-occurrences {
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}
+.booking-occurrence-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-background);
+}
+.booking-occurrence-item.is-excluded,
+.booking-occurrence-item.is-cancelled {
+  opacity: 0.65;
+  background: rgba(148, 163, 184, 0.12);
+}
+.booking-occurrence-item label,
+.booking-occurrence-details {
+  min-width: 0;
+  flex: 1;
+}
+.booking-occurrence-details strong,
+.booking-occurrence-details small {
+  display: block;
+}
+.booking-occurrence-details small {
+  color: var(--color-text-muted);
+}
+.booking-occurrence-cancel {
+  flex-shrink: 0;
+  min-width: auto;
+  height: 2rem;
+  padding: 0 0.65rem;
+  font-size: 0.8rem;
+}
 .booking-table-thumb {
   width: 3.25rem;
   height: 3.25rem;

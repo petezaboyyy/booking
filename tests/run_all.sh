@@ -1,0 +1,12 @@
+#!/bin/sh
+# Run every booking test suite. Needs the docker compose stack up.
+#   sh tests/run_all.sh
+set -e
+cd "$(dirname "$0")/.."
+
+for t in booking_guardrails_test booking_validation_test booking_security_test booking_occurrence_integration_test; do
+    printf '\n======== %s ========\n' "$t"
+    docker compose exec -T web php "tests/$t.php"
+done
+
+printf '\n======== all suites passed ========\n'

@@ -49,6 +49,7 @@ class Controller extends ApiController
                 ],
                 'options' => (object) [
                     'booking_statuses' => Helper::getStatusOptions(),
+                    'booking_delete_statuses' => Helper::getBookerDeleteStatusOptions(),
                     'status' => \Gcms\Controller::getUserStatusOptions(),
                     'department' => \Gcms\Category::init()->toOptions('department')
                 ]
@@ -103,9 +104,11 @@ class Controller extends ApiController
             }
 
             $bookingStatuses = Language::get('BOOKING_STATUS');
+            // Statuses an officer owns (approved) can never be handed to the booker.
+            $protectedStatuses = Helper::getBookerProtectedStatuses();
             $bookingDelete = [];
             foreach ($request->post('booking_delete')->toArray() as $status) {
-                if (isset($bookingStatuses[$status])) {
+                if (isset($bookingStatuses[$status]) && !in_array((int) $status, $protectedStatuses, true)) {
                     $bookingDelete[] = (int) $status;
                 }
             }

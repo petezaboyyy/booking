@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           enabled: true,
           autoGuard: true,
           defaultRequireAuth: true,
-          publicPaths: ['/login', '/404'],
+          publicPaths: ['/', '/login', '/404'],
           guestOnlyPaths: ['/login'],
           redirects: {
             unauthenticated: '/login',
@@ -124,14 +124,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         routes: {
+          // Public: a visitor lands here as Guest and sees the calendar.
+          // api/index/auth/me already answers anonymous callers with a Guest
+          // user, and every booking endpoint refuses them.
           '/': {
             template: 'index.html',
             title: '{LNG_Dashboard}',
             requireGuest: false,
-            requireAuth: true
+            requireAuth: false
           },
           '/login': {
-            template: 'login.html',
+            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260916-microsoft-only',
             title: '{LNG_Login}',
             requireGuest: true,
             requireAuth: false

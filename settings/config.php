@@ -1,12 +1,12 @@
 <?php
 /* config.php */
 return array (
-  'version' => '7.0.2',
+  'version' => '7.0.3',
   'web_title' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
   'web_description' => 'ระบบจองห้องคณะสัตวแพทยศาสตร์',
   'timezone' => 'Asia/Bangkok',
   'password_key' => '6a61e52cb2c86',
-  'reversion' => 1784799856,
+  'reversion' => 1789464553,
   'api_tokens' => 
   array (
     'internal' => '2509ff5b61aa488e68e479248ac3371ec3d890b4',
@@ -24,7 +24,6 @@ return array (
   'booking_delete' => 
   array (
     0 => 0,
-    1 => 1,
     2 => 2,
     3 => 3,
     4 => 4,

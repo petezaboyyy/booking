@@ -1,6 +1,18 @@
 <div class="roomly-login-page">
   <form data-form="login" class="auth-form roomly-login-shell" novalidate action="api/index/auth/login" method="post" data-ajax-submit="true" data-redirect="/" data-auto-fill-intended-url="true"
         data-load-api="api/index/config/login" data-load-cache="true" data-load-cache-time="300000">
+    <!-- Brand panel. Hidden below 760px, where .roomly-login-mobile-brand takes over. -->
+    <aside class="roomly-login-visual">
+      <div class="roomly-login-visual-brand">
+        <span class="roomly-login-visual-logo">
+          <img src="/images/logo.png" alt="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
+        </span>
+        <div class="roomly-login-visual-name">
+          <h2 data-i18n>Room booking system of the Faculty of Veterinary Medicine</h2>
+          <p data-i18n>Chiang Mai University</p>
+        </div>
+      </div>
+    </aside>
     <section class="roomly-login-panel">
       <div class="roomly-login-utilities">
         <button class="roomly-language-toggle" type="button" data-roomly-language-toggle aria-label="Switch language">
@@ -12,11 +24,11 @@
       </div>
       <div class="roomly-login-form-card">
         <div class="auth-header roomly-login-header">
-          <a href="/" class="roomly-login-brand" aria-label="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
+          <a href="/" class="roomly-login-mobile-brand" aria-label="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
             <img class="roomly-brand-logo roomly-login-brand-logo" src="/images/logo.png" alt="{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}">
           </a>
-          <h1 class="roomly-login-title" data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</h1>
-          <p class="login-message" data-i18n>Welcome back! Please login to proceed.</p>
+          <h1 class="roomly-login-title" data-i18n>Log in</h1>
+          <p class="login-message" data-i18n>Use your Chiang Mai University account</p>
         </div>
 
         <!-- Microsoft SSO only -->

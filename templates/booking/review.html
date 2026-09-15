@@ -3,7 +3,7 @@
     <div>
         <header data-component="topbar"></header>
         <main class="content">
-            <form data-form="bookingReview" data-load-api="api/booking/review/get" data-load-query-params="true" autocomplete="off">
+            <form data-form="bookingReview" data-load-api="api/booking/review/get" data-load-query-params="true" autocomplete="off" data-on-load="initBookingReview">
                 <div class="card-groups">
                     <header>
                         <div>
@@ -87,12 +87,17 @@
                                 </span>
                             </div>
                         </fieldset>
+                        <fieldset>
+                            <legend><span data-i18n>Booking dates</span> (<span data-text="occurrence_count">0</span>)</legend>
+                            <div class="booking-review-occurrences" id="booking_review_occurrences"></div>
+                            <div class="comment" data-i18n>An approved date can be cancelled individually without cancelling the other dates</div>
+                        </fieldset>
                         <fieldset data-attr="disabled:!canProcess&&!canCancelAction">
                             <legend data-i18n>Approval decision</legend>
                             <div>
                                 <label for="approval_reason" data-i18n>Decision note</label>
                                 <span class="form-control icon-edit">
-                                    <textarea id="approval_reason" name="approval_reason" rows="4" data-text="approval_reason"></textarea>
+                                    <textarea id="approval_reason" name="approval_reason" rows="4" maxlength="255" data-text="approval_reason"></textarea>
                                 </span>
                                 <div class="comment" id="result_approval_reason" data-i18n>Required when rejecting, returning, or cancelling a booking</div>
                             </div>
@@ -102,20 +107,25 @@
                             <div data-if="canProcess">
                                 <button type="button" class="btn btn-success icon-valid" data-action="click.prevent:requestApi" data-api-url="api/booking/review/approve"
                                         data-api-method="post" data-param-id="{id}" data-param-approval_reason="{approval_reason}" data-confirm="Confirm approval"
+                                        data-param-version="{version}"
                                         data-loading-text="Approving" data-notify-success="true" data-attr="disabled:!canApproveAction" data-i18n>Approve</button>
                                 <button type="button" class="btn btn-danger icon-ban" data-action="click.prevent:requestApi" data-api-url="api/booking/review/reject"
                                         data-api-method="post" data-param-id="{id}" data-param-approval_reason="{approval_reason}" data-confirm="Confirm rejection"
+                                        data-param-version="{version}"
                                         data-loading-text="Rejecting" data-notify-success="true" data-attr="disabled:!canApproveAction" data-i18n>Reject</button>
                                 <button type="button" class="btn btn-warning icon-write" data-action="click.prevent:requestApi" data-api-url="api/booking/review/returnedit"
                                         data-api-method="post" data-param-id="{id}" data-param-approval_reason="{approval_reason}" data-confirm="Confirm return for correction"
+                                        data-param-version="{version}"
                                         data-loading-text="Returning" data-notify-success="true" data-attr="disabled:!canApproveAction" data-i18n>Return for correction</button>
                             </div>
                             <div data-if="canCancelAction">
                                 <button type="button" class="btn btn-danger icon-delete" data-action="click.prevent:requestApi" data-api-url="api/booking/review/cancelofficer"
                                         data-api-method="post" data-param-id="{id}" data-param-approval_reason="{approval_reason}" data-confirm="Confirm cancellation by officer"
+                                        data-param-version="{version}"
                                         data-loading-text="Cancelling" data-notify-success="true" data-attr="disabled:!canCancelAction" data-i18n>Cancel by officer</button>
                             </div>
                             <input type="hidden" name="id" data-attr="value:id">
+                            <input type="hidden" name="version" data-attr="value:version">
                         </fieldset>
                     </div>
                 </div>

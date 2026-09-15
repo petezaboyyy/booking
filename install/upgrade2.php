@@ -221,11 +221,21 @@ if (defined('ROOT_PATH')) {
                     $db->query("ALTER TABLE `$table_reservation` CHANGE `schedule_type` `schedule_type` VARCHAR(20) NOT NULL DEFAULT 'daily-slot'");
                     $content[] = '<li class="correct">reservation: กำหนดค่าเริ่มต้น schedule_type เป็น daily-slot และเก็บข้อมูลเดิมเป็น continuous</li>';
                 }
+                if (!$db->fieldExists($table_reservation, 'version')) {
+                    $db->query("ALTER TABLE `$table_reservation` ADD `version` INT(10) UNSIGNED NOT NULL DEFAULT 1 AFTER `department`");
+                    $content[] = '<li class="correct">reservation: เพิ่ม version สำหรับป้องกันการอนุมัติข้อมูลเก่า</li>';
+                }
                 // swap index status → idx_room_availability + member_id(member_id, created_at)
                 if ($db->indexExists($table_reservation, 'status') && !$db->indexExists($table_reservation, 'idx_room_availability')) {
                     $db->query("DROP INDEX `status` ON `$table_reservation`");
                     $db->query("ALTER TABLE `$table_reservation` ADD INDEX `idx_room_availability` (`room_id`, `status`, `approve`, `begin`, `end`)");
                     $content[] = '<li class="correct">reservation: เพิ่ม index idx_room_availability</li>';
+                }
+                // The decision note shares one 255-character textarea with the
+                // per-date cancellation reason; reason was narrower than that.
+                if ($db->isColumnType($table_reservation, 'reason', 'varchar(128)')) {
+                    $db->query("ALTER TABLE `$table_reservation` CHANGE `reason` `reason` VARCHAR(255) NULL DEFAULT NULL");
+                    $content[] = '<li class="correct">reservation: ขยาย reason เป็น VARCHAR(255)</li>';
                 }
                 if (!$db->indexExists($table_reservation, 'member_id')) {
                     $db->query("ALTER TABLE `$table_reservation` ADD INDEX `member_id` (`member_id`, `created_at`)");
@@ -233,6 +243,94 @@ if (defined('ROOT_PATH')) {
                 }
 
                 $content[] = '<li class="correct">reservation อัปเกรดสำเร็จ</li>';
+
+                // =========================================================
+                // reservation_occurrence
+                // =========================================================
+                $table_occurrence = $db_config['prefix'].'_reservation_occurrence';
+                if (!$db->tableExists($table_occurrence)) {
+                    $db->query("CREATE TABLE `$table_occurrence` (
+                        `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                        `reservation_id` INT(11) NOT NULL,
+                        `room_id` INT(11) NOT NULL,
+                        `begin` DATETIME NOT NULL,
+                        `end` DATETIME NOT NULL,
+                        `status` TINYINT(1) NOT NULL DEFAULT 0,
+                        `cancelled_by` INT(11) NULL DEFAULT NULL,
+                        `cancelled_at` DATETIME NULL DEFAULT NULL,
+                        `cancellation_reason` VARCHAR(255) NULL DEFAULT NULL,
+                        `created_at` DATETIME NOT NULL,
+                        `updated_at` DATETIME NOT NULL,
+                        PRIMARY KEY (`id`),
+                        UNIQUE KEY `uq_reservation_occurrence` (`reservation_id`, `begin`, `end`),
+                        KEY `idx_occurrence_availability` (`room_id`, `status`, `begin`, `end`),
+                        KEY `idx_occurrence_reservation` (`reservation_id`, `status`, `begin`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    $content[] = '<li class="correct">reservation_occurrence: สร้างตารางวันจองจริง</li>';
+                }
+
+                // Backfill requests made before concrete occurrences existed.
+                $table_reservation_data = $db_config['prefix'].'_reservation_data';
+                $legacyRows = $db->customQuery("SELECT R.*,
+                      (SELECT D.value FROM `$table_reservation_data` D
+                       WHERE D.reservation_id=R.id AND D.name='recurrence_days' LIMIT 1) recurrence_days
+                    FROM `$table_reservation` R
+                    WHERE NOT EXISTS (
+                      SELECT 1 FROM `$table_occurrence` O WHERE O.reservation_id=R.id
+                    )");
+                $now = date('Y-m-d H:i:s');
+                foreach ((array) $legacyRows as $row) {
+                    $beginTs = strtotime((string) $row->begin);
+                    $endTs = strtotime((string) $row->end);
+                    if ($beginTs === false || $endTs === false || $endTs <= $beginTs) {
+                        continue;
+                    }
+                    $scheduleType = (string) ($row->schedule_type ?: 'continuous');
+                    $days = array_map('intval', array_filter(explode(',', (string) ($row->recurrence_days ?? '')), 'strlen'));
+                    if ($scheduleType === 'continuous') {
+                        $db->insert($table_occurrence, [
+                            'reservation_id' => (int) $row->id,
+                            'room_id' => (int) $row->room_id,
+                            'begin' => date('Y-m-d H:i:s', $beginTs),
+                            'end' => date('Y-m-d H:i:s', $endTs),
+                            'status' => (int) $row->status,
+                            'created_at' => $now,
+                            'updated_at' => $now
+                        ]);
+                        continue;
+                    }
+                    $cursor = strtotime(date('Y-m-d', $beginTs));
+                    $last = strtotime(date('Y-m-d', $endTs));
+                    while ($cursor !== false && $cursor <= $last) {
+                        if ($scheduleType !== 'weekly-slot' || in_array((int) date('w', $cursor), $days, true)) {
+                            $date = date('Y-m-d', $cursor);
+                            $db->insert($table_occurrence, [
+                                'reservation_id' => (int) $row->id,
+                                'room_id' => (int) $row->room_id,
+                                'begin' => $date.' '.date('H:i:s', $beginTs),
+                                'end' => $date.' '.date('H:i:s', $endTs),
+                                'status' => (int) $row->status,
+                                'created_at' => $now,
+                                'updated_at' => $now
+                            ]);
+                        }
+                        $cursor = strtotime('+1 day', $cursor);
+                    }
+                }
+                $content[] = '<li class="correct">reservation_occurrence: แปลงข้อมูลการจองเดิมเรียบร้อย</li>';
+
+                // =========================================================
+                // reservation_data
+                // =========================================================
+                // excluded_dates stores one YYYY-MM-DD per excluded day, so a
+                // month-long booking already needs ~330 characters. VARCHAR(150)
+                // silently truncated the list, or failed outright under
+                // STRICT_TRANS_TABLES.
+                if ($db->isColumnType($table_reservation_data, 'value', 'varchar')) {
+                    $db->query("ALTER TABLE `$table_reservation_data` CHANGE `value` `value` TEXT NOT NULL");
+                    $content[] = '<li class="correct">reservation_data: ขยาย value เป็น TEXT</li>';
+                }
+                $content[] = '<li class="correct">reservation_data อัปเกรดสำเร็จ</li>';
 
                 // =========================================================
                 // rooms

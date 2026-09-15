@@ -44,8 +44,10 @@
 - ใช้ Now.js สำหรับ router, component manager, form binding, i18n และ UI manager ต่าง ๆ
 - ใช้ `index.html` เป็น SPA shell หลัก
 - bootstrapping หลักอยู่ที่ `js/main.js`
-- หน้าใช้งานจริงอยู่ใน `templates/booking/`
-- route ของโมดูลจองห้องถูกลงทะเบียนใน `modules/booking/admin.js`
+- หน้าใช้งานจริงอยู่ใน `templates/booking/` (เจ้าหน้าที่) และ `ui-handoff/templates/booking/` (สมาชิก)
+  โดย `js/booking-ui-role.js` เป็นตัวเลือกว่าจะใช้ชุดไหน
+- route ของโมดูลจองห้องถูกลงทะเบียนใน `ui-handoff/modules/booking/admin.js`
+  ซึ่งเป็นสคริปต์การจองไฟล์เดียวที่ `index.html` โหลด
 
 ### Backend
 
