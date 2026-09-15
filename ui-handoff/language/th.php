@@ -1802,6 +1802,8 @@ return array(
   'This booking can no longer be cancelled' => 'รายการนี้ไม่สามารถยกเลิกได้แล้ว',
   'Decision note is required' => 'กรุณากรอกเหตุผล',
   'Room booking system of the Faculty of Veterinary Medicine' => 'ระบบจองห้องของคณะสัตวแพทยศาสตร์',
+  'Room Booking System' => 'ระบบจองห้อง',
+  'Faculty of Veterinary Medicine' => 'คณะสัตวแพทยศาสตร์',
   'Chiang Mai University' => 'มหาวิทยาลัยเชียงใหม่',
   'Use your Chiang Mai University account' => 'ใช้บัญชีมหาวิทยาลัยเชียงใหม่ของคุณ',
   'Sign in with Microsoft' => 'เข้าสู่ระบบด้วยบัญชี CMU',
