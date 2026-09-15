@@ -2718,9 +2718,9 @@ html[data-theme='dark'] .roomly-theme-sun {
   position: fixed;
   inset: 0;
   background-image: var(--roomly-login-bg-image);
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
+  background-repeat: repeat;
+  background-position: center top;
+  background-size: 380px auto;
   opacity: var(--roomly-login-bg-opacity);
   pointer-events: none;
   z-index: -1;
@@ -2729,7 +2729,7 @@ html[data-theme='dark'] .roomly-theme-sun {
 [data-theme='dark'] .roomly-login-page {
   --roomly-primary: #75d1ff;
   --roomly-secondary: #5ed7ee;
-  --roomly-background: #07111f;
+  --roomly-background: #131d38;
   --roomly-surface: #101c2c;
   --roomly-surface-low: #111f33;
   --roomly-surface-container: #17324c;
