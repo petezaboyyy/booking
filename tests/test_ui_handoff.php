@@ -13,6 +13,8 @@ $files = [
     'language/en.json',
     'language/en.php',
     'images/logo.png',
+    'images/login-bg-dark.jpg',
+    'images/login-bg-light.jpg',
     'js/main.js',
     'js/components/GallerySlideshow.js',
     'index.html'

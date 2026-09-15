@@ -2702,14 +2702,28 @@ html[data-theme='dark'] .roomly-theme-sun {
   --roomly-muted: #5a6876;
   --roomly-outline: rgba(136, 158, 180, .3);
   --roomly-on-primary: #fff;
+  --roomly-login-bg-image: url('/images/login-bg-light.jpg');
+  --roomly-login-bg-opacity: 0.22;
+  position: relative;
   min-height: 100vh;
   padding: 28px;
-  background:
-    radial-gradient(circle at 88% 12%, rgba(42, 164, 211, .13), transparent 28rem),
-    radial-gradient(circle at 4% 94%, rgba(0, 101, 145, .08), transparent 24rem),
-    var(--roomly-background);
+  background-color: var(--roomly-background);
   color: var(--roomly-text);
   font-family: 'Noto Sans Thai', 'Kanit', Tahoma, sans-serif;
+  isolation: isolate;
+}
+
+.roomly-login-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--roomly-login-bg-image);
+  background-repeat: repeat;
+  background-position: center top;
+  background-size: 500px auto;
+  opacity: var(--roomly-login-bg-opacity);
+  pointer-events: none;
+  z-index: -1;
 }
 
 [data-theme='dark'] .roomly-login-page {
@@ -2723,6 +2737,8 @@ html[data-theme='dark'] .roomly-theme-sun {
   --roomly-muted: #a9b9ca;
   --roomly-outline: rgba(151, 180, 211, .2);
   --roomly-on-primary: #002033;
+  --roomly-login-bg-image: url('/images/login-bg-dark.jpg');
+  --roomly-login-bg-opacity: 0.25;
 }
 
 .roomly-login-page,
@@ -2731,6 +2747,8 @@ html[data-theme='dark'] .roomly-theme-sun {
 }
 
 .roomly-login-page .roomly-login-shell {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(440px, .95fr);
   width: min(1180px, 100%);
