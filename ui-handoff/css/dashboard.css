@@ -55,6 +55,7 @@ html[data-theme='dark']:not([data-ui-role='admin']) .footer {
   --ec-weekend-bg: var(--roomly-surface-low);
   --z-index-loading: 1000000;
   --z-index-modal: 1000005;
+  --z-index-alert: 1000010;
 }
 
 .roomly-dashboard {
