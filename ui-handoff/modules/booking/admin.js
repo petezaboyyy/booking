@@ -379,7 +379,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260915-user-ui-1';
+const ROOMLY_ROLE_UI_VERSION = '20260915-occurrences-5';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -1925,6 +1925,15 @@ function initOccurrencePicker(element, data) {
             .filter(item => /^\d{4}-\d{2}-\d{2}$/.test(item))
     );
     const excluded = parseExcluded(data?.excluded_dates ?? excludedInput.value);
+
+    // The staff template calls this through data-on-load, which hands over the loaded
+    // booking. The member template uses data-script, which fires with route params only
+    // and gets its values from data-binding afterwards — so pick up whatever landed in
+    // the hidden input since the last pass. Union, never remove: the checkbox handler
+    // keeps the input and this set in step, so the only new values are the bound ones.
+    const adoptBoundExclusions = () => {
+        parseExcluded(excludedInput.value).forEach(date => excluded.add(date));
+    };
     const parseDate = value => {
         const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
         return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
@@ -1939,11 +1948,14 @@ function initOccurrencePicker(element, data) {
     );
 
     const renderOccurrences = () => {
+        adoptBoundExclusions();
         const first = parseDate(beginDate.value);
         const last = parseDate(endDate.value);
         preview.replaceChildren();
         if (!first || !last || first > last) {
-            excludedInput.value = '';
+            // Leave the hidden input alone: on an edit this runs once before the dates
+            // are bound, and clearing here would drop the saved exclusions. The server
+            // ignores excluded dates that fall outside the schedule anyway.
             if (result) result.textContent = '';
             return;
         }
@@ -2021,6 +2033,9 @@ function initOccurrencePicker(element, data) {
         input.addEventListener('change', renderOccurrences);
         input.addEventListener('input', renderOccurrences);
     });
+    // Data-binding writes the date fields without firing input events, so redraw once the
+    // page reports it finished loading.
+    EventManager.on('page:loaded', renderOccurrences);
     renderOccurrences();
 
     return () => {
@@ -2029,6 +2044,7 @@ function initOccurrencePicker(element, data) {
             input.removeEventListener('change', renderOccurrences);
             input.removeEventListener('input', renderOccurrences);
         });
+        EventManager.off?.('page:loaded', renderOccurrences);
     };
 }
 
