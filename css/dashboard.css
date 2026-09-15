@@ -2772,20 +2772,10 @@ html[data-theme='dark'] .roomly-theme-sun {
   min-height: 680px;
   overflow: hidden;
   padding: 44px 48px;
-  background: linear-gradient(145deg, rgba(0, 60, 91, .96), rgba(0, 114, 145, .9));
+  background:
+    linear-gradient(to bottom, rgba(0, 20, 35, .1) 0%, rgba(0, 25, 42, .32) 42%, rgba(0, 18, 32, .88) 100%),
+    url('/images/login-visual-bg.jpg') center top / cover no-repeat;
   color: #fff;
-}
-
-.roomly-login-visual::before {
-  position: absolute;
-  inset: 0;
-  opacity: .16;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, .18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .18) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(to bottom right, #000, transparent 76%);
-  content: '';
 }
 
 .roomly-login-brand,
@@ -3300,11 +3290,11 @@ html[data-theme='dark'] .roomly-theme-sun {
   justify-content: center;
 }
 
-/* Brand only: logo, system name, university. Centred in the panel. */
+/* Brand only: system name, university with Faculty crest background. */
 .roomly-login-visual {
   align-items: center;
-  justify-content: center;
-  padding: 64px 56px;
+  justify-content: flex-end;
+  padding: 64px 44px 54px;
 }
 
 .roomly-login-visual-brand {
@@ -3313,42 +3303,29 @@ html[data-theme='dark'] .roomly-theme-sun {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 34px;
+  width: 100%;
   text-align: center;
-}
-
-.roomly-login-visual-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px 24px;
-  border-radius: 22px;
-  background: #fff;
-  box-shadow: 0 18px 44px rgba(0, 28, 48, .22);
-}
-
-.roomly-login-visual-logo img {
-  display: block;
-  width: auto;
-  height: 76px;
 }
 
 .roomly-login-visual-name h2 {
   margin: 0;
   color: #fff;
-  font-size: clamp(26px, 2.5vw, 34px);
+  font-size: clamp(24px, 2.3vw, 32px);
   font-weight: 700;
-  letter-spacing: -.035em;
-  line-height: 1.3;
+  letter-spacing: 0.035em;
+  line-height: 1.55;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, .65);
   text-wrap: balance;
 }
 
 .roomly-login-visual-name p {
-  margin: 14px 0 0;
-  color: rgba(238, 250, 255, .82);
+  margin: 16px 0 0;
+  color: rgba(238, 250, 255, .92);
   font-size: 19px;
   font-weight: 500;
-  line-height: 1.55;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .55);
 }
 
 /* The primary way in. Full width of the card, not a small outlined chip. */

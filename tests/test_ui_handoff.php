@@ -15,6 +15,7 @@ $files = [
     'images/logo.png',
     'images/login-bg-dark.jpg',
     'images/login-bg-light.jpg',
+    'images/login-visual-bg.jpg',
     'js/main.js',
     'js/components/GallerySlideshow.js',
     'index.html'
