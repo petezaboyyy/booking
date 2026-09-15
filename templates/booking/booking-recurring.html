@@ -286,22 +286,6 @@
                     </span>
                   </div>
                 </fieldset>
-
-                <!-- Form Actions Bottom Bar -->
-                <fieldset class="submit roomly-form-actions">
-                  <aside class="error" data-if="!canEdit" data-i18n>This booking has already been processed and cannot be changed</aside>
-                  <div class='roomly-actions-btn-group'>
-                    <a href="/my-bookings" class="btn btn-secondary roomly-cancel-btn">
-                      <span class="icon-reply" aria-hidden="true"></span>
-                      <span data-i18n>Cancel</span>
-                    </a>
-                    <button type="submit" class="btn btn-primary roomly-submit-btn" data-attr="disabled:!canEdit">
-                      <span class="icon-save" aria-hidden="true"></span>
-                      <span data-i18n>Save</span>
-                    </button>
-                  </div>
-                  <input type="hidden" name="id" data-attr="value:id">
-                </fieldset>
               </div>
             </div>
 
@@ -387,6 +371,22 @@
                 <span data-i18n>Room booking calendar</span>
               </button>
             </aside>
+
+            <!-- Form Actions Bottom Bar (On mobile appears directly below reservation details) -->
+            <fieldset class="submit roomly-form-actions">
+              <aside class="error" data-if="!canEdit" data-i18n>This booking has already been processed and cannot be changed</aside>
+              <div class='roomly-actions-btn-group'>
+                <a href="/my-bookings" class="btn btn-secondary roomly-cancel-btn">
+                  <span class="icon-reply" aria-hidden="true"></span>
+                  <span data-i18n>Cancel</span>
+                </a>
+                <button type="submit" class="btn btn-primary roomly-submit-btn" data-attr="disabled:!canEdit">
+                  <span class="icon-save" aria-hidden="true"></span>
+                  <span data-i18n>Save</span>
+                </button>
+              </div>
+              <input type="hidden" name="id" data-attr="value:id">
+            </fieldset>
           </div>
         </div>
       </form>

@@ -1918,6 +1918,9 @@ html[data-theme='dark'] .roomly-theme-sun {
 .roomly-booking-form-body {
   display: grid;
   grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr);
+  grid-template-areas:
+    "main side"
+    "actions side";
   gap: 24px;
   align-items: start;
   padding: 0;
@@ -1928,10 +1931,19 @@ html[data-theme='dark'] .roomly-theme-sun {
 }
 
 .roomly-booking-main-column {
+  grid-area: main;
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 24px;
+}
+
+.roomly-booking-context {
+  grid-area: side;
+}
+
+.roomly-form-actions {
+  grid-area: actions;
 }
 
 .roomly-requester-card,
@@ -2630,7 +2642,29 @@ html[data-theme='dark'] .roomly-theme-sun {
   }
 
   .roomly-booking-page .roomly-booking-form-body {
-    grid-template-columns: 1fr;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .roomly-booking-page .roomly-booking-main-column {
+    order: 1 !important;
+    width: 100% !important;
+  }
+
+  .roomly-booking-page .roomly-booking-context {
+    order: 2 !important;
+    position: static !important;
+    margin-top: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .roomly-booking-page .roomly-form-actions {
+    order: 3 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
   }
 
   .roomly-booking-page .roomly-requester-card {
@@ -2648,10 +2682,6 @@ html[data-theme='dark'] .roomly-theme-sun {
 
   .roomly-booking-page .roomly-reservation-card {
     padding: 24px 18px 18px;
-  }
-
-  .roomly-booking-page .roomly-form-actions {
-    margin: 0 18px;
   }
 
   .roomly-booking-page .roomly-form-actions .btn-primary {
