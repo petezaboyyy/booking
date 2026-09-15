@@ -18,7 +18,7 @@
           <h1 class="roomly-login-title" data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</h1>
           <p class="login-message" data-i18n>Welcome back! Please login to proceed.</p>
         </div>
-      <fieldset class="roomly-login-fields">
+      <fieldset class="roomly-login-fields" data-if="!data.microsoft_only">
         <div>
           <label for="login_username" data-i18n>{LNG_Username}/{LNG_Email}</label>
           <span class="form-control icon-email">
@@ -45,15 +45,24 @@
           </div>
         </div>
       </fieldset>
-      <fieldset class="center roomly-login-submit">
+      <fieldset class="center roomly-login-submit" data-if="!data.microsoft_only">
         <button type="submit" class="btn btn-primary fullwidth large icon-signin" data-i18n>Log in</button>
       </fieldset>
       <!-- Social Login Divider -->
-      <div class="social-divider" data-if="data.user_register === 1">
+      <div class="social-divider" data-if="!data.microsoft_only">
         <span data-i18n>Or continue with</span>
       </div>
+      <!-- Microsoft SSO stays visible independently of public registration, and is the
+           only way in when microsoft_only is set. SocialLogin.js enables the button once
+           microsoft_login_url arrives and looks for [data-microsoft-status] as a sibling. -->
+      <fieldset class="center">
+        <div class="social-login-buttons">
+          <button type="button" data-attr="data-username:data.microsoft_login_url" class="btn icon-microsoft" data-social-provider="microsoft" aria-describedby="microsoft-login-status" disabled data-i18n>Sign in with Microsoft</button>
+          <p id="microsoft-login-status" class="comment" data-microsoft-status role="status">Microsoft SSO ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ</p>
+        </div>
+      </fieldset>
       <!-- Social Login Buttons -->
-      <fieldset class="center" data-if="data.user_register === 1 || data.demo_mode === 1">
+      <fieldset class="center" data-if="!data.microsoft_only && (data.user_register === 1 || data.demo_mode === 1)">
         <div class="social-login-buttons">
           <div data-attr="data-username:data.google_client_id" data-social-provider="google"></div>
           <button type="button" data-attr="data-username:data.line_channel_id" class="btn icon-line" data-social-provider="line" data-i18n>LINE</button>
@@ -61,7 +70,7 @@
           <div data-attr="data-username:data.telegram_bot_username" data-social-provider="telegram"></div>
         </div>
       </fieldset>
-      <div class="center roomly-login-register" data-if="data.user_register === 1">
+      <div class="center roomly-login-register" data-if="!data.microsoft_only && data.user_register === 1">
         <span data-i18n>Don't have an account?</span> <a href="register" data-i18n>Sign up</a>
       </div>
       </div>
