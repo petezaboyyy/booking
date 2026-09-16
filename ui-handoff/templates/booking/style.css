@@ -1051,7 +1051,7 @@
   color: var(--roomly-muted) !important;
   font-family: 'icomoon' !important;
   font-size: 11px !important;
-  transition: color .2s ease;
+  transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), color .2s ease !important;
 }
 
 .roomly-booking-page .form-control .dropdown-button .dropdown-arrow::before,
@@ -1063,6 +1063,19 @@
 .form-control:hover .dropdown-button .dropdown-arrow,
 .form-control:focus-within .dropdown-button .dropdown-arrow {
   color: var(--roomly-primary) !important;
+}
+
+.form-control.is-open .dropdown-button .dropdown-arrow,
+.form-control .dropdown-button[aria-expanded="true"] .dropdown-arrow {
+  transform: translateY(-50%) rotate(180deg) !important;
+  color: var(--roomly-primary) !important;
+}
+
+.form-control.is-open,
+.form-control:has(.dropdown-button[aria-expanded="true"]) {
+  border-color: var(--roomly-primary) !important;
+  background: var(--roomly-surface) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--roomly-primary) 18%, transparent) !important;
 }
 
 /* Chips inside single-line multi-select */
@@ -1102,17 +1115,19 @@
   position: fixed !important;
   z-index: 100000 !important;
   background: var(--roomly-surface, #ffffff) !important;
-  border: 1.5px solid var(--roomly-outline, rgba(190, 200, 210, .42)) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid var(--roomly-outline, rgba(200, 215, 235, 0.6)) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 36px rgba(0, 20, 45, 0.18), 0 2px 6px rgba(0, 0, 0, 0.06) !important;
   overflow: hidden !important;
   min-width: 240px !important;
   box-sizing: border-box !important;
+  animation: roomlyDropdownPop .18s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 [data-theme='dark'] .dropdown-panel {
-  background: var(--roomly-surface, #101c2c) !important;
-  border-color: var(--roomly-outline, rgba(151, 180, 211, .2)) !important;
+  background: #111d2e !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55) !important;
   color: var(--roomly-text, #edf6ff) !important;
 }
 
@@ -1444,6 +1459,14 @@
 .form-control.custom-datepicker .dropdown-arrow {
   margin-left: 8px !important;
   opacity: 0.7 !important;
+  transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), color .2s ease, opacity .2s ease !important;
+}
+
+.form-control.custom-datepicker.is-open .dropdown-arrow,
+.form-control.custom-datepicker .dropdown-button[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg) !important;
+  color: var(--roomly-primary) !important;
+  opacity: 1 !important;
 }
 
 .dropdown-panel .autocomplete-list {
@@ -2763,6 +2786,7 @@ div.modal {
 }
 
 /* Native select is kept for form value and validation, but hidden from user */
+.roomly-combobox select,
 .roomly-combobox select#room_id {
   position: absolute !important;
   opacity: 0 !important;
@@ -2775,7 +2799,7 @@ div.modal {
   clip: rect(0, 0, 0, 0) !important;
 }
 
-/* Search input */
+/* Search or Trigger input */
 .roomly-combobox-input {
   flex: 1 1 auto !important;
   width: 100% !important;
@@ -2790,6 +2814,15 @@ div.modal {
   font-size: 14.5px !important;
   font-weight: 600 !important;
   box-sizing: border-box !important;
+}
+
+.roomly-combobox-input[readonly] {
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.roomly-combobox:not(:has(.roomly-combobox-clear)) .roomly-combobox-input {
+  padding-right: 42px !important;
 }
 
 .roomly-combobox-input::placeholder {
@@ -2841,10 +2874,12 @@ div.modal {
 }
 
 /* Arrow transition on open */
-.roomly-combobox .roomly-select-arrow {
-  transition: transform .2s ease, color .2s ease !important;
+.roomly-combobox .roomly-select-arrow,
+.roomly-select-btn .roomly-select-arrow {
+  transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), color .2s ease !important;
 }
 
+.roomly-select-btn.is-open .roomly-select-arrow,
 .roomly-combobox.is-open .roomly-select-arrow {
   transform: translateY(-50%) rotate(180deg) !important;
   color: var(--roomly-primary) !important;

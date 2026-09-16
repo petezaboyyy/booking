@@ -102,5 +102,8 @@ return array(
   'ชช:นน' => 'HH:MM',
   'HH:MM (เช่น 08:30)' => 'HH:MM (e.g. 08:30)',
   'HH:MM (เช่น 12:00)' => 'HH:MM (e.g. 12:00)',
-  'HH:MM' => 'HH:MM'
+  'HH:MM' => 'HH:MM',
+  'Select or search topic...' => 'Select or search topic...',
+  'No topics found' => 'No topics found',
+  'Select repeat option...' => 'Select repeat option...'
 );
