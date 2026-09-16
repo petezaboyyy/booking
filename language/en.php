@@ -77,5 +77,15 @@ return array(
   'Room Booking System' => 'Room Booking System',
   'Faculty of Veterinary Medicine' => 'Faculty of Veterinary Medicine',
   'Chiang Mai University' => 'Chiang Mai University',
-  'Chiang Mai University • Faculty of Veterinary Medicine' => 'Chiang Mai University • Faculty of Veterinary Medicine'
+  'Chiang Mai University • Faculty of Veterinary Medicine' => 'Chiang Mai University • Faculty of Veterinary Medicine',
+  'Meeting' => 'Meeting',
+  'Seminar' => 'Seminar',
+  'Banquet' => 'Banquet',
+  'ประชุม' => 'Meeting',
+  'สัมนา' => 'Seminar',
+  'จัดเลี้ยง' => 'Banquet',
+  'วว/ดด/ปปปป' => 'DD/MM/YYYY',
+  'DD/MM/YYYY' => 'DD/MM/YYYY',
+  'Selected dates' => 'Selected dates',
+  'วันที่เลือก' => 'Selected dates'
 );

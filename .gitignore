@@ -17,6 +17,8 @@
 .qoder/
 .augment/
 .antigravity/
+.agents/
+skills-lock.json
 
 # Dependencies
 node_modules/

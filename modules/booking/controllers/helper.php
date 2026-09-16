@@ -449,6 +449,49 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * Topic options based on category 'use' with English i18n support.
+     * Returns a sequential array of ['value' => $thValue, 'text' => $enText, 'label' => $enText].
+     *
+     * @param string|null $currentTopic
+     * @return array
+     */
+    public static function getTopicOptions(?string $currentTopic = null): array
+    {
+        $categories = BookingCategory::init()->toOptions('use', true);
+        $options = [];
+        $map = [
+            '1' => ['en' => 'Meeting', 'th' => 'ประชุม'],
+            '2' => ['en' => 'Seminar', 'th' => 'สัมมนา'],
+            '3' => ['en' => 'Banquet', 'th' => 'จัดเลี้ยง']
+        ];
+
+        foreach ($categories as $cat) {
+            $catId = (string) $cat['value'];
+            $thText = $cat['text'];
+            $enText = $map[$catId]['en'] ?? $thText;
+            $options[] = [
+                'value' => $thText,
+                'text' => $enText,
+                'label' => $enText
+            ];
+        }
+
+        if (!empty($currentTopic)) {
+            $found = false;
+            foreach ($options as $opt) {
+                if ($opt['value'] === $currentTopic || $opt['text'] === $currentTopic) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $options[] = ['value' => $currentTopic, 'text' => $currentTopic, 'label' => $currentTopic];
+            }
+        }
+        return $options;
+    }
+
+    /**
      * Accessory options
      *
      * @return array

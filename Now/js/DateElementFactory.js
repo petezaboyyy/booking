@@ -654,6 +654,12 @@ class EmbeddedDateTime {
       } else {
         this.displayButton.firstChild.textContent = displayValue;
       }
+    } else {
+      const placeholder = this.type === 'time' ? 'Choose time' :
+        this.type === 'datetime-local' ? 'Choose date and time' :
+          'Choose a date';
+      const rawPlaceholder = this._original.getAttribute('placeholder') || placeholder;
+      this.displayButton.firstChild.textContent = Now.translate(rawPlaceholder);
     }
 
     // Re-render current view if open

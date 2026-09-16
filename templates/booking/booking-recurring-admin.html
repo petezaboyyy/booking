@@ -78,26 +78,19 @@
                       </div>
                     </div>
 
-                    <div class="form-group roomly-form-grid-2">
+                    <div class="form-group">
                       <div class="roomly-field-wrap">
                         <label for="topic">
                           <span data-i18n>Topic</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
                         </label>
-                        <span class="form-control">
-                          <input type="text" id="topic" name="topic" data-attr="value:topic" maxlength="150" placeholder="ระบุหัวข้อการประชุม เช่น สรุปผลการดำเนินงานประจำไตรมาส" required>
-                        </span>
-                      </div>
-                      <div class="roomly-field-wrap">
-                        <label for="use">
-                          <span data-i18n>Use for</span>
-                        </label>
                         <span class="form-control roomly-select-btn">
-                          <select id="use" name="use" data-options-key="use" data-attr="value:use">
+                          <select id="topic" name="topic" data-options-key="topic" data-attr="value:topic" required>
                             <option value="" data-placeholder="true" selected></option>
                           </select>
                           <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
                         </span>
                       </div>
+                      <input type="hidden" id="use" name="use" data-attr="value:use">
                     </div>
                   </div>
 
@@ -120,7 +113,7 @@
                           <span data-i18n>Start date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
                         </label>
                         <span class="form-control">
-                          <input type="date" id="begin_date" name="begin_date" data-attr="value:begin_date" placeholder="วว/ดด/ปปปป" required>
+                          <input type="date" id="begin_date" name="begin_date" data-attr="value:begin_date" placeholder="{LNG_วว/ดด/ปปปป}" data-i18n-placeholder="วว/ดด/ปปปป" required>
                         </span>
                       </div>
                       <div class="roomly-field-wrap">
@@ -141,7 +134,7 @@
                           <span data-i18n>End date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
                         </label>
                         <span class="form-control">
-                          <input type="date" id="end_date" name="end_date" data-attr="value:end_date" placeholder="วว/ดด/ปปปป" required>
+                          <input type="date" id="end_date" name="end_date" data-attr="value:end_date" placeholder="{LNG_วว/ดด/ปปปป}" data-i18n-placeholder="วว/ดด/ปปปป" required>
                         </span>
                       </div>
                       <div class="roomly-field-wrap">

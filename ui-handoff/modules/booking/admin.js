@@ -677,6 +677,55 @@ function initBookingSettings(element, data) {
         approveLevel.removeEventListener('change', approveChange);
     };
 }
+function formatTime(time) {
+    if (!time) return '';
+    const str = String(time).trim();
+    if (!str) return '';
+
+    // e.g. "12" or "9" -> "12:00", "09:00"
+    if (/^\d{1,2}$/.test(str)) {
+        const num = parseInt(str, 10);
+        if (num >= 0 && num <= 23) {
+            return str.padStart(2, '0') + ':00';
+        }
+        return str;
+    }
+
+    // e.g. "12:" -> "12:00"
+    if (/^\d{1,2}:$/.test(str)) {
+        const num = parseInt(str.slice(0, -1), 10);
+        if (num >= 0 && num <= 23) {
+            return str.slice(0, -1).padStart(2, '0') + ':00';
+        }
+        return str;
+    }
+
+    // e.g. "12:0" -> "12:00", "12:3" -> "12:30", "9:30" -> "09:30"
+    const match = /^(\d{1,2}):(\d{0,2})$/.exec(str);
+    if (match) {
+        const h = parseInt(match[1], 10);
+        if (h >= 0 && h <= 23) {
+            const hStr = match[1].padStart(2, '0');
+            const mStr = (match[2] || '00').padEnd(2, '0').slice(0, 2);
+            return `${hStr}:${mStr}`;
+        }
+    }
+
+    return str;
+}
+
+function formatSummaryDate(isoDate) {
+    if (!isoDate) return '';
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate).trim());
+    if (!match) return isoDate;
+    const y = parseInt(match[1], 10);
+    const m = match[2];
+    const d = match[3];
+    const currentLang = (document.documentElement.lang || (window.I18nManager?.getCurrentLocale ? window.I18nManager.getCurrentLocale() : 'th')).toLowerCase();
+    const isThai = currentLang.startsWith('th');
+    const displayYear = isThai ? (y + 543) : y;
+    return `${d}/${m}/${displayYear}`;
+}
 
 function initBookingForm(element, data) {
     const scheduleType = element.querySelector('#schedule_type');
@@ -781,6 +830,23 @@ function initBookingForm(element, data) {
                 }
             }
         }
+        if (topicInput && topicInput.tagName === 'SELECT') {
+            if (topicInput.options && topicInput.options.length > 0) {
+                const firstOpt = topicInput.options[0];
+                if (!firstOpt.value) {
+                    firstOpt.textContent = '';
+                    firstOpt.removeAttribute('data-i18n');
+                    delete firstOpt.dataset.i18n;
+                    firstOpt.dataset.placeholder = 'true';
+                }
+            }
+            if (!topicInput.value || topicInput.value === '0' || topicInput.selectedIndex <= 0) {
+                topicInput.value = '';
+                if (topicInput.options && topicInput.options.length > 0) {
+                    topicInput.selectedIndex = 0;
+                }
+            }
+        }
         const accessoriesInput = element.querySelector('#accessories');
         if (accessoriesInput) {
             if (accessoriesInput.options) {
@@ -846,8 +912,9 @@ function initBookingForm(element, data) {
 
         // 2. Topic
         if (summaryTopic && topicInput) {
-            const topicVal = topicInput.value.trim();
-            summaryTopic.textContent = topicVal || '—';
+            const selectedOpt = topicInput.selectedOptions?.[0];
+            const topicText = selectedOpt && selectedOpt.value ? selectedOpt.textContent.trim() : topicInput.value.trim();
+            summaryTopic.textContent = topicText || '—';
         }
 
         // 3. Attendees
@@ -856,14 +923,14 @@ function initBookingForm(element, data) {
             summaryAttendees.textContent = attVal ? attVal : '1';
         }
 
-        // 4. Dates
+        // 4. Dates (Thai format: วัน/เดือน/ปี)
         if (summaryDates && beginDateInput) {
             const bDate = beginDateInput.value;
             const eDate = endDateInput ? endDateInput.value : '';
             if (bDate && eDate && bDate !== eDate) {
-                summaryDates.textContent = `${bDate} → ${eDate}`;
+                summaryDates.textContent = `${formatSummaryDate(bDate)} → ${formatSummaryDate(eDate)}`;
             } else if (bDate) {
-                summaryDates.textContent = bDate;
+                summaryDates.textContent = formatSummaryDate(bDate);
             } else {
                 summaryDates.textContent = '—';
             }
@@ -871,12 +938,12 @@ function initBookingForm(element, data) {
 
         // 5. Times
         if (summaryTimes && beginTimeInput) {
-            const bTime = beginTimeInput.value;
-            const eTime = endTimeInput ? endTimeInput.value : '';
+            const bTime = formatTime(beginTimeInput.value);
+            const eTime = formatTime(endTimeInput ? endTimeInput.value : '');
             if (bTime && eTime) {
                 summaryTimes.textContent = `${bTime} - ${eTime}`;
             } else if (bTime) {
-                summaryTimes.textContent = `${bTime}`;
+                summaryTimes.textContent = bTime;
             } else {
                 summaryTimes.textContent = '—';
             }
@@ -924,18 +991,40 @@ function initBookingForm(element, data) {
     }
     if (topicInput) {
         topicInput.addEventListener('input', updateLiveSummary);
+        topicInput.addEventListener('change', updateLiveSummary);
     }
+    const onLocaleChange = () => {
+        updateLiveSummary();
+    };
+    window.addEventListener('locale:changed', onLocaleChange);
+    window.EventManager?.on?.('locale:changed', onLocaleChange);
     if (beginDateInput) {
         beginDateInput.addEventListener('change', updateLiveSummary);
     }
     if (beginTimeInput) {
         beginTimeInput.addEventListener('input', updateLiveSummary);
+        beginTimeInput.addEventListener('blur', () => {
+            const normalized = formatTime(beginTimeInput.value);
+            if (normalized && normalized !== beginTimeInput.value) {
+                beginTimeInput.value = normalized;
+                beginTimeInput.dispatchEvent(new Event('input'));
+                beginTimeInput.dispatchEvent(new Event('change'));
+            }
+        });
     }
     if (endDateInput) {
         endDateInput.addEventListener('change', updateLiveSummary);
     }
     if (endTimeInput) {
         endTimeInput.addEventListener('input', updateLiveSummary);
+        endTimeInput.addEventListener('blur', () => {
+            const normalized = formatTime(endTimeInput.value);
+            if (normalized && normalized !== endTimeInput.value) {
+                endTimeInput.value = normalized;
+                endTimeInput.dispatchEvent(new Event('input'));
+                endTimeInput.dispatchEvent(new Event('change'));
+            }
+        });
     }
 
     // Interactive Validation for Required Fields
@@ -1784,6 +1873,14 @@ function initBookingForm(element, data) {
                 if (dayLabels[idx]) el.textContent = dayLabels[idx];
             });
         }
+
+        // Placeholder text when empty
+        if (!instance.selectedDate && instance.displayButton && instance.displayButton.firstChild) {
+            const currentText = instance.displayButton.firstChild.textContent?.trim();
+            if (currentText === 'วว/ดด/ปปปป' || currentText === 'DD/MM/YYYY' || (instance._original && /วว\/ดด\/ปปปป|DD\/MM\/YYYY/.test(instance._original.getAttribute('placeholder') || ''))) {
+                instance.displayButton.firstChild.textContent = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+            }
+        }
     }
 
     function patchProto(proto) {
@@ -1849,6 +1946,34 @@ function initBookingForm(element, data) {
             };
         }
 
+        const origUpdateLocale = proto._updateLocale;
+        if (typeof origUpdateLocale === 'function') {
+            proto._updateLocale = function() {
+                origUpdateLocale.call(this);
+                const isThai = !this.displayLocale || this.displayLocale.startsWith('th');
+                if (!this.selectedDate && this.displayButton && this.displayButton.firstChild) {
+                    const currentText = this.displayButton.firstChild.textContent?.trim();
+                    if (currentText === 'วว/ดด/ปปปป' || currentText === 'DD/MM/YYYY' || (this._original && /วว\/ดด\/ปปปป|DD\/MM\/YYYY/.test(this._original.getAttribute('placeholder') || ''))) {
+                        this.displayButton.firstChild.textContent = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+                    }
+                }
+            };
+        }
+
+        const origSetValue = proto.setValue;
+        if (typeof origSetValue === 'function') {
+            proto.setValue = function(value) {
+                origSetValue.apply(this, arguments);
+                if (!value && this.displayButton && this.displayButton.firstChild) {
+                    const isThai = !this.displayLocale || this.displayLocale.startsWith('th');
+                    const currentText = this.displayButton.firstChild.textContent?.trim();
+                    if (currentText === 'วว/ดด/ปปปป' || currentText === 'DD/MM/YYYY' || (this._original && /วว\/ดด\/ปปปป|DD\/MM\/YYYY/.test(this._original.getAttribute('placeholder') || ''))) {
+                        this.displayButton.firstChild.textContent = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+                    }
+                }
+            };
+        }
+
         const origOpen = proto.open;
         if (typeof origOpen === 'function') {
             proto.open = function() {
@@ -1867,10 +1992,50 @@ function initBookingForm(element, data) {
                 if (instance && instance.gdatetime) {
                     patchProto(Object.getPrototypeOf(instance.gdatetime));
                     fixCalendarHeaderElements(instance.gdatetime);
+                    const g = instance.gdatetime;
+                    if (!g.selectedDate && g.displayButton && g.displayButton.firstChild) {
+                        const isThai = !g.displayLocale || g.displayLocale.startsWith('th');
+                        const currentText = g.displayButton.firstChild.textContent?.trim();
+                        if (currentText === 'วว/ดด/ปปปป' || currentText === 'DD/MM/YYYY' || (g._original && /วว\/ดด\/ปปปป|DD\/MM\/YYYY/.test(g._original.getAttribute('placeholder') || ''))) {
+                            g.displayButton.firstChild.textContent = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+                        }
+                    }
                 }
                 return res;
             };
         }
+    }
+
+    const updateAllDatePlaceholders = (locale) => {
+        const docLang = locale || (document.documentElement && document.documentElement.lang) || 'th';
+        const isThai = docLang.toLowerCase().startsWith('th');
+        document.querySelectorAll('.custom-datepicker').forEach(picker => {
+            const display = picker.querySelector('.dropdown-display');
+            const hidden = picker.querySelector('input[type="hidden"], input[type="date"]');
+            if (display && (!hidden || !hidden.value)) {
+                const txt = display.textContent?.trim();
+                if (txt === 'วว/ดด/ปปปป' || txt === 'DD/MM/YYYY') {
+                    display.textContent = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+                }
+            }
+        });
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            input.setAttribute('lang', isThai ? 'th' : 'en-GB');
+            if (input.placeholder === 'วว/ดด/ปปปป' || input.placeholder === 'DD/MM/YYYY') {
+                input.placeholder = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+            }
+        });
+    };
+
+    if (window.EventManager?.on) {
+        EventManager.on('locale:changed', ({locale}) => updateAllDatePlaceholders(locale));
+        EventManager.on('page:loaded', () => updateAllDatePlaceholders());
+        EventManager.on('i18n:updated', ({locale}) => updateAllDatePlaceholders(locale));
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => updateAllDatePlaceholders());
+    } else {
+        updateAllDatePlaceholders();
     }
 })();
 
@@ -1970,6 +2135,10 @@ function initOccurrencePicker(element, data) {
         });
         excludedInput.value = Array.from(excluded).sort().join(',');
 
+        const currentLang = (document.documentElement.lang || (window.I18nManager?.getCurrentLocale ? window.I18nManager.getCurrentLocale() : 'th')).toLowerCase();
+        const isThai = currentLang.startsWith('th');
+        const localeTag = isThai ? 'th-TH' : 'en-GB';
+
         availableDates.forEach(date => {
             const item = document.createElement('div');
             item.className = `booking-occurrence-item${excluded.has(date) ? ' is-excluded' : ''}`;
@@ -1981,17 +2150,27 @@ function initOccurrencePicker(element, data) {
             label.htmlFor = checkbox.id;
             const dateObject = parseDate(date);
             const dateLabel = dateObject
-                ? dateObject.toLocaleDateString(document.documentElement.lang || undefined, {
+                ? dateObject.toLocaleDateString(localeTag, {
                     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
                 })
                 : date;
-            label.textContent = `${dateLabel} ${beginTime?.value || ''}-${endTime?.value || ''}`;
+            const bTime = formatTime(beginTime?.value);
+            const eTime = formatTime(endTime?.value);
+            const hasTime = bTime && eTime;
+            const timeRange = hasTime ? ` (${bTime} – ${eTime})` : '';
+            label.textContent = `${dateLabel}${timeRange}`;
             checkbox.addEventListener('change', () => {
                 if (checkbox.checked) excluded.delete(date);
                 else excluded.add(date);
                 item.classList.toggle('is-excluded', !checkbox.checked);
                 excludedInput.value = Array.from(excluded).sort().join(',');
                 updateSummary(availableDates.length);
+            });
+            item.addEventListener('click', (e) => {
+                if (e.target !== checkbox && e.target !== label) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
             });
             item.append(checkbox, label);
             preview.appendChild(item);
@@ -2016,8 +2195,10 @@ function initOccurrencePicker(element, data) {
         input.addEventListener('input', renderOccurrences);
     });
     // Data-binding writes the date fields without firing input events, so redraw once the
-    // page reports it finished loading.
-    EventManager.on('page:loaded', renderOccurrences);
+    // page reports it finished loading or language changes.
+    EventManager.on?.('page:loaded', renderOccurrences);
+    EventManager.on?.('locale:changed', renderOccurrences);
+    EventManager.on?.('i18n:updated', renderOccurrences);
     renderOccurrences();
 
     return () => {
@@ -2027,6 +2208,8 @@ function initOccurrencePicker(element, data) {
             input.removeEventListener('input', renderOccurrences);
         });
         EventManager.off?.('page:loaded', renderOccurrences);
+        EventManager.off?.('locale:changed', renderOccurrences);
+        EventManager.off?.('i18n:updated', renderOccurrences);
     };
 }
 

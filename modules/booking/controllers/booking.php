@@ -43,6 +43,7 @@ class Controller extends ApiController
             $data->options = [
                 'room_id' => Helper::getRoomOptions(true, $includeRoomId),
                 'use' => Helper::getUseOptions(),
+                'topic' => Helper::getTopicOptions(!empty($data->topic) ? (string) $data->topic : null),
                 'accessories' => Helper::getAccessoryOptions(),
                 'recurrence_days' => Helper::getWeekdayOptions()
             ];
@@ -89,6 +90,23 @@ class Controller extends ApiController
             if (!empty($errors)) {
                 // Error response
                 return $this->formErrorResponse($errors, 400);
+            }
+
+            // If use is not explicitly provided, map from topic (supports both Thai and English)
+            if (empty($save['use']) && !empty($save['topic'])) {
+                $useCategories = \Booking\Category\Controller::init()->toOptions('use', true);
+                $enToTh = [
+                    'Meeting' => 'ประชุม',
+                    'Seminar' => 'สัมนา',
+                    'Banquet' => 'จัดเลี้ยง'
+                ];
+                $normTopic = $enToTh[$save['topic']] ?? $save['topic'];
+                foreach ($useCategories as $cat) {
+                    if ($cat['text'] === $save['topic'] || $cat['text'] === $normTopic) {
+                        $save['use'] = (string) $cat['value'];
+                        break;
+                    }
+                }
             }
 
             $meta = [

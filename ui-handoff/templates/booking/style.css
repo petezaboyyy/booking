@@ -4,6 +4,126 @@
   gap: 0.75rem;
   min-width: 0;
 }
+.booking-occurrence-selector {
+  margin-top: 1rem;
+}
+.booking-occurrence-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+.booking-review-occurrences {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  max-height: 20rem;
+  overflow: auto;
+  padding: 0.2rem;
+}
+.booking-occurrence-preview .booking-occurrence-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  min-height: 42px;
+  border: 1px solid var(--roomly-border, rgba(148, 163, 184, 0.25));
+  border-radius: 10px;
+  background: var(--roomly-surface-low, rgba(148, 163, 184, 0.08));
+  color: var(--roomly-text, #1e293b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.booking-occurrence-preview .booking-occurrence-item:not(.is-excluded) {
+  border-color: rgba(59, 130, 246, 0.45);
+  background: rgba(59, 130, 246, 0.08);
+}
+.booking-occurrence-preview .booking-occurrence-item:hover {
+  border-color: var(--roomly-primary, #2563eb);
+}
+.booking-occurrence-preview .booking-occurrence-item.is-excluded {
+  opacity: 0.45;
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--roomly-border, rgba(148, 163, 184, 0.2));
+}
+.booking-occurrence-preview .booking-occurrence-item input[type="checkbox"] {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  min-height: 17px !important;
+  max-width: 17px !important;
+  max-height: 17px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: var(--roomly-primary, #2563eb);
+  border-radius: 4px;
+}
+.booking-occurrence-preview .booking-occurrence-item label {
+  min-width: 0;
+  flex: 0 0 auto;
+  margin: 0;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--roomly-text, inherit);
+  line-height: 1.2;
+}
+[data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--roomly-text, #edf6ff);
+}
+[data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item:not(.is-excluded) {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(96, 165, 250, 0.45);
+}
+[data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item.is-excluded {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--roomly-muted, #94a3b8);
+}
+.booking-review-occurrences .booking-occurrence-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-background);
+}
+.booking-review-occurrences .booking-occurrence-item.is-excluded,
+.booking-review-occurrences .booking-occurrence-item.is-cancelled {
+  opacity: 0.65;
+  background: rgba(148, 163, 184, 0.12);
+}
+.booking-review-occurrences .booking-occurrence-details {
+  min-width: 0;
+  flex: 1;
+}
+.booking-review-occurrences .booking-occurrence-details strong,
+.booking-review-occurrences .booking-occurrence-details small {
+  display: block;
+}
+.booking-occurrence-details small {
+  color: var(--color-text-muted);
+}
+.booking-occurrence-cancel {
+  flex-shrink: 0;
+  min-width: auto;
+  height: 2rem;
+  padding: 0 0.65rem;
+  font-size: 0.8rem;
+}
 .booking-table-thumb {
   width: 3.25rem;
   height: 3.25rem;
@@ -757,6 +877,39 @@
   background: transparent !important;
   box-shadow: none !important;
   outline: none !important;
+}
+
+/* Select & option color-scheme and background for dark/light themes */
+.roomly-booking-page select,
+.roomly-admin-booking-content select,
+.roomly-select-btn select,
+.roomly-room-select-btn select {
+  color-scheme: light;
+}
+
+.roomly-booking-page select option,
+.roomly-admin-booking-content select option,
+.roomly-select-btn select option,
+.roomly-room-select-btn select option {
+  background-color: #ffffff;
+  color: #0d1c2e;
+}
+
+[data-theme='dark'] .roomly-booking-page select,
+[data-theme='dark'] .roomly-admin-booking-content select,
+[data-theme='dark'] .roomly-select-btn select,
+[data-theme='dark'] .roomly-room-select-btn select,
+[data-theme='dark'] select {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] .roomly-booking-page select option,
+[data-theme='dark'] .roomly-admin-booking-content select option,
+[data-theme='dark'] .roomly-select-btn select option,
+[data-theme='dark'] .roomly-room-select-btn select option,
+[data-theme='dark'] select option {
+  background-color: #101c2c;
+  color: #edf6ff;
 }
 
 .roomly-select-btn .roomly-select-arrow,
