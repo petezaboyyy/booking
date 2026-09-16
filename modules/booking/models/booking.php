@@ -29,6 +29,7 @@ class Model extends \Kotchasan\Model
                 'member_name' => (string) $login->name,
                 'room_id' => $prefillRoomId,
                 'room_name' => '',
+                'room_image' => $prefillRoomId > 0 ? (Helper::getRoomFirstImageUrl($prefillRoomId) ?: '') : '',
                 'topic' => '',
                 'reason' => '',
                 'comment' => '',
@@ -90,6 +91,7 @@ class Model extends \Kotchasan\Model
         $record->excluded_dates = self::normalizeExcludedDates($meta['excluded_dates'] ?? '');
         $record->canEdit = Helper::canEditBooking($record);
         $record->status_text = Helper::getStatusText($record);
+        $record->room_image = !empty($record->room_id) ? (Helper::getRoomFirstImageUrl((int) $record->room_id) ?: '') : '';
 
         return $record;
     }

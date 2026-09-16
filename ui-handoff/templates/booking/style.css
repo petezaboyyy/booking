@@ -1483,16 +1483,38 @@
 
 .dropdown-panel .autocomplete-list li .icon-check,
 .dropdown-panel .autocomplete-list li .icon-uncheck {
-  font-size: 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  min-height: 17px !important;
+  border-radius: 4.5px !important;
+  border: 1.5px solid color-mix(in srgb, var(--roomly-text) 35%, transparent) !important;
+  box-sizing: border-box !important;
+  transition: all 0.15s ease !important;
   flex-shrink: 0 !important;
-}
-
-.dropdown-panel .autocomplete-list li .icon-check {
-  color: var(--roomly-primary) !important;
+  position: relative !important;
 }
 
 .dropdown-panel .autocomplete-list li .icon-uncheck {
-  color: var(--roomly-muted) !important;
+  background: transparent !important;
+}
+
+.dropdown-panel .autocomplete-list li .icon-check {
+  background: var(--roomly-primary) !important;
+  border-color: var(--roomly-primary) !important;
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--roomly-primary) 24%, transparent) !important;
+}
+
+/* Remove checkmark symbol - pure filled color indicator */
+.dropdown-panel .autocomplete-list li .icon-check::before,
+.dropdown-panel .autocomplete-list li .icon-uncheck::before {
+  display: none !important;
+  content: "" !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Textarea inside form-control */
@@ -2733,9 +2755,11 @@ div.modal {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--roomly-primary) 18%, transparent) !important;
 }
 
-.roomly-field-wrap.has-error .roomly-combobox {
-  border-color: #dc2626 !important;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+.roomly-field-wrap.has-error .roomly-combobox,
+.roomly-field-wrap.has-error .roomly-combobox:focus-within,
+.roomly-field-wrap.has-error .roomly-combobox.is-open {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
 
 /* Native select is kept for form value and validation, but hidden from user */

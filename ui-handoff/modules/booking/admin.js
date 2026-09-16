@@ -889,6 +889,10 @@ function initBookingForm(element, data) {
                     summaryRoomImg.src = roomImgUrl;
                     summaryRoomImg.style.display = 'block';
                     summaryRoomIcon.style.display = 'none';
+                    summaryRoomImg.onerror = () => {
+                        summaryRoomImg.style.display = 'none';
+                        summaryRoomIcon.style.display = '';
+                    };
                 } else {
                     summaryRoomImg.src = '';
                     summaryRoomImg.style.display = 'none';
@@ -918,9 +922,12 @@ function initBookingForm(element, data) {
         }
 
         // 3. Attendees
-        if (summaryAttendees && attendeesInput) {
-            const attVal = attendeesInput.value.trim();
-            summaryAttendees.textContent = attVal ? attVal : '1';
+        const attTarget = summaryAttendees || element.querySelector('#summary-attendees') || document.querySelector('#summary-attendees');
+        const attSrc = attendeesInput || element.querySelector('#attendees') || document.querySelector('#attendees');
+        if (attTarget && attSrc) {
+            const rawVal = (attSrc.value !== undefined && attSrc.value !== null) ? String(attSrc.value).trim() : '';
+            const n = parseInt(rawVal, 10);
+            attTarget.textContent = (!isNaN(n) && n > 0) ? String(n) : (rawVal || '1');
         }
 
         // 4. Dates (Thai format: วัน/เดือน/ปี)
@@ -987,22 +994,45 @@ function initBookingForm(element, data) {
         roomIdInput.addEventListener('change', updateLiveSummary);
     }
     if (attendeesInput) {
-        attendeesInput.addEventListener('input', updateLiveSummary);
+        ['input', 'change', 'keyup', 'paste', 'blur'].forEach(evt => {
+            attendeesInput.addEventListener(evt, updateLiveSummary);
+        });
     }
     if (topicInput) {
         topicInput.addEventListener('input', updateLiveSummary);
         topicInput.addEventListener('change', updateLiveSummary);
     }
+    const updateTimePlaceholders = () => {
+        const curLang = (document.documentElement.getAttribute('lang') || (window.I18nManager?.getCurrentLocale ? window.I18nManager.getCurrentLocale() : null) || window.Now?.getLocale?.() || 'th').toLowerCase();
+        const isThai = curLang.startsWith('th');
+        if (beginTimeInput) {
+            beginTimeInput.placeholder = isThai ? 'ชช:นน (เช่น 08:30)' : 'HH:MM (e.g. 08:30)';
+        }
+        if (endTimeInput) {
+            endTimeInput.placeholder = isThai ? 'ชช:นน (เช่น 12:00)' : 'HH:MM (e.g. 12:00)';
+        }
+        if (beginDateInput) {
+            beginDateInput.placeholder = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+        }
+        if (endDateInput) {
+            endDateInput.placeholder = isThai ? 'วว/ดด/ปปปป' : 'DD/MM/YYYY';
+        }
+    };
+    updateTimePlaceholders();
     const onLocaleChange = () => {
+        updateTimePlaceholders();
         updateLiveSummary();
     };
     window.addEventListener('locale:changed', onLocaleChange);
     window.EventManager?.on?.('locale:changed', onLocaleChange);
+    window.EventManager?.on?.('i18n:updated', onLocaleChange);
     if (beginDateInput) {
         beginDateInput.addEventListener('change', updateLiveSummary);
+        beginDateInput.addEventListener('input', updateLiveSummary);
     }
     if (beginTimeInput) {
         beginTimeInput.addEventListener('input', updateLiveSummary);
+        beginTimeInput.addEventListener('change', updateLiveSummary);
         beginTimeInput.addEventListener('blur', () => {
             const normalized = formatTime(beginTimeInput.value);
             if (normalized && normalized !== beginTimeInput.value) {
@@ -1014,9 +1044,11 @@ function initBookingForm(element, data) {
     }
     if (endDateInput) {
         endDateInput.addEventListener('change', updateLiveSummary);
+        endDateInput.addEventListener('input', updateLiveSummary);
     }
     if (endTimeInput) {
         endTimeInput.addEventListener('input', updateLiveSummary);
+        endTimeInput.addEventListener('change', updateLiveSummary);
         endTimeInput.addEventListener('blur', () => {
             const normalized = formatTime(endTimeInput.value);
             if (normalized && normalized !== endTimeInput.value) {
@@ -1164,7 +1196,13 @@ function initBookingForm(element, data) {
         if (firstInvalid) {
             e.preventDefault();
             e.stopImmediatePropagation();
-            firstInvalid.focus();
+            if (firstInvalid.id === 'room_id') {
+                const searchEl = element.querySelector('#room_id_search');
+                if (searchEl) searchEl.focus();
+                else firstInvalid.focus();
+            } else {
+                firstInvalid.focus();
+            }
             return false;
         }
     };
@@ -1402,6 +1440,10 @@ function initBookingForm(element, data) {
                 container.classList.remove('is-open');
                 activeIndex = -1;
                 syncInputWithSelect();
+                if (roomIdInput._userClicked) {
+                    roomIdInput._touched = true;
+                    checkFieldValidity(roomIdInput);
+                }
             };
 
             const syncInputWithSelect = () => {
@@ -1423,11 +1465,14 @@ function initBookingForm(element, data) {
                 searchInput.value = text;
                 updateClearBtn();
                 closeDropdown();
+                const wrap = roomIdInput.closest('.roomly-field-wrap');
+                if (wrap) wrap.classList.remove('has-error');
                 roomIdInput.dispatchEvent(new Event('change', { bubbles: true }));
                 updateLiveSummary();
             };
 
             searchInput.addEventListener('focus', () => {
+                roomIdInput._userClicked = true;
                 // Clicking or focusing opens dropdown with ALL available options
                 openDropdown('');
                 setTimeout(() => {
@@ -1436,9 +1481,20 @@ function initBookingForm(element, data) {
             });
 
             searchInput.addEventListener('click', (e) => {
+                roomIdInput._userClicked = true;
                 if (!isOpen) {
                     openDropdown('');
                 }
+            });
+
+            searchInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (isOpen) return;
+                    if (roomIdInput._userClicked) {
+                        roomIdInput._touched = true;
+                        checkFieldValidity(roomIdInput);
+                    }
+                }, 150);
             });
 
             searchInput.addEventListener('input', () => {
@@ -1497,6 +1553,7 @@ function initBookingForm(element, data) {
             clearBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                roomIdInput._userClicked = true;
                 roomIdInput.value = '';
                 roomIdInput.selectedIndex = 0;
                 Array.from(roomIdInput.options).forEach((opt, idx) => {
@@ -1517,6 +1574,7 @@ function initBookingForm(element, data) {
                 arrow.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    roomIdInput._userClicked = true;
                     if (isOpen) {
                         closeDropdown();
                     } else {
@@ -1526,7 +1584,12 @@ function initBookingForm(element, data) {
                 });
             }
 
+            container.addEventListener('pointerdown', () => {
+                roomIdInput._userClicked = true;
+            });
+
             container.addEventListener('click', (e) => {
+                roomIdInput._userClicked = true;
                 if (e.target === clearBtn || clearBtn.contains(e.target) || dropdown.contains(e.target) || e.target === searchInput || (arrow && arrow.contains(e.target))) return;
                 if (!isOpen) {
                     searchInput.focus();
@@ -1542,6 +1605,10 @@ function initBookingForm(element, data) {
             const onDocClick = (e) => {
                 if (!container.contains(e.target) && !dropdown.contains(e.target)) {
                     closeDropdown();
+                    if (roomIdInput._userClicked) {
+                        roomIdInput._touched = true;
+                        checkFieldValidity(roomIdInput);
+                    }
                 }
             };
             document.addEventListener('pointerdown', onDocClick);
@@ -1572,11 +1639,21 @@ function initBookingForm(element, data) {
         }
     }
 
-    const onOptionsChanged = () => {
+    const onOptionsChanged = (e) => {
+        const optsList = e?.detail?.options || data?.options?.room_id;
+        if (Array.isArray(optsList)) {
+            optsList.forEach(opt => {
+                if (opt && opt.value && opt.image) {
+                    roomImageMap.set(String(opt.value), opt.image);
+                }
+            });
+        }
         if (roomIdInput && roomIdInput.options) {
             Array.from(roomIdInput.options).forEach(opt => {
                 if (opt.value && opt.dataset && opt.dataset.image) {
                     roomImageMap.set(String(opt.value), opt.dataset.image);
+                } else if (opt.value && roomImageMap.has(String(opt.value))) {
+                    opt.dataset.image = roomImageMap.get(String(opt.value));
                 }
             });
         }
@@ -1778,12 +1855,28 @@ function initBookingForm(element, data) {
         if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
         if (recurrenceDays) recurrenceDays.removeEventListener('change', updateLiveSummary);
         if (roomIdInput) roomIdInput.removeEventListener('change', updateLiveSummary);
-        if (attendeesInput) attendeesInput.removeEventListener('input', updateLiveSummary);
+        if (attendeesInput) {
+            ['input', 'change', 'keyup', 'paste', 'blur'].forEach(evt => {
+                attendeesInput.removeEventListener(evt, updateLiveSummary);
+            });
+        }
         if (topicInput) topicInput.removeEventListener('input', updateLiveSummary);
-        if (beginDateInput) beginDateInput.removeEventListener('change', updateLiveSummary);
-        if (beginTimeInput) beginTimeInput.removeEventListener('input', updateLiveSummary);
-        if (endDateInput) endDateInput.removeEventListener('change', updateLiveSummary);
-        if (endTimeInput) endTimeInput.removeEventListener('input', updateLiveSummary);
+        if (beginDateInput) {
+            beginDateInput.removeEventListener('change', updateLiveSummary);
+            beginDateInput.removeEventListener('input', updateLiveSummary);
+        }
+        if (beginTimeInput) {
+            beginTimeInput.removeEventListener('input', updateLiveSummary);
+            beginTimeInput.removeEventListener('change', updateLiveSummary);
+        }
+        if (endDateInput) {
+            endDateInput.removeEventListener('change', updateLiveSummary);
+            endDateInput.removeEventListener('input', updateLiveSummary);
+        }
+        if (endTimeInput) {
+            endTimeInput.removeEventListener('input', updateLiveSummary);
+            endTimeInput.removeEventListener('change', updateLiveSummary);
+        }
     };
 }
 

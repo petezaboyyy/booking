@@ -431,7 +431,8 @@ class Controller extends \Gcms\Controller
             }
             $options[] = [
                 'value' => (string) $item->id,
-                'text' => $label
+                'text' => $label,
+                'image' => self::getRoomFirstImageUrl((int) $item->id) ?: ''
             ];
         }
 
@@ -498,7 +499,25 @@ class Controller extends \Gcms\Controller
      */
     public static function getAccessoryOptions(): array
     {
-        return BookingCategory::init()->toOptions('accessories');
+        $categories = BookingCategory::init()->toOptions('accessories', true);
+        $map = [
+            '1' => ['en' => 'Computer', 'th' => 'เครื่องคอมพิวเตอร์'],
+            '2' => ['en' => 'Projector', 'th' => 'จอโปรเจ็คเตอร์'],
+            '3' => ['en' => 'Visualizer', 'th' => 'เครื่องฉายแผ่นใส'],
+            '4' => ['en' => 'Snacks & Refreshments', 'th' => 'ของว่าง']
+        ];
+        $options = [];
+        foreach ($categories as $cat) {
+            $catId = (string) $cat['value'];
+            $thText = $cat['text'];
+            $enText = $map[$catId]['en'] ?? $thText;
+            $options[] = [
+                'value' => $catId,
+                'text' => $enText,
+                'label' => $enText
+            ];
+        }
+        return $options;
     }
 
     /**

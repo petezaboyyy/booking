@@ -290,7 +290,10 @@ const I18nManager = {
     container.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
       const template = element.getAttribute('data-i18n-placeholder');
       if (!template) return;
-      const translated = this.interpolate(template, {}, translations);
+      let translated = this.interpolate(template, {}, translations);
+      if (translated === template && translations[template]) {
+        translated = translations[template];
+      }
       if ('placeholder' in element) {
         element.placeholder = translated;
       } else {

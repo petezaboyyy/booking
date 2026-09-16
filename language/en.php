@@ -1,6 +1,15 @@
 <?php
 /* language/en.php */
 return array(
+  'or sign in with password' => 'or sign in with password',
+  'Computer' => 'Computer',
+  'Projector' => 'Projector',
+  'Visualizer' => 'Visualizer',
+  'Snacks & Refreshments' => 'Snacks & Refreshments',
+  'เครื่องคอมพิวเตอร์' => 'Computer',
+  'จอโปรเจ็คเตอร์' => 'Projector',
+  'เครื่องฉายแผ่นใส' => 'Visualizer',
+  'ของว่าง' => 'Snacks & Refreshments',
   'BOOKING_STATUS' => array(
     0 => 'Pending',
     1 => 'Approved',
@@ -87,5 +96,11 @@ return array(
   'วว/ดด/ปปปป' => 'DD/MM/YYYY',
   'DD/MM/YYYY' => 'DD/MM/YYYY',
   'Selected dates' => 'Selected dates',
-  'วันที่เลือก' => 'Selected dates'
+  'วันที่เลือก' => 'Selected dates',
+  'ชช:นน (เช่น 08:30)' => 'HH:MM (e.g. 08:30)',
+  'ชช:นน (เช่น 12:00)' => 'HH:MM (e.g. 12:00)',
+  'ชช:นน' => 'HH:MM',
+  'HH:MM (เช่น 08:30)' => 'HH:MM (e.g. 08:30)',
+  'HH:MM (เช่น 12:00)' => 'HH:MM (e.g. 12:00)',
+  'HH:MM' => 'HH:MM'
 );
