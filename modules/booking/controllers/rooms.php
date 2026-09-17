@@ -67,6 +67,10 @@ class Controller extends \Gcms\Table
     {
         foreach ($datas as $item) {
             $item->first_image_url = \Booking\Helper\Controller::getRoomFirstImageUrl((int) $item->id);
+            if (isset($item->seats)) {
+                $rawSeats = (string) $item->seats;
+                $item->seats = preg_match('/^\s*(\d+)/', $rawSeats, $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', $rawSeats));
+            }
         }
 
         return $datas;

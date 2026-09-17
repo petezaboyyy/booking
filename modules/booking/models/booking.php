@@ -229,7 +229,7 @@ class Model extends \Kotchasan\Model
             'room_name' => (string) $row->room_name,
             'room_number' => (string) ($row->room_number ?? ''),
             'room_building' => (string) ($row->room_building ?? ''),
-            'room_seats' => (string) ($row->room_seats ?? ''),
+            'room_seats' => preg_match('/^\s*(\d+)/', (string) ($row->room_seats ?? ''), $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', (string) ($row->room_seats ?? ''))),
             'reason' => (string) $row->reason,
             'topic' => (string) $row->topic,
             'comment' => (string) $row->comment,

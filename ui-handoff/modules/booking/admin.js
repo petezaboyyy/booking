@@ -1238,6 +1238,8 @@ function initBookingForm(element, data) {
         if (!isSearchable) {
             searchInput.readOnly = true;
             searchInput.style.cursor = 'pointer';
+            searchInput.style.userSelect = 'none';
+            searchInput.style.webkitUserSelect = 'none';
         }
 
         const clearBtn = document.createElement('button');
@@ -1392,12 +1394,6 @@ function initBookingForm(element, data) {
                 }
                 item.appendChild(labelEl);
 
-                if (String(selectEl.value) === val) {
-                    const check = document.createElement('span');
-                    check.className = 'roomly-combobox-check icon-check';
-                    check.setAttribute('aria-hidden', 'true');
-                    item.appendChild(check);
-                }
 
                 const handleSelect = (e) => {
                     e.preventDefault();
@@ -1489,7 +1485,9 @@ function initBookingForm(element, data) {
 
         searchInput.addEventListener('focus', () => {
             selectEl._userClicked = true;
-            openDropdown('');
+            if (!isOpen) {
+                openDropdown('');
+            }
             if (isSearchable) {
                 setTimeout(() => {
                     searchInput.select();
@@ -1499,7 +1497,9 @@ function initBookingForm(element, data) {
 
         searchInput.addEventListener('click', (e) => {
             selectEl._userClicked = true;
-            if (!isOpen) {
+            if (isOpen) {
+                closeDropdown();
+            } else {
                 openDropdown('');
             }
         });
@@ -1731,7 +1731,7 @@ function initBookingForm(element, data) {
                 : 'เลือกรูปแบบการเกิดซ้ำ...',
             renderItemIcon: (iconWrap, opt, val) => {
                 if (val === 'weekly-slot') {
-                    iconWrap.innerHTML = '<span class="icon-repeat" aria-hidden="true"></span>';
+                    iconWrap.innerHTML = '<span class="icon-shuffle" aria-hidden="true"></span>';
                 } else {
                     iconWrap.innerHTML = '<span class="icon-calendar" aria-hidden="true"></span>';
                 }

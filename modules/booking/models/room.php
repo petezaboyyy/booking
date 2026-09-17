@@ -40,6 +40,10 @@ class Model extends \Kotchasan\Model
             }
 
             $record = (object) array_merge((array) $record, (array) $room, self::getMetaValues($id));
+            if (isset($record->seats)) {
+                $rawSeats = (string) $record->seats;
+                $record->seats = preg_match('/^\s*(\d+)/', $rawSeats, $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', $rawSeats));
+            }
             $record->booking = \Download\Index\Controller::getAttachments($id, 'booking', self::$cfg->img_typies);
         }
 

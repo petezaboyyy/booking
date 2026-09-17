@@ -266,7 +266,8 @@ class Controller extends \Gcms\Controller
         }
 
         if (!array_key_exists($roomId, self::$roomGalleryCache)) {
-            $files = \Download\Index\Controller::getAttachments($roomId, 'booking', self::$cfg->img_typies);
+            $imgTypes = !empty(self::$cfg->img_typies) && is_array(self::$cfg->img_typies) ? self::$cfg->img_typies : ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $files = \Download\Index\Controller::getAttachments($roomId, 'booking', $imgTypes);
             self::$roomGalleryCache[$roomId] = array_values(array_filter($files, static function ($file) {
                 return !empty($file['is_image']);
             }));

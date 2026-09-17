@@ -97,7 +97,8 @@ class Model extends \Kotchasan\Model
         $row->detail = (string) ($row->detail ?? '');
         $row->building = (string) ($row->building ?? '');
         $row->room_number = (string) ($row->room_number ?? '');
-        $row->seats = (string) ($row->seats ?? '');
+        $rawSeats = (string) ($row->seats ?? '');
+        $row->seats = preg_match('/^\s*(\d+)/', $rawSeats, $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', $rawSeats));
         $row->gallery = $gallery;
         $row->gallery_count = count($gallery);
         $row->first_image_url = $gallery[0]['url'] ?? null;

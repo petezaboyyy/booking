@@ -183,14 +183,14 @@ CREATE TABLE `{prefix}_rooms_meta` (
 --
 
 INSERT INTO `{prefix}_rooms_meta` (`room_id`, `name`, `value`) VALUES
-(2, 'seats', '20 ที่นั่ง'),
+(2, 'seats', '20'),
 (2, 'number', 'R-0001'),
 (2, 'building', 'อาคาร 1'),
-(1, 'seats', '50 ที่นั่ง รูปตัว U'),
+(1, 'seats', '50'),
 (1, 'number', 'R-0002'),
 (1, 'building', 'อาคาร 2'),
 (3, 'building', 'โรงอาหาร'),
-(3, 'seats', '100 คน');
+(3, 'seats', '100');
 
 -- --------------------------------------------------------
 
