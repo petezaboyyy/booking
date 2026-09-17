@@ -14,12 +14,8 @@ $cfg = (require dirname(__DIR__).'/settings/database.php')['mysql'];
 if (!preg_match('/^[a-zA-Z0-9_]+$/D', (string) $cfg['prefix'])) {
     throw new RuntimeException('Invalid table prefix');
 }
-$pdo = new PDO(
-    'mysql:host='.$cfg['hostname'].';port='.$cfg['port'].';dbname='.$cfg['dbname'].';charset=utf8mb4',
-    $cfg['username'],
-    $cfg['password'],
-    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-);
+require_once __DIR__.'/migrations/connection.php';
+$pdo = booking_migration_pdo($cfg);
 
 require_once __DIR__.'/migrations/occurrence_migration.php';
 echo 'Reservation occurrence '.booking_apply_occurrence_migration($pdo, (string) $cfg['prefix'])."\n";
