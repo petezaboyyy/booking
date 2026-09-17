@@ -81,4 +81,31 @@ if (!function_exists('booking_sync_missing_columns')) {
 
         return $applied;
     }
+
+    /**
+     * What install/database.sql still expects and the database does not have.
+     * Reported rather than applied, because missing tables need keys and
+     * AUTO_INCREMENT that this file does not reproduce.
+     *
+     * @return array{missing_tables: string[], missing_columns: array<string, string[]>}
+     */
+    function booking_schema_drift(PDO $pdo, string $prefix, string $sqlPath): array
+    {
+        $drift = ['missing_tables' => [], 'missing_columns' => []];
+        $existingTables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+        foreach (booking_parse_schema($sqlPath) as $suffix => $columns) {
+            $table = $prefix.'_'.$suffix;
+            if (!in_array($table, $existingTables, true)) {
+                $drift['missing_tables'][] = $table;
+                continue;
+            }
+            $present = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(PDO::FETCH_COLUMN);
+            $missing = array_values(array_diff(array_keys($columns), $present));
+            if ($missing) {
+                $drift['missing_columns'][$table] = $missing;
+            }
+        }
+
+        return $drift;
+    }
 }

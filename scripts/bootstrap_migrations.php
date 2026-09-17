@@ -60,6 +60,20 @@ class BootstrapMigrations
                 $summary .= "\n  ".$sql;
             }
 
+            // What the schema still lacks afterwards. Without log access this
+            // file is the only way to tell "nothing was missing" apart from
+            // "an earlier container already fixed it".
+            $drift = booking_schema_drift($pdo, (string) $cfg['prefix'], $rootPath.'install/database.sql');
+            $summary .= "\nremaining drift: ";
+            if (empty($drift['missing_tables']) && empty($drift['missing_columns'])) {
+                $summary .= 'none';
+            } else {
+                $summary .= 'tables='.(implode(',', $drift['missing_tables']) ?: 'none');
+                foreach ($drift['missing_columns'] as $table => $cols) {
+                    $summary .= "\n  ".$table.' missing: '.implode(',', $cols);
+                }
+            }
+
             // Best effort: an unwritable datas/ only costs a repeated migration,
             // which is idempotent, so it must not turn into a failure.
             if (!is_dir(dirname($marker))) {
