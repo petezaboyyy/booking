@@ -1,13 +1,13 @@
-<!-- Refined admin booking form with recurring booking support -->
+<!-- Original admin booking form with recurring booking support -->
 <aside data-component='sidebar'></aside>
 <div class='main-content'>
   <div>
     <header data-component='topbar'></header>
-    <main class='content roomly-admin-booking-content'>
+    <main class='content'>
       <form data-form='booking' data-load-api='api/booking/booking/get' data-load-query-params='true' data-ajax-submit='true' action='api/booking/booking/save' method='post'
-            autocomplete='off' data-script='initBookingForm' novalidate>
-        <div class='card-groups roomly-booking-shell'>
-          <header class='roomly-page-heading roomly-booking-heading'>
+            autocomplete='off' data-script='initBookingForm'>
+        <div class='card-groups'>
+          <header>
             <div>
               <h1 class='icon-edit'>
                 <span data-i18n>Book a room</span>
@@ -15,331 +15,138 @@
               </h1>
               <p data-i18n>Create or update a room reservation request</p>
             </div>
-            <div class='header-actions roomly-booking-header-actions'>
+            <div class='header-actions'>
               <a class='btn btn-info icon-office' href='/rooms' data-i18n>All rooms</a>
               <a class='btn btn-warning icon-list' href='/my-bookings' data-i18n>My bookings</a>
             </div>
           </header>
-
-          <div class='content-body roomly-booking-form-body'>
-            <div class='roomly-booking-main-column'>
-
-              <!-- Requester Identity Strip -->
-              <div class='roomly-requester-strip'>
-                <div class='roomly-requester-avatar-badge' aria-hidden='true'>
-                  <span class='icon-user'></span>
-                </div>
-                <div class='roomly-requester-info'>
-                  <span class='roomly-requester-label' data-i18n>Requester</span>
-                  <div class='roomly-requester-name-row'>
-                    <strong class='roomly-requester-name' data-text="member_name || '—'">User</strong>
-                    <span class='roomly-status-pill roomly-status-new' data-if="!id || id <= 0" data-i18n>New booking</span>
-                    <span class='roomly-status-pill' data-if="id > 0" data-class="'status' + status" data-text="status_text"></span>
-                  </div>
-                </div>
-                <input type="hidden" id="member_name" data-attr="value:member_name">
+          <div class='content-body'>
+            <fieldset>
+              <legend data-i18n>Requester</legend>
+              <div>
+                <label for='member_name' data-i18n>Name</label>
+                <span class='form-control icon-profile'>
+                  <input type='text' id='member_name' data-attr='value:member_name' disabled>
+                </span>
               </div>
-
-              <!-- Main Form Fields Surface -->
-              <div class='roomly-reservation-surface'>
-                <fieldset class='roomly-form-card roomly-reservation-card' data-attr="disabled:!canEdit">
-
-                  <!-- Section 1: Meeting & Room Details -->
-                  <div class='roomly-form-section'>
-                    <div class='roomly-section-header'>
-                      <div class='roomly-section-icon roomly-icon-room' aria-hidden='true'>
-                        <span class='icon-office'></span>
-                      </div>
-                      <div class='roomly-section-titles'>
-                        <h2 data-i18n>Reservation details</h2>
-                        <p data-i18n>Select meeting room, number of attendees and topic</p>
-                      </div>
-                    </div>
-
-                    <div class="form-group roomly-form-grid-2">
-                      <div class="roomly-field-wrap roomly-room-field-wrap">
-                        <label for="room_id">
-                          <span data-i18n>Room</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control roomly-select-btn">
-                          <select id="room_id" name="room_id" data-options-key="room_id" data-attr="value:room_id" required>
-                            <option value="" data-placeholder="true" selected></option>
-                          </select>
-                          <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
-                        </span>
-                      </div>
-                      <div class="roomly-field-wrap">
-                        <label for="attendees">
-                          <span data-i18n>Attendees number</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control">
-                          <input type="number" id="attendees" name="attendees" data-attr="value:attendees" min="1" max="999" placeholder="ระบุจำนวนผู้เข้าร่วม (เช่น 5)" required>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="form-group">
-                      <div class="roomly-field-wrap">
-                        <label for="topic">
-                          <span data-i18n>Topic</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control roomly-select-btn">
-                          <select id="topic" name="topic" data-options-key="topic" data-attr="value:topic" required>
-                            <option value="" data-placeholder="true" selected></option>
-                          </select>
-                          <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
-                        </span>
-                      </div>
-                      <input type="hidden" id="use" name="use" data-attr="value:use">
-                    </div>
-                  </div>
-
-                  <!-- Section 2: Date & Time Schedule -->
-                  <div class='roomly-form-section'>
-                    <div class='roomly-section-header'>
-                      <div class='roomly-section-icon roomly-icon-schedule' aria-hidden='true'>
-                        <span class='icon-calendar'></span>
-                      </div>
-                      <div class='roomly-section-titles'>
-                        <h2 data-i18n>Schedule</h2>
-                        <p data-i18n>Specify reservation date, time and repetition</p>
-                      </div>
-                    </div>
-
-                    <!-- Date & Time Grid -->
-                    <div class="form-group roomly-form-grid-2">
-                      <div class="roomly-field-wrap">
-                        <label for="begin_date">
-                          <span data-i18n>Start date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control">
-                          <input type="date" id="begin_date" name="begin_date" data-attr="value:begin_date" placeholder="{LNG_วว/ดด/ปปปป}" data-i18n-placeholder="วว/ดด/ปปปป" required>
-                        </span>
-                      </div>
-                      <div class="roomly-field-wrap">
-                        <label for="begin_time">
-                          <span data-i18n>Start time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control">
-                          <input type="text" id="begin_time" name="begin_time" data-attr="value:begin_time"
-                                 inputmode="numeric" maxlength="5" placeholder="HH:MM (เช่น 08:30)"
-                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="Use 24-hour time format (HH:MM)" required>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="form-group roomly-form-grid-2">
-                      <div class="roomly-field-wrap">
-                        <label for="end_date">
-                          <span data-i18n>End date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control">
-                          <input type="date" id="end_date" name="end_date" data-attr="value:end_date" placeholder="{LNG_วว/ดด/ปปปป}" data-i18n-placeholder="วว/ดด/ปปปป" required>
-                        </span>
-                      </div>
-                      <div class="roomly-field-wrap">
-                        <label for="end_time">
-                          <span data-i18n>End time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
-                        </label>
-                        <span class="form-control">
-                          <input type="text" id="end_time" name="end_time" data-attr="value:end_time"
-                                 inputmode="numeric" maxlength="5" placeholder="HH:MM (เช่น 12:00)"
-                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="Use 24-hour time format (HH:MM)" required>
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- Recurrence Settings -->
-                    <div class="form-group roomly-form-grid-2 roomly-recurrence-row">
-                      <div class="roomly-field-wrap">
-                        <label for="schedule_type">
-                          <span data-i18n>Repeat</span>
-                        </label>
-                        <span class="form-control roomly-select-btn">
-                          <select id="schedule_type" name="schedule_type" data-attr="value:schedule_type">
-                            <option value="daily-slot" data-i18n>Every day</option>
-                            <option value="weekly-slot" data-i18n>Selected weekdays</option>
-                          </select>
-                          <span class="roomly-select-arrow icon-chevron-down" aria-hidden="true"></span>
-                        </span>
-                      </div>
-
-                      <div class="roomly-field-wrap roomly-recurrence-days-group">
-                        <label for="recurrence_days">
-                          <span data-i18n>Repeat on</span>
-                        </label>
-                        <span class="form-control">
-                          <select id="recurrence_days" name="recurrence_days" multiple
-                                  data-options-key="recurrence_days" data-attr="value:recurrence_days"></select>
-                        </span>
-                        <div class="comment" id="result_recurrence_days" data-i18n>Required when repeating on selected weekdays</div>
-                      </div>
-                    </div>
-
-                    <div class="roomly-tip-callout">
-                      <span class="roomly-tip-icon icon-info" aria-hidden="true"></span>
-                      <span data-i18n>The selected time applies to each occurrence within the date range</span>
-                    </div>
-                  </div>
-
-                  <!-- Section 3: Accessories & Notes -->
-                  <div class='roomly-form-section'>
-                    <div class='roomly-section-header'>
-                      <div class='roomly-section-icon roomly-icon-accessories' aria-hidden='true'>
-                        <span class='icon-list'></span>
-                      </div>
-                      <div class='roomly-section-titles'>
-                        <h2 data-i18n>Accessories</h2>
-                        <p data-i18n>Select required equipment and provide any additional requests</p>
-                      </div>
-                    </div>
-
-                    <div class="roomly-field-wrap roomly-accessories-wrap">
-                      <label for="accessories">
-                        <span data-i18n>Accessories</span>
-                      </label>
-                      <span class="form-control">
-                        <select id="accessories" name="accessories" multiple
-                                data-options-key="accessories" data-attr="value:accessories">
-                          <option value="" disabled data-placeholder="true"></option>
-                        </select>
-                      </span>
-                      <div class="comment" id="result_accessories" data-i18n="Select required equipment">เลือกอุปกรณ์เสริมที่ต้องการ</div>
-                    </div>
-
-                    <div class="roomly-field-wrap roomly-notes-wrap">
-                      <label for="comment">
-                        <span data-i18n>Notes</span>
-                      </label>
-                      <span class="form-control">
-                        <textarea id="comment" name="comment" rows="3" data-text="comment" placeholder="ระบุหมายเหตุหรือข้อความเพิ่มเติม (ถ้ามี)..."></textarea>
-                      </span>
-                    </div>
-                  </div>
-
-                </fieldset>
-
-                <!-- Latest Decision (if exists) -->
-                <fieldset class='roomly-form-card roomly-decision-card' data-if="reason">
-                  <div class='roomly-section-header roomly-decision-header'>
-                    <div class='roomly-section-icon roomly-icon-decision' aria-hidden='true'>
-                      <span class='icon-warning'></span>
-                    </div>
-                    <div class='roomly-section-titles'>
-                      <h2 data-i18n>Latest decision</h2>
-                      <p data-i18n>Review remarks from the approver</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label for="reason" data-i18n>Reason</label>
-                    <span class="form-control icon-warning roomly-control-has-icon">
-                      <textarea id="reason" rows="3" data-text="reason" disabled></textarea>
-                    </span>
-                  </div>
-                </fieldset>
-              </div>
-            </div>
-
-            <!-- Side Live Summary & Room Preview Card -->
-            <aside class='roomly-booking-context' aria-label='Booking Summary'>
-              <!-- Summary Top -->
-              <div class='roomly-summary-header'>
-                <div class='roomly-summary-title-wrap'>
-                  <span class='roomly-summary-badge' data-i18n>Summary</span>
-                  <h3 class='roomly-summary-title' data-i18n>Reservation details</h3>
+            </fieldset>
+            <fieldset data-attr='disabled:!canEdit'>
+              <legend data-i18n>Reservation details</legend>
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='room_id' data-i18n>Room</label>
+                  <span class='form-control icon-office'>
+                    <select id='room_id' name='room_id' data-options-key='room_id' data-attr='value:room_id'>
+                      <option value='' data-i18n>Please select</option>
+                    </select>
+                  </span>
                 </div>
-                <div class='roomly-summary-icon-bubble' aria-hidden='true'>
-                  <span class='icon-calendar'></span>
+                <div class='width50'>
+                  <label for='attendees' data-i18n>Attendees number</label>
+                  <span class='form-control icon-users'>
+                    <input type='number' id='attendees' name='attendees' data-attr='value:attendees' min='1' max='999'>
+                  </span>
                 </div>
               </div>
-
-              <!-- Room Preview Card -->
-              <div class='roomly-summary-room-banner'>
-                <div class='roomly-summary-room-avatar' aria-hidden='true'>
-                  <img id='summary-room-img' class='roomly-summary-room-img' src='' alt='' style='display: none;'>
-                  <span class='icon-office' id='summary-room-icon'></span>
-                </div>
-                <div class='roomly-summary-room-text'>
-                  <span class='roomly-summary-label' data-i18n>Room</span>
-                  <div class='roomly-summary-room-name' id='summary-room-name' data-i18n>Please select</div>
-                </div>
-              </div>
-
-              <!-- Live Summary Field List -->
-              <div class='roomly-summary-items'>
-                <div class='roomly-summary-item'>
-                  <span class='roomly-summary-item-icon icon-file' aria-hidden='true'></span>
-                  <div class='roomly-summary-item-content'>
-                    <span class='roomly-summary-item-label' data-i18n>Topic</span>
-                    <strong class='roomly-summary-item-val' id='summary-topic'>—</strong>
-                  </div>
-                </div>
-
-                <div class='roomly-summary-item'>
-                  <span class='roomly-summary-item-icon icon-users' aria-hidden='true'></span>
-                  <div class='roomly-summary-item-content'>
-                    <span class='roomly-summary-item-label' data-i18n>Attendees number</span>
-                    <strong class='roomly-summary-item-val' id='summary-attendees'>—</strong>
-                  </div>
-                </div>
-
-                <div class='roomly-summary-item'>
-                  <span class='roomly-summary-item-icon icon-calendar' aria-hidden='true'></span>
-                  <div class='roomly-summary-item-content'>
-                    <span class='roomly-summary-item-label' data-i18n>Start date</span>
-                    <strong class='roomly-summary-item-val' id='summary-dates'>—</strong>
-                  </div>
-                </div>
-
-                <div class='roomly-summary-item'>
-                  <span class='roomly-summary-item-icon icon-clock' aria-hidden='true'></span>
-                  <div class='roomly-summary-item-content'>
-                    <span class='roomly-summary-item-label' data-i18n>Start time</span>
-                    <strong class='roomly-summary-item-val' id='summary-times'>—</strong>
-                  </div>
-                </div>
-
-                <div class='roomly-summary-item' id='summary-repeat-row'>
-                  <span class='roomly-summary-item-icon icon-repeat' aria-hidden='true'></span>
-                  <div class='roomly-summary-item-content'>
-                    <span class='roomly-summary-item-label' data-i18n>Repeat</span>
-                    <strong class='roomly-summary-item-val' id='summary-repeat' data-i18n>Every day</strong>
-                  </div>
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='use' data-i18n>Topic</label>
+                  <span class='form-control icon-menus'>
+                    <select id='use' name='use' data-options-key='use' data-attr='value:use' required>
+                      <option value='' data-i18n>Please select</option>
+                    </select>
+                  </span>
+                  <input type='hidden' id='topic' name='topic' data-attr='value:topic'>
                 </div>
               </div>
-
-              <!-- Guidelines Box -->
-              <div class='roomly-summary-policy'>
-                <div class='roomly-policy-header'>
-                  <span class='icon-info' aria-hidden='true'></span>
-                  <span data-i18n>Policy Notes</span>
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='begin_date' data-i18n>Start date</label>
+                  <span class='form-control icon-calendar'>
+                    <input type='date' id='begin_date' name='begin_date' data-attr='value:begin_date'>
+                  </span>
                 </div>
-                <ul class='roomly-policy-list'>
-                  <li data-i18n>Check room schedule to avoid overlap</li>
-                  <li data-i18n>Bookings can be modified before review</li>
-                </ul>
+                <div class='width50'>
+                  <label for='begin_time' data-i18n>Start time</label>
+                  <span class='form-control icon-clock'>
+                    <input type='text' id='begin_time' name='begin_time' data-attr='value:begin_time'
+                           inputmode='numeric' maxlength='5' placeholder='HH:MM'
+                           pattern='(?:[01][0-9]|2[0-3]):[0-5][0-9]' title='Use 24-hour time format (HH:MM)'>
+                  </span>
+                </div>
               </div>
-
-              <a class='roomly-summary-browse-btn' href='/rooms'>
-                <span class='icon-search' aria-hidden='true'></span>
-                <span data-i18n>All rooms</span>
-              </a>
-            </aside>
-
-            <!-- Form Actions Bottom Bar (On mobile appears directly below reservation details) -->
-            <fieldset class="submit roomly-form-actions">
-              <aside class="error" data-if="!canEdit" data-i18n>This booking has already been processed and cannot be changed</aside>
-              <div class='roomly-actions-btn-group'>
-                <a href="/my-bookings" class="btn btn-secondary roomly-cancel-btn">
-                  <span class="icon-reply" aria-hidden="true"></span>
-                  <span data-i18n>Cancel</span>
-                </a>
-                <button type="submit" class="btn btn-primary roomly-submit-btn" data-attr="disabled:!canEdit">
-                  <span class="icon-save" aria-hidden="true"></span>
-                  <span data-i18n>Save</span>
-                </button>
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='end_date' data-i18n>End date</label>
+                  <span class='form-control icon-calendar'>
+                    <input type='date' id='end_date' name='end_date' data-attr='value:end_date'>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='end_time' data-i18n>End time</label>
+                  <span class='form-control icon-clock'>
+                    <input type='text' id='end_time' name='end_time' data-attr='value:end_time'
+                           inputmode='numeric' maxlength='5' placeholder='HH:MM'
+                           pattern='(?:[01][0-9]|2[0-3]):[0-5][0-9]' title='Use 24-hour time format (HH:MM)'>
+                  </span>
+                </div>
               </div>
-              <input type="hidden" name="id" data-attr="value:id">
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='schedule_type' data-i18n>Repeat</label>
+                  <span class='form-control icon-repeat'>
+                    <select id='schedule_type' name='schedule_type' data-attr='value:schedule_type'>
+                      <option value='daily-slot' data-i18n>Every day</option>
+                      <option value='weekly-slot' data-i18n>Selected weekdays</option>
+                    </select>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='recurrence_days' data-i18n>Repeat on</label>
+                  <span class='form-control icon-calendar'>
+                    <select id='recurrence_days' name='recurrence_days' multiple data-options-key='recurrence_days'
+                            data-attr='value:recurrence_days'></select>
+                  </span>
+                  <div class='comment' id='result_recurrence_days' data-i18n>Required when repeating on selected weekdays</div>
+                </div>
+              </div>
+              <div class='comment' data-i18n>The selected time applies to each occurrence within the date range</div>
+              <div class='booking-occurrence-selector'>
+                <label data-i18n>Booking dates</label>
+                <div class='comment' data-i18n>Uncheck dates that should not be included in this request</div>
+                <div id='booking_occurrence_preview' class='booking-occurrence-preview'></div>
+                <div id='result_excluded_dates' class='comment'></div>
+                <input type='hidden' id='excluded_dates' name='excluded_dates' data-attr='value:excluded_dates'>
+              </div>
+              <div>
+                <label for='accessories' data-i18n>Accessories</label>
+                <span class='form-control icon-list'>
+                  <select id='accessories' name='accessories' multiple data-options-key='accessories'
+                          data-attr='value:accessories'></select>
+                </span>
+                <div class='comment' id='result_accessories' data-i18n>Select one or more required accessories</div>
+              </div>
+              <div>
+                <label for='comment' data-i18n>Notes</label>
+                <span class='form-control icon-comments'>
+                  <textarea id='comment' name='comment' rows='3' data-text='comment'></textarea>
+                </span>
+              </div>
+            </fieldset>
+            <fieldset data-if='reason'>
+              <legend data-i18n>Latest decision</legend>
+              <div>
+                <label for='reason' data-i18n>Reason</label>
+                <span class='form-control icon-warning'>
+                  <textarea id='reason' rows='3' data-text='reason' disabled></textarea>
+                </span>
+              </div>
+            </fieldset>
+            <fieldset class='submit'>
+              <aside class='error' data-if='!canEdit' data-i18n>This booking has already been processed and cannot be changed</aside>
+              <button type='submit' class='btn btn-primary icon-save' data-attr='disabled:!canEdit' data-i18n>Save</button>
+              <input type='hidden' name='id' data-attr='value:id'>
+              <input type='hidden' name='version' data-attr='value:version'>
             </fieldset>
           </div>
         </div>

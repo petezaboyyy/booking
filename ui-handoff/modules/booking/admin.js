@@ -379,7 +379,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260915-occurrences-5';
+const ROOMLY_ROLE_UI_VERSION = '20260917-admin-original-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -728,6 +728,54 @@ function formatSummaryDate(isoDate) {
 }
 
 function initBookingForm(element, data) {
+    const isRoomly = element.classList.contains('roomly-booking-form')
+        || Boolean(element.querySelector('.roomly-reservation-surface'))
+        || Boolean(element.closest('.roomly-booking-page'));
+
+    if (!isRoomly) {
+        // Original Admin booking form logic (from friend's split commit ba60ab2 / 2e0db40)
+        const scheduleType = element.querySelector('#schedule_type');
+        const recurrenceDays = element.querySelector('#recurrence_days');
+        const recurrenceGroup = recurrenceDays ? recurrenceDays.closest('.width50, .roomly-recurrence-days-group') : null;
+        const useInput = element.querySelector('#use');
+        const topicInput = element.querySelector('#topic');
+
+        const syncTopicFromUse = () => {
+            if (!topicInput || !useInput) return;
+            const selectedOption = useInput.selectedOptions?.[0];
+            topicInput.value = useInput.value
+                ? (selectedOption?.textContent?.trim() || useInput.value)
+                : '';
+        };
+
+        const scheduleChange = () => {
+            const weekly = scheduleType ? scheduleType.value === 'weekly-slot' : false;
+            if (recurrenceGroup) {
+                recurrenceGroup.style.display = weekly ? '' : 'none';
+            }
+            if (recurrenceDays) {
+                recurrenceDays.disabled = !weekly;
+            }
+        };
+
+        if (scheduleType) {
+            scheduleType.addEventListener('change', scheduleChange);
+            scheduleChange();
+        }
+        if (useInput) {
+            useInput.addEventListener('change', syncTopicFromUse);
+            syncTopicFromUse();
+        }
+
+        const occurrencePickerCleanup = initOccurrencePicker(element, data);
+
+        return () => {
+            if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
+            if (useInput) useInput.removeEventListener('change', syncTopicFromUse);
+            if (typeof occurrencePickerCleanup === 'function') occurrencePickerCleanup();
+        };
+    }
+
     const scheduleType = element.querySelector('#schedule_type');
     const recurrenceDays = element.querySelector('#recurrence_days');
     const recurrenceGroup = recurrenceDays ? recurrenceDays.closest('.roomly-recurrence-days-group, .width50') : null;
