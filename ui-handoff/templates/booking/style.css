@@ -3129,18 +3129,44 @@ div.modal {
 .booking-occurrence-item.has-conflict,
 .booking-occurrence-preview .booking-occurrence-item.has-conflict,
 .booking-review-occurrences .booking-occurrence-item.has-conflict {
-  border-color: #ef4444 !important;
-  background-color: rgba(239, 68, 68, 0.12) !important;
-  color: #b91c1c !important;
+  /* A tinted surface rather than a flat wash: the chip stays as light as its
+     neighbours so a row of dates still reads as one set, and the border plus
+     the soft halo carry the warning. */
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  background-color: #fef2f2 !important;
+  color: #b42318 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
   cursor: help;
+}
+
+.booking-occurrence-item.has-conflict input[type="checkbox"] {
+  /* A blue tick inside a red chip looks like a rendering mistake. */
+  accent-color: #ef4444;
+}
+
+.booking-occurrence-preview .booking-occurrence-item.has-conflict:hover {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14) !important;
 }
 
 [data-theme='dark'] .booking-occurrence-item.has-conflict,
 [data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item.has-conflict,
 [data-theme='dark'] .booking-review-occurrences .booking-occurrence-item.has-conflict {
-  border-color: #f87171 !important;
-  background-color: rgba(239, 68, 68, 0.3) !important;
+  /* Red at any weight over a navy surface turns muddy, so the fill stays
+     nearly transparent and the signal comes from a bright border and text. */
+  border-color: rgba(248, 113, 113, 0.7) !important;
+  background-color: rgba(248, 113, 113, 0.09) !important;
   color: #fecaca !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1) !important;
+}
+
+[data-theme='dark'] .booking-occurrence-item.has-conflict input[type="checkbox"] {
+  accent-color: #f87171;
+}
+
+[data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item.has-conflict:hover {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.18) !important;
 }
 
 
