@@ -1262,6 +1262,7 @@ function initBookingForm(element, data) {
 
         let activeIndex = -1;
         let isOpen = false;
+        let justFocused = false;
 
         const updateClearBtn = () => {
             if (!clearBtn.parentElement) return;
@@ -1487,6 +1488,10 @@ function initBookingForm(element, data) {
             selectEl._userClicked = true;
             if (!isOpen) {
                 openDropdown('');
+                justFocused = true;
+                setTimeout(() => {
+                    justFocused = false;
+                }, 250);
             }
             if (isSearchable) {
                 setTimeout(() => {
@@ -1497,6 +1502,10 @@ function initBookingForm(element, data) {
 
         searchInput.addEventListener('click', (e) => {
             selectEl._userClicked = true;
+            if (justFocused) {
+                justFocused = false;
+                return;
+            }
             if (isOpen) {
                 closeDropdown();
             } else {
@@ -1610,6 +1619,8 @@ function initBookingForm(element, data) {
             if (!isOpen) {
                 searchInput.focus();
                 openDropdown('');
+            } else {
+                closeDropdown();
             }
         });
 
