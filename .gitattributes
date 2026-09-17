@@ -1,0 +1,4 @@
+# Shell scripts run inside Linux containers; a CRLF shebang makes the kernel
+# report "no such file or directory" for the interpreter, so keep them LF even
+# when checked out on Windows (core.autocrlf=true).
+*.sh text eol=lf
