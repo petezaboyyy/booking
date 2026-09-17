@@ -829,12 +829,11 @@ function initConflictChecker(element, data, isRoomly = true) {
                     const tag = document.createElement('span');
                     tag.className = 'roomly-conflict-tag';
                     tag.textContent = tagText;
-                    const label = item.querySelector('label');
-                    if (label) {
-                        label.appendChild(tag);
-                    } else {
-                        item.appendChild(tag);
-                    }
+                    // A sibling of the label, not a child of it: the label is
+                    // white-space: nowrap so ordinary dates stay on one line, and
+                    // a tag inside it had nowhere to break, so it spilled outside
+                    // the chip. As a chip child it takes a row of its own.
+                    item.appendChild(tag);
                 }
             } else {
                 item.classList.remove('has-conflict');

@@ -3126,10 +3126,11 @@ div.modal {
   background-color: rgba(239, 68, 68, 0.1) !important;
 }
 
-/* The chip's label is nowrap so ordinary dates stay on one line. A conflict
-   appends a tag to that label, which then cannot fit the grid column and spills
-   outside the rounded box, so conflicting chips are allowed to wrap instead. */
-.booking-occurrence-preview .booking-occurrence-item.has-conflict {
+/* Chips sit in a fixed grid column, so the conflict tag gets a row of its own
+   rather than sharing the line with a date that is already nearly as wide as
+   the chip. Wrapping is enabled for every chip: one that needs no tag has a
+   single row and looks unchanged. */
+.booking-occurrence-preview .booking-occurrence-item {
   flex-wrap: wrap;
   row-gap: 4px;
 }
@@ -3142,10 +3143,11 @@ div.modal {
 }
 
 .roomly-conflict-tag {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  flex: 1 0 100%;
   max-width: 100%;
-  margin-left: 8px;
   padding: 2px 8px;
   font-size: 11px;
   font-weight: 700;
