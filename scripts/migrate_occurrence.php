@@ -42,6 +42,18 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS `$occurrence` (
     KEY `idx_occurrence_reservation` (`reservation_id`, `status`, `begin`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// A fresh install has no reservations yet; the tables the backfill reads from
+// arrive later with install/database.sql, so leaving early beats a fatal error
+// that would look like a broken deploy.
+$tableExists = function (string $name) use ($pdo) {
+    $stmt = $pdo->prepare('SHOW TABLES LIKE ?');
+    $stmt->execute([$name]);
+    return (bool) $stmt->fetchColumn();
+};
+if (!$tableExists($reservation) || !$tableExists($reservationData)) {
+    echo "Reservation occurrence table ready. Nothing to backfill: `$reservation` not installed yet.\n";
+    exit(0);
+}
 $legacy = $pdo->query("SELECT R.`id`, R.`room_id`, R.`begin`, R.`end`, R.`schedule_type`, R.`status`,
       (SELECT D.`value` FROM `$reservationData` D
        WHERE D.`reservation_id` = R.`id` AND D.`name` = 'recurrence_days' LIMIT 1) recurrence_days

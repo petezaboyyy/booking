@@ -29,4 +29,10 @@ RUN mkdir -p /var/www/html/datas /var/www/html/settings \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/datas /var/www/html/settings
 
+# Apply pending schema migrations before serving (hosts without shell access)
+RUN cp /var/www/html/docker-entrypoint.sh /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["apache2-foreground"]
