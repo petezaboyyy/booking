@@ -3074,6 +3074,10 @@ div.modal {
 .roomly-conflict-alert-body {
   font-size: 13.5px;
   line-height: 1.5;
+  /* A slot label carries a date and two times, and on a narrow screen it has to
+     break instead of pushing the banner wider than the form. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .roomly-conflict-alert-msg {
@@ -3091,6 +3095,7 @@ div.modal {
 .roomly-conflict-slot-pill {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   padding: 4px 12px;
   background: rgba(239, 68, 68, 0.14);
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -3121,9 +3126,25 @@ div.modal {
   background-color: rgba(239, 68, 68, 0.1) !important;
 }
 
+/* The chip's label is nowrap so ordinary dates stay on one line. A conflict
+   appends a tag to that label, which then cannot fit the grid column and spills
+   outside the rounded box, so conflicting chips are allowed to wrap instead. */
+.booking-occurrence-preview .booking-occurrence-item.has-conflict {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.booking-occurrence-preview .booking-occurrence-item.has-conflict label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .roomly-conflict-tag {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   margin-left: 8px;
   padding: 2px 8px;
   font-size: 11px;
