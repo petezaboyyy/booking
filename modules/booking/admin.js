@@ -1165,10 +1165,24 @@ function initBookingForm(element, data) {
             }
         };
 
+        const onFocusOut = () => {
+            setTimeout(() => {
+                if (wrap && wrap.contains(document.activeElement)) return;
+                const fc = wrap ? wrap.querySelector('.form-control') : null;
+                if (fc && fc.classList.contains('is-open')) return;
+                if (input._userClicked) {
+                    input._touched = true;
+                    checkFieldValidity(input);
+                }
+            }, 150);
+        };
+
         input.addEventListener('focus', onUserFocus);
         input.addEventListener('pointerdown', onUserFocus);
         if (wrap) {
             wrap.addEventListener('pointerdown', onUserFocus);
+            wrap.addEventListener('focusin', onUserFocus);
+            wrap.addEventListener('focusout', onFocusOut);
         }
         input.addEventListener('blur', onBlur);
         input.addEventListener('input', onInput);
@@ -1177,7 +1191,13 @@ function initBookingForm(element, data) {
         validationCleanups.push(
             () => input.removeEventListener('focus', onUserFocus),
             () => input.removeEventListener('pointerdown', onUserFocus),
-            () => { if (wrap) wrap.removeEventListener('pointerdown', onUserFocus); },
+            () => {
+                if (wrap) {
+                    wrap.removeEventListener('pointerdown', onUserFocus);
+                    wrap.removeEventListener('focusin', onUserFocus);
+                    wrap.removeEventListener('focusout', onFocusOut);
+                }
+            },
             () => input.removeEventListener('blur', onBlur),
             () => input.removeEventListener('input', onInput),
             () => input.removeEventListener('change', onChange)
@@ -1772,6 +1792,12 @@ function initBookingForm(element, data) {
             if (fc) fc.classList.remove('is-open');
             const btn = target.querySelector('.dropdown-button') || (target.classList.contains('dropdown-button') ? target : null);
             if (btn) btn.setAttribute('aria-expanded', 'false');
+            const wrap = target.closest?.('.roomly-field-wrap');
+            const dateInput = target.querySelector?.('input') || wrap?.querySelector?.('input');
+            if (dateInput && (dateInput.id === 'begin_date' || dateInput.id === 'end_date') && dateInput._userClicked) {
+                dateInput._touched = true;
+                checkFieldValidity(dateInput);
+            }
         }
     };
 
@@ -1782,6 +1808,11 @@ function initBookingForm(element, data) {
             if (fc) fc.classList.add('is-open');
             const btn = target.querySelector?.('.dropdown-button');
             if (btn) btn.setAttribute('aria-expanded', 'true');
+            const wrap = target.closest?.('.roomly-field-wrap');
+            const dateInput = target.querySelector?.('input') || wrap?.querySelector?.('input');
+            if (dateInput) {
+                dateInput._userClicked = true;
+            }
         }
     };
 
@@ -1792,6 +1823,12 @@ function initBookingForm(element, data) {
             if (fc) fc.classList.remove('is-open');
             const btn = target.querySelector?.('.dropdown-button');
             if (btn) btn.setAttribute('aria-expanded', 'false');
+            const wrap = target.closest?.('.roomly-field-wrap');
+            const dateInput = target.querySelector?.('input') || wrap?.querySelector?.('input');
+            if (dateInput && dateInput._userClicked) {
+                dateInput._touched = true;
+                checkFieldValidity(dateInput);
+            }
         }
     };
 
