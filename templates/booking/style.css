@@ -3161,7 +3161,10 @@ div.modal {
 }
 
 [data-theme='dark'] .booking-occurrence-item.has-conflict input[type="checkbox"] {
-  accent-color: #f87171;
+  /* Not the lighter #f87171 used for the border: the browser picks the tick's
+     colour from the accent's luminance, and a light accent gets a dark tick,
+     which shrinks to a pale box that does not read as red at all. */
+  accent-color: #ef4444;
 }
 
 [data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item.has-conflict:hover {
