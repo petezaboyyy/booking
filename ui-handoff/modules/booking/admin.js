@@ -927,7 +927,7 @@ function initBookingForm(element, data) {
         if (attTarget && attSrc) {
             const rawVal = (attSrc.value !== undefined && attSrc.value !== null) ? String(attSrc.value).trim() : '';
             const n = parseInt(rawVal, 10);
-            attTarget.textContent = (!isNaN(n) && n > 0) ? String(n) : (rawVal || '1');
+            attTarget.textContent = (!isNaN(n) && n > 0) ? String(n) : '—';
         }
 
         // 4. Dates (Thai format: วัน/เดือน/ปี)

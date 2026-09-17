@@ -33,7 +33,7 @@ class Model extends \Kotchasan\Model
                 'topic' => '',
                 'reason' => '',
                 'comment' => '',
-                'attendees' => 1,
+                'attendees' => '',
                 'begin' => '',
                 'end' => '',
                 'begin_date' => '',
