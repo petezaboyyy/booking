@@ -23,6 +23,13 @@ RewriteRule ^(.*)$ index.html [L,QSA]
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
+  # Scripts and styles carry a ?v= key, but during a deploy the old container
+  # can still answer a request for the new key, and the host's week-long
+  # max-age then pins that stale answer for a week. Revalidating keeps the key
+  # honest; the ETag still turns an unchanged file into a 304.
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
   # CORS headers for API requests
   <If "%{REQUEST_URI} =~ m#^.*/api/#">
     Header always set Access-Control-Allow-Origin "*"
@@ -34,7 +41,7 @@ RewriteRule ^(.*)$ index.html [L,QSA]
   <filesMatch ".(jpg|jpeg|png|gif|ico)$">
     Header set Cache-Control "max-age=604800, public"
   </filesMatch>
-  <filesMatch ".(css|js|ttf|woff|svg|eot)$">
+  <filesMatch ".(ttf|woff|woff2|svg|eot)$">
     Header set Cache-Control "max-age=604800, public"
   </filesMatch>
 </IfModule>
