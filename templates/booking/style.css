@@ -3130,9 +3130,17 @@ div.modal {
    rather than sharing the line with a date that is already nearly as wide as
    the chip. Wrapping is enabled for every chip: one that needs no tag has a
    single row and looks unchanged. */
-.booking-occurrence-preview .booking-occurrence-item {
+/* Not scoped to a container: the chip renders in the preview grid today and in
+   the review list elsewhere, and in both the tag must break to its own row
+   rather than be squeezed into whatever width is left beside the date. */
+.booking-occurrence-item {
   flex-wrap: wrap;
   row-gap: 4px;
+}
+
+.booking-occurrence-item .roomly-conflict-tag {
+  flex: 1 0 100%;
+  width: 100%;
 }
 
 .booking-occurrence-preview .booking-occurrence-item.has-conflict label {
