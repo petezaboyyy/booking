@@ -322,12 +322,20 @@ class Controller extends ApiController
      */
     protected function formatConflictMessage(array $conflicts): string
     {
-        $slots = array_map(static function ($conflict) {
-            return substr($conflict['begin'], 0, 10)
-                .' '.substr($conflict['begin'], 11, 5)
-                .'-'.substr($conflict['end'], 11, 5);
-        }, array_slice($conflicts, 0, 10));
-        $suffix = count($conflicts) > 10 ? ' (+'.(count($conflicts) - 10).')' : '';
+        // Report the approved booking's times, not the ones just requested:
+        // several requested dates can collide with the same approved slot, so
+        // the list is deduplicated.
+        $slots = array_values(array_unique(array_map(static function ($conflict) {
+            $begin = $conflict['approved_begin'] ?? $conflict['begin'];
+            $end = $conflict['approved_end'] ?? $conflict['end'];
+
+            return substr($begin, 0, 10)
+                .' '.substr($begin, 11, 5)
+                .'-'.substr($end, 11, 5);
+        }, $conflicts)));
+        $total = count($slots);
+        $slots = array_slice($slots, 0, 10);
+        $suffix = $total > 10 ? ' (+'.($total - 10).')' : '';
 
         return Language::get('Conflicts with an approved booking').': '.implode(', ', $slots).$suffix;
     }
@@ -458,11 +466,21 @@ class Controller extends ApiController
             $formattedConflicts = array_map(static function ($c) {
                 $bTime = substr($c['begin'], 11, 5);
                 $eTime = substr($c['end'], 11, 5);
+                $approvedBegin = $c['approved_begin'] ?? $c['begin'];
+                $approvedEnd = $c['approved_end'] ?? $c['end'];
+
                 return [
                     'date' => $c['date'],
                     'begin' => $c['begin'],
                     'end' => $c['end'],
                     'time_range' => $bTime.' - '.$eTime,
+                    // The slot already granted on this room, which is what the
+                    // warning shows; the requested range stays available for
+                    // highlighting the fields the booker typed.
+                    'approved_date' => substr($approvedBegin, 0, 10),
+                    'approved_begin' => $approvedBegin,
+                    'approved_end' => $approvedEnd,
+                    'approved_time_range' => substr($approvedBegin, 11, 5).' - '.substr($approvedEnd, 11, 5),
                     'reservation_id' => $c['reservation_id']
                 ];
             }, $conflicts);

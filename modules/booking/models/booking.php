@@ -638,6 +638,11 @@ class Model extends \Kotchasan\Model
                         'date' => substr($candidate['begin'], 0, 10),
                         'begin' => $candidate['begin'],
                         'end' => $candidate['end'],
+                        // The approved booking's own times: what the booker
+                        // needs in order to pick a slot that is actually free.
+                        // Their requested times they already know.
+                        'approved_begin' => (string) $existing->begin,
+                        'approved_end' => (string) $existing->end,
                         'reservation_id' => (int) $existing->reservation_id
                     ];
                     break;

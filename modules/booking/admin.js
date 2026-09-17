@@ -727,6 +727,29 @@ function formatSummaryDate(isoDate) {
     return `${d}/${m}/${displayYear}`;
 }
 
+/**
+ * Label one conflict by the approved booking that causes it, since that is the
+ * slot the booker has to avoid. Falls back to the requested slot for responses
+ * from an older backend that does not send the approved times yet.
+ */
+function formatApprovedSlot(conflict, isThai) {
+    const begin = conflict.approved_begin || '';
+    const end = conflict.approved_end || '';
+    if (!begin || !end) {
+        return `${formatSummaryDate(conflict.date)} (${conflict.time_range || ''})`.trim();
+    }
+    const beginDate = begin.slice(0, 10);
+    const endDate = end.slice(0, 10);
+    const beginTime = begin.slice(11, 16);
+    const endTime = end.slice(11, 16);
+    if (beginDate === endDate) {
+        return `${formatSummaryDate(beginDate)} (${beginTime} - ${endTime})`;
+    }
+    // A booking that runs past midnight needs both dates to stay unambiguous.
+    const separator = isThai ? ' ถึง ' : ' to ';
+    return `${formatSummaryDate(beginDate)} ${beginTime}${separator}${formatSummaryDate(endDate)} ${endTime}`;
+}
+
 function initConflictChecker(element, data, isRoomly = true) {
     const roomIdInput = element.querySelector('#room_id');
     const beginDateInput = element.querySelector('#begin_date');
@@ -838,15 +861,21 @@ function initConflictChecker(element, data, isRoomly = true) {
                 const slotsEl = conflictAlert.querySelector('.roomly-conflict-alert-slots');
                 if (msgEl) {
                     msgEl.textContent = isThai
-                        ? 'ช่วงเวลาที่เลือกตรงกับรายการที่ได้รับการอนุมัติแล้ว กรุณาเลือกวันหรือเวลาอื่น:'
-                        : 'The selected date/time overlaps with an approved booking. Please select another slot:';
+                        ? 'ช่วงเวลาที่เลือกชนกับรายการที่อนุมัติแล้ว ห้องนี้ถูกจองไว้แล้วในช่วงต่อไปนี้:'
+                        : 'The selected date/time overlaps an approved booking. This room is already taken during:';
                 }
                 if (slotsEl) {
                     slotsEl.innerHTML = '';
+                    // Several requested dates can collide with one approved
+                    // booking, so identical slots are shown once.
+                    const seen = new Set();
                     conflicts.forEach(c => {
+                        const label = formatApprovedSlot(c, isThai);
+                        if (seen.has(label)) return;
+                        seen.add(label);
                         const pill = document.createElement('span');
                         pill.className = 'roomly-conflict-slot-pill';
-                        pill.textContent = `${formatSummaryDate(c.date)} (${c.time_range})`;
+                        pill.textContent = label;
                         slotsEl.appendChild(pill);
                     });
                 }
