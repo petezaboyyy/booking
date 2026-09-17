@@ -379,4 +379,104 @@ class Controller extends ApiController
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }
     }
+
+    /**
+     * Real-time check for conflicts with approved bookings.
+     *
+     * @param Request $request
+     *
+     * @return \Kotchasan\Http\Response
+     */
+    public function checkConflicts(Request $request)
+    {
+        try {
+            ApiController::validateMethod($request, 'GET');
+
+            $roomId = $request->get('room_id')->toInt();
+            $beginDate = $request->get('begin_date')->date();
+            $beginTime = $request->get('begin_time')->time();
+            $endDate = $request->get('end_date')->date();
+            $endTime = $request->get('end_time')->time();
+            $scheduleType = $request->get('schedule_type', 'daily-slot')->filter('a-z-');
+            $rawDays = $request->get('recurrence_days')->toString();
+            if (!empty($rawDays)) {
+                $recurrenceDays = array_values(array_filter(array_map('intval', explode(',', $rawDays)), fn($d) => $d >= 0 && $d <= 6));
+            } else {
+                $recurrenceDays = $request->get('recurrence_days', [])->toInt();
+            }
+            $excludedDates = $request->get('excluded_dates', '')->toString();
+            $excludeId = $request->get('id')->toInt();
+
+            if ($roomId <= 0 || empty($beginDate) || empty($beginTime) || empty($endDate) || empty($endTime)) {
+                return $this->successResponse([
+                    'has_conflict' => false,
+                    'conflicts' => [],
+                    'message' => ''
+                ], 'Incomplete parameters');
+            }
+
+            if ($beginDate > $endDate) {
+                return $this->successResponse([
+                    'has_conflict' => false,
+                    'conflicts' => [],
+                    'message' => ''
+                ], 'Invalid date range');
+            }
+
+            $begin = $beginDate.' '.$beginTime.':00';
+            $end = $endDate.' '.$endTime.':00';
+
+            if ($beginDate === $endDate && $beginTime >= $endTime) {
+                return $this->successResponse([
+                    'has_conflict' => false,
+                    'conflicts' => [],
+                    'message' => ''
+                ], 'Invalid time range');
+            }
+
+            $schedule = Helper::buildBookingSchedule($begin, $end, $scheduleType, $recurrenceDays);
+            if ($schedule === null) {
+                return $this->successResponse([
+                    'has_conflict' => false,
+                    'conflicts' => [],
+                    'message' => ''
+                ], 'Invalid schedule');
+            }
+
+            $occurrences = Helper::buildBookingOccurrences($schedule, $excludedDates);
+            if (empty($occurrences)) {
+                return $this->successResponse([
+                    'has_conflict' => false,
+                    'conflicts' => [],
+                    'message' => ''
+                ], 'No occurrences');
+            }
+
+            $conflicts = Model::findApprovedConflicts($roomId, $occurrences, $excludeId);
+
+            // Add formatted fields for client UI convenience
+            $formattedConflicts = array_map(static function ($c) {
+                $bTime = substr($c['begin'], 11, 5);
+                $eTime = substr($c['end'], 11, 5);
+                return [
+                    'date' => $c['date'],
+                    'begin' => $c['begin'],
+                    'end' => $c['end'],
+                    'time_range' => $bTime.' - '.$eTime,
+                    'reservation_id' => $c['reservation_id']
+                ];
+            }, $conflicts);
+
+            $message = !empty($conflicts) ? $this->formatConflictMessage($conflicts) : '';
+
+            return $this->successResponse([
+                'has_conflict' => !empty($conflicts),
+                'conflicts' => $formattedConflicts,
+                'message' => $message
+            ], 'Conflict check completed');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
+        }
+    }
 }
+

@@ -194,6 +194,18 @@
                       </div>
                     </div>
 
+                    <!-- Conflict Warning Banner (Approved Booking Overlap) -->
+                    <div id="booking_conflict_alert" class="roomly-conflict-alert" style="display: none;" role="alert" aria-live="polite">
+                      <div class="roomly-conflict-alert-header">
+                        <span class="roomly-conflict-alert-icon icon-warning" aria-hidden="true"></span>
+                        <strong class="roomly-conflict-alert-title" data-i18n>Conflicts with an approved booking</strong>
+                      </div>
+                      <div class="roomly-conflict-alert-body">
+                        <p class="roomly-conflict-alert-msg"></p>
+                        <div class="roomly-conflict-alert-slots"></div>
+                      </div>
+                    </div>
+
                     <!-- Recurrence Settings -->
                     <div class="form-group roomly-form-grid-2 roomly-recurrence-row">
                       <div class="roomly-field-wrap">
@@ -351,6 +363,11 @@
                     <span class='roomly-summary-item-label' data-i18n>Start time</span>
                     <strong class='roomly-summary-item-val' id='summary-times'>—</strong>
                   </div>
+                </div>
+
+                <div id='summary-conflict-badge' class='roomly-summary-conflict-alert' style='display: none;'>
+                  <span class='icon-warning' aria-hidden='true'></span>
+                  <span data-i18n>Conflicts with an approved booking</span>
                 </div>
 
                 <div class='roomly-summary-item' id='summary-repeat-row'>

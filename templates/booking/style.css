@@ -3027,8 +3027,149 @@ div.modal {
     padding: 12px 16px !important;
   }
   .roomly-modal-body {
-    padding: 12px 14px !important;
-  }
 }
+
+/* ==========================================================================
+   Real-Time Conflict Warning Alert (Approved Booking Overlap)
+   ========================================================================== */
+.roomly-conflict-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.12) 100%);
+  border: 1.5px solid rgba(239, 68, 68, 0.45);
+  border-radius: 14px;
+  color: #991b1b;
+  margin: 12px 0 16px;
+  animation: roomlyFadeIn 0.25s ease-out;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+}
+
+[data-theme='dark'] .roomly-conflict-alert {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(245, 158, 11, 0.14) 100%);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.roomly-conflict-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.roomly-conflict-alert-icon {
+  font-size: 19px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .roomly-conflict-alert-icon {
+  color: #ef4444;
+}
+
+.roomly-conflict-alert-body {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.roomly-conflict-alert-msg {
+  margin: 0 0 8px 0;
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+.roomly-conflict-alert-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roomly-conflict-slot-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: inherit;
+}
+
+[data-theme='dark'] .roomly-conflict-slot-pill {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.roomly-field-wrap.has-conflict .form-control {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+}
+
+.roomly-field-wrap.has-conflict .form-control:focus-within {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.26) !important;
+}
+
+/* Occurrence item conflict tag */
+.booking-occurrence-item.has-conflict {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.roomly-conflict-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.15);
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+[data-theme='dark'] .roomly-conflict-tag {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.28);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Summary conflict badge */
+.roomly-summary-conflict-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+[data-theme='dark'] .roomly-summary-conflict-alert {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+@keyframes roomlyShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.roomly-conflict-alert.shake-animation {
+  animation: roomlyShake 0.5s ease-in-out;
+}
+
 
 

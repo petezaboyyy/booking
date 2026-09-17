@@ -727,6 +727,352 @@ function formatSummaryDate(isoDate) {
     return `${d}/${m}/${displayYear}`;
 }
 
+function initConflictChecker(element, data, isRoomly = true) {
+    const roomIdInput = element.querySelector('#room_id');
+    const beginDateInput = element.querySelector('#begin_date');
+    const beginTimeInput = element.querySelector('#begin_time');
+    const endDateInput = element.querySelector('#end_date');
+    const endTimeInput = element.querySelector('#end_time');
+    const scheduleTypeInput = element.querySelector('#schedule_type');
+    const recurrenceDaysInput = element.querySelector('#recurrence_days');
+    const excludedDatesInput = element.querySelector('#excluded_dates');
+    const idInput = element.querySelector('#id') || element.querySelector('input[name="id"]');
+    const conflictAlert = element.querySelector('#booking_conflict_alert');
+    const summaryConflictBadge = element.querySelector('#summary-conflict-badge');
+    const preview = element.querySelector('#booking_occurrence_preview');
+
+    if (!conflictAlert && !summaryConflictBadge) {
+        return {
+            hasConflict: () => false,
+            focusAlert: () => {},
+            destroy: () => {}
+        };
+    }
+
+    let abortController = null;
+    let debounceTimer = null;
+    let currentConflicts = [];
+    let hasActiveConflict = false;
+
+    const getLocaleTag = () => {
+        const lang = (document.documentElement.lang || (window.I18nManager?.getCurrentLocale ? window.I18nManager.getCurrentLocale() : 'th')).toLowerCase();
+        return lang.startsWith('th') ? 'th' : 'en';
+    };
+
+    const clearConflictUi = () => {
+        hasActiveConflict = false;
+        currentConflicts = [];
+
+        if (conflictAlert) {
+            conflictAlert.style.display = 'none';
+            conflictAlert.classList.remove('shake-animation');
+            const msgEl = conflictAlert.querySelector('.roomly-conflict-alert-msg');
+            if (msgEl) msgEl.textContent = '';
+            const slotsEl = conflictAlert.querySelector('.roomly-conflict-alert-slots');
+            if (slotsEl) slotsEl.innerHTML = '';
+            if (!isRoomly) {
+                conflictAlert.innerHTML = '';
+            }
+        }
+
+        if (summaryConflictBadge) {
+            summaryConflictBadge.style.display = 'none';
+        }
+
+        const dateFields = [beginDateInput, beginTimeInput, endDateInput, endTimeInput]
+            .map(i => i?.closest('.roomly-field-wrap'))
+            .filter(Boolean);
+        dateFields.forEach(wrap => wrap.classList.remove('has-conflict'));
+
+        if (preview) {
+            preview.querySelectorAll('.booking-occurrence-item').forEach(item => {
+                item.classList.remove('has-conflict');
+                item.querySelectorAll('.roomly-conflict-tag').forEach(tag => tag.remove());
+            });
+        }
+    };
+
+    const applyConflictHighlightsToOccurrences = () => {
+        if (!preview || !currentConflicts.length) return;
+        const conflictDates = new Set(currentConflicts.map(c => c.date));
+        const isThai = getLocaleTag() === 'th';
+        const tagText = isThai ? 'ชนกับรายการที่อนุมัติแล้ว' : 'Approved conflict';
+
+        preview.querySelectorAll('.booking-occurrence-item').forEach(item => {
+            const date = item.dataset.date || (item.querySelector('input[type="checkbox"]')?.id || '').replace('occurrence_', '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+            if (date && conflictDates.has(date)) {
+                item.classList.add('has-conflict');
+                if (!item.querySelector('.roomly-conflict-tag')) {
+                    const tag = document.createElement('span');
+                    tag.className = 'roomly-conflict-tag';
+                    tag.textContent = tagText;
+                    const label = item.querySelector('label');
+                    if (label) {
+                        label.appendChild(tag);
+                    } else {
+                        item.appendChild(tag);
+                    }
+                }
+            } else {
+                item.classList.remove('has-conflict');
+                item.querySelectorAll('.roomly-conflict-tag').forEach(t => t.remove());
+            }
+        });
+    };
+
+    const renderConflictUi = (data) => {
+        const conflicts = data?.conflicts || [];
+        if (!data?.has_conflict || !conflicts.length) {
+            clearConflictUi();
+            return;
+        }
+
+        hasActiveConflict = true;
+        currentConflicts = conflicts;
+        const isThai = getLocaleTag() === 'th';
+
+        // 1. Alert Banner
+        if (conflictAlert) {
+            if (isRoomly) {
+                const msgEl = conflictAlert.querySelector('.roomly-conflict-alert-msg');
+                const slotsEl = conflictAlert.querySelector('.roomly-conflict-alert-slots');
+                if (msgEl) {
+                    msgEl.textContent = isThai
+                        ? 'ช่วงเวลาที่เลือกตรงกับรายการที่ได้รับการอนุมัติแล้ว กรุณาเลือกวันหรือเวลาอื่น:'
+                        : 'The selected date/time overlaps with an approved booking. Please select another slot:';
+                }
+                if (slotsEl) {
+                    slotsEl.innerHTML = '';
+                    conflicts.forEach(c => {
+                        const pill = document.createElement('span');
+                        pill.className = 'roomly-conflict-slot-pill';
+                        pill.textContent = `${formatSummaryDate(c.date)} (${c.time_range})`;
+                        slotsEl.appendChild(pill);
+                    });
+                }
+                conflictAlert.style.display = 'flex';
+            } else {
+                conflictAlert.innerHTML = `<span class="icon-warning" aria-hidden="true"></span> ${data.message || (isThai ? 'ชนกับรายการจองที่อนุมัติแล้ว' : 'Conflicts with an approved booking')}`;
+                conflictAlert.style.display = '';
+            }
+        }
+
+        // 2. Summary Badge in User UI
+        if (summaryConflictBadge) {
+            summaryConflictBadge.style.display = 'flex';
+        }
+
+        // 3. Highlight Date & Time Inputs
+        if (isRoomly) {
+            [beginDateInput, beginTimeInput, endDateInput, endTimeInput].forEach(inp => {
+                const wrap = inp?.closest('.roomly-field-wrap');
+                if (wrap) wrap.classList.add('has-conflict');
+            });
+        }
+
+        // 4. Mark occurrence items
+        applyConflictHighlightsToOccurrences();
+    };
+
+    const checkConflicts = async () => {
+        const roomId = parseInt(roomIdInput?.value, 10);
+        const beginDate = beginDateInput?.value?.trim() || '';
+        const endDate = endDateInput?.value?.trim() || '';
+        const beginTime = formatTime(beginTimeInput?.value?.trim() || '');
+        const endTime = formatTime(endTimeInput?.value?.trim() || '');
+
+        const isValidDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+        const isValidTime = (t) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(t);
+
+        if (!roomId || roomId <= 0 || !isValidDate(beginDate) || !isValidDate(endDate) || !isValidTime(beginTime) || !isValidTime(endTime)) {
+            clearConflictUi();
+            return;
+        }
+
+        if (beginDate > endDate) {
+            clearConflictUi();
+            return;
+        }
+        if (beginDate === endDate && beginTime >= endTime) {
+            clearConflictUi();
+            return;
+        }
+
+        if (abortController) {
+            abortController.abort();
+        }
+        abortController = new AbortController();
+
+        const scheduleType = scheduleTypeInput ? scheduleTypeInput.value : 'daily-slot';
+        let recurrenceDays = '';
+        if (scheduleType === 'weekly-slot' && recurrenceDaysInput) {
+            recurrenceDays = Array.from(recurrenceDaysInput.selectedOptions || [])
+                .map(o => o.value)
+                .filter(Boolean)
+                .join(',');
+        }
+
+        const excludedDates = excludedDatesInput?.value || '';
+        const bookingId = idInput?.value || data?.id || 0;
+
+        const params = new URLSearchParams({
+            room_id: String(roomId),
+            begin_date: beginDate,
+            begin_time: beginTime,
+            end_date: endDate,
+            end_time: endTime,
+            schedule_type: scheduleType
+        });
+        if (recurrenceDays) params.set('recurrence_days', recurrenceDays);
+        if (excludedDates) params.set('excluded_dates', excludedDates);
+        if (bookingId) params.set('id', String(bookingId));
+
+        try {
+            const baseUrl = window.WEB_URL || '/';
+            const token = window.AuthManager?.getToken?.() || '';
+            const headers = {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${baseUrl}api/booking/booking/checkconflicts?${params.toString()}`, {
+                method: 'GET',
+                headers,
+                credentials: 'same-origin',
+                signal: abortController.signal
+            });
+
+            if (!response.ok) return;
+
+            const resData = await response.json();
+            if (resData && resData.success && resData.data) {
+                renderConflictUi(resData.data);
+            }
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+            console.warn('[Booking Conflict Checker]', err);
+        }
+    };
+
+    const scheduleCheck = (delay = 250) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            checkConflicts();
+        }, delay);
+    };
+
+    // Event listeners
+    const trackedInputs = [
+        roomIdInput,
+        beginDateInput,
+        beginTimeInput,
+        endDateInput,
+        endTimeInput,
+        scheduleTypeInput,
+        recurrenceDaysInput,
+        excludedDatesInput
+    ].filter(Boolean);
+
+    const onInputChange = () => scheduleCheck(200);
+    const onInputType = () => scheduleCheck(300);
+
+    trackedInputs.forEach(input => {
+        input.addEventListener('change', onInputChange);
+        input.addEventListener('input', onInputType);
+    });
+
+    const onOccurrencesRendered = () => {
+        if (hasActiveConflict && currentConflicts.length) {
+            applyConflictHighlightsToOccurrences();
+        }
+    };
+
+    const onOccurrencesChanged = () => {
+        scheduleCheck(100);
+    };
+
+    if (preview) {
+        preview.addEventListener('occurrences:rendered', onOccurrencesRendered);
+        preview.addEventListener('occurrences:changed', onOccurrencesChanged);
+        preview.addEventListener('change', onOccurrencesChanged);
+    }
+
+    // Submit handler
+    const onSubmit = (e) => {
+        if (hasActiveConflict) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (conflictAlert) {
+                conflictAlert.style.display = isRoomly ? 'flex' : '';
+                conflictAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                conflictAlert.classList.remove('shake-animation');
+                void conflictAlert.offsetWidth; // force DOM reflow
+                conflictAlert.classList.add('shake-animation');
+            }
+            const isThai = getLocaleTag() === 'th';
+            if (window.NotificationManager?.error) {
+                NotificationManager.error(isThai
+                    ? 'ไม่สามารถจองได้ เนื่องจากเวลาที่เลือกตรงกับรายการที่ได้รับการอนุมัติแล้ว'
+                    : 'Cannot submit booking because selected slot conflicts with an approved booking');
+            }
+            return false;
+        }
+    };
+
+    element.addEventListener('submit', onSubmit, true);
+
+    // Lifecycle events
+    const onLocaleChanged = () => {
+        if (hasActiveConflict && currentConflicts.length) {
+            renderConflictUi({ has_conflict: true, conflicts: currentConflicts });
+        }
+    };
+
+    const onPageLoaded = () => {
+        scheduleCheck(50);
+    };
+
+    window.EventManager?.on?.('locale:changed', onLocaleChanged);
+    window.EventManager?.on?.('i18n:updated', onLocaleChanged);
+    window.EventManager?.on?.('page:loaded', onPageLoaded);
+
+    // Initial check
+    scheduleCheck(100);
+
+    return {
+        hasConflict: () => hasActiveConflict,
+        focusAlert: () => {
+            if (conflictAlert) {
+                conflictAlert.style.display = isRoomly ? 'flex' : '';
+                conflictAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                conflictAlert.classList.remove('shake-animation');
+                void conflictAlert.offsetWidth;
+                conflictAlert.classList.add('shake-animation');
+            }
+        },
+        destroy: () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            if (abortController) abortController.abort();
+            trackedInputs.forEach(input => {
+                input.removeEventListener('change', onInputChange);
+                input.removeEventListener('input', onInputType);
+            });
+            if (preview) {
+                preview.removeEventListener('occurrences:rendered', onOccurrencesRendered);
+                preview.removeEventListener('occurrences:changed', onOccurrencesChanged);
+                preview.removeEventListener('change', onOccurrencesChanged);
+            }
+            element.removeEventListener('submit', onSubmit, true);
+            window.EventManager?.off?.('locale:changed', onLocaleChanged);
+            window.EventManager?.off?.('i18n:updated', onLocaleChanged);
+            window.EventManager?.off?.('page:loaded', onPageLoaded);
+        }
+    };
+}
+
 function initBookingForm(element, data) {
     const isRoomly = element.classList.contains('roomly-booking-form')
         || Boolean(element.querySelector('.roomly-reservation-surface'))
@@ -768,11 +1114,15 @@ function initBookingForm(element, data) {
         }
 
         const occurrencePickerCleanup = initOccurrencePicker(element, data);
+        const conflictCheckerInstance = initConflictChecker(element, data, false);
 
         return () => {
             if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
             if (useInput) useInput.removeEventListener('change', syncTopicFromUse);
             if (typeof occurrencePickerCleanup === 'function') occurrencePickerCleanup();
+            if (conflictCheckerInstance && typeof conflictCheckerInstance.destroy === 'function') {
+                conflictCheckerInstance.destroy();
+            }
         };
     }
 
@@ -1031,6 +1381,7 @@ function initBookingForm(element, data) {
     // Staff screens render templates/booking/booking-recurring.html, which
     // carries the per-date picker this UI has no markup for.
     const occurrencePickerCleanup = initOccurrencePicker(element, data);
+    const conflictCheckerInstance = initConflictChecker(element, data, true);
 
     if (scheduleType) {
         scheduleType.addEventListener('change', scheduleChange);
@@ -1275,6 +1626,13 @@ function initBookingForm(element, data) {
             } else {
                 firstInvalid.focus();
             }
+            return false;
+        }
+
+        if (conflictCheckerInstance && conflictCheckerInstance.hasConflict()) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            conflictCheckerInstance.focusAlert();
             return false;
         }
     };
@@ -2145,6 +2503,9 @@ function initBookingForm(element, data) {
             endTimeInput.removeEventListener('input', updateLiveSummary);
             endTimeInput.removeEventListener('change', updateLiveSummary);
         }
+        if (conflictCheckerInstance && typeof conflictCheckerInstance.destroy === 'function') {
+            conflictCheckerInstance.destroy();
+        }
     };
 }
 
@@ -2503,6 +2864,7 @@ function initOccurrencePicker(element, data) {
         availableDates.forEach(date => {
             const item = document.createElement('div');
             item.className = `booking-occurrence-item${excluded.has(date) ? ' is-excluded' : ''}`;
+            item.dataset.date = date;
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = !excluded.has(date);
@@ -2526,6 +2888,7 @@ function initOccurrencePicker(element, data) {
                 item.classList.toggle('is-excluded', !checkbox.checked);
                 excludedInput.value = Array.from(excluded).sort().join(',');
                 updateSummary(availableDates.length);
+                preview.dispatchEvent(new CustomEvent('occurrences:changed', { bubbles: true }));
             });
             item.addEventListener('click', (e) => {
                 if (e.target !== checkbox && e.target !== label) {
@@ -2537,6 +2900,7 @@ function initOccurrencePicker(element, data) {
             preview.appendChild(item);
         });
         updateSummary(availableDates.length);
+        preview.dispatchEvent(new CustomEvent('occurrences:rendered', { bubbles: true, detail: { availableDates } }));
     };
 
     const updateSummary = total => {
