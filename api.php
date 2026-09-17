@@ -16,11 +16,14 @@ include 'load.php';
 // same hosts rarely offer a shell to run it by hand.
 include ROOT_PATH.'scripts/bootstrap_migrations.php';
 Gcms\BootstrapMigrations::run(ROOT_PATH, DATA_FOLDER);
+// A failed migration is invisible on a host with no log access, so the reason
+// still leaves the building — but only as its SQLSTATE code. That is enough to
+// tell a missing table from a refused connection or a denied privilege, and it
+// carries none of the schema, credentials or host names the driver's full
+// message spells out. The full message goes to the error log.
 if (!headers_sent() && Gcms\BootstrapMigrations::lastError() !== null) {
-    header('X-Migration-Error: '.substr(preg_replace('/[\r\n]+/', ' ', Gcms\BootstrapMigrations::lastError()), 0, 200));
-}
-if (!headers_sent() && Gcms\BootstrapMigrations::appliedCount() > 0) {
-    header('X-Migration-Applied: '.Gcms\BootstrapMigrations::appliedCount());
+    $migrationError = Gcms\BootstrapMigrations::lastError();
+    header('X-Migration-Error: '.(preg_match('/SQLSTATE\[[0-9A-Za-z]+\](?:\s*\[\d+\])?/', $migrationError, $sqlState) ? $sqlState[0] : 'failed'));
 }
 // Initial Kotchasan Framework
 $app = Kotchasan::createWebApplication('Gcms\Config');

@@ -3,6 +3,12 @@ Options -Indexes
 
 RewriteEngine On
 
+# Migration markers record what the schema was missing and which ALTERs ran.
+# They live under datas/ so the app can write them, which also puts them in the
+# document root. Only this folder is blocked: datas/images/ holds the uploads
+# the site serves.
+RewriteRule ^datas/migrations/ - [F,L]
+
 # Handle CORS preflight OPTIONS requests
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^api/ - [R=200,L]

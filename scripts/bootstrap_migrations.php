@@ -21,17 +21,9 @@ class BootstrapMigrations
     /** @var string|null reason the last run failed, for diagnostics */
     private static $lastError;
 
-    /** @var int|null columns added by the last run, for diagnostics */
-    private static $applied;
-
     public static function lastError()
     {
         return self::$lastError;
-    }
-
-    public static function appliedCount()
-    {
-        return self::$applied;
     }
 
     public static function run(string $rootPath, string $dataFolder)
@@ -54,7 +46,6 @@ class BootstrapMigrations
 
             require_once $rootPath.'scripts/migrations/schema_sync.php';
             $applied = booking_sync_missing_columns($pdo, (string) $cfg['prefix'], $rootPath.'install/database.sql');
-            self::$applied = count($applied);
             $summary .= '; added '.count($applied).' missing column(s)';
             foreach ($applied as $sql) {
                 $summary .= "\n  ".$sql;

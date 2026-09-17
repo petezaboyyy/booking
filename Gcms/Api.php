@@ -143,4 +143,30 @@ class Api extends \Kotchasan\ApiController
         }
         return null;
     }
+
+    /**
+     * Controllers pass an exception's own message here, and for a server fault
+     * that message is the database driver's: it names the schema, the table and
+     * sometimes the connection, to anyone who can reach the endpoint, signed in
+     * or not. Callers can do nothing with those details anyway, so a 5xx
+     * answers with a fixed sentence and keeps the real one for the log, which
+     * the parent still writes, alongside the request_id that ties the two
+     * together.
+     *
+     * Client errors (4xx) keep their message: those are written for the caller.
+     *
+     * @param string     $message
+     * @param int        $code
+     * @param \Throwable $error
+     *
+     * @return \Kotchasan\Http\Response
+     */
+    protected function errorResponse($message = 'Error', $code = 400, $error = null)
+    {
+        if ((int) $code >= 500 && !(defined('DEBUG') && DEBUG == 2)) {
+            $message = \Kotchasan\Language::get('An error occurred, please try again');
+        }
+
+        return parent::errorResponse($message, $code, $error);
+    }
 }
