@@ -19,6 +19,9 @@ Gcms\BootstrapMigrations::run(ROOT_PATH, DATA_FOLDER);
 if (!headers_sent() && Gcms\BootstrapMigrations::lastError() !== null) {
     header('X-Migration-Error: '.substr(preg_replace('/[\r\n]+/', ' ', Gcms\BootstrapMigrations::lastError()), 0, 200));
 }
+if (!headers_sent() && Gcms\BootstrapMigrations::appliedCount() > 0) {
+    header('X-Migration-Applied: '.Gcms\BootstrapMigrations::appliedCount());
+}
 // Initial Kotchasan Framework
 $app = Kotchasan::createWebApplication('Gcms\Config');
 $app->run();

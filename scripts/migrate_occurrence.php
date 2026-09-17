@@ -20,6 +20,13 @@ $pdo = booking_migration_pdo($cfg);
 require_once __DIR__.'/migrations/occurrence_migration.php';
 echo 'Reservation occurrence '.booking_apply_occurrence_migration($pdo, (string) $cfg['prefix'])."\n";
 
+require_once __DIR__.'/migrations/schema_sync.php';
+$applied = booking_sync_missing_columns($pdo, (string) $cfg['prefix'], dirname(__DIR__).'/install/database.sql');
+echo 'Added '.count($applied)." missing column(s).\n";
+foreach ($applied as $sql) {
+    echo '  '.$sql."\n";
+}
+
 // A missing occurrence table usually means the whole schema is behind, so name
 // anything else install/database.sql expects but the database does not have.
 $expected = [];
