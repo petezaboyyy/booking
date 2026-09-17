@@ -30,6 +30,7 @@
                                   "title": "Cancel",
                                   "className": "btn btn-danger icon-ban",
                                   "confirm": "{LNG_Confirm cancellation}",
+                                  "params": {"version": "{version}"},
                                   "condition":"${can_cancel == true}"
                                 }
                               }'>
@@ -38,6 +39,7 @@
                   <th data-field='room_name' data-sort='room_name' data-formatter='formatRoomWithImage' data-i18n>{LNG_Room}</th>
                   <th data-field='topic' data-template="<span class='two_line'>${topic}</span>" data-i18n>{LNG_Topic}</th>
                   <th data-field='reservation_text' data-sort='begin' class='center' data-cell-class='center' data-i18n>{LNG_Reservation period}</th>
+                  <th data-field='occurrence_summary' class='center' data-cell-class='center' data-i18n>{LNG_Active / total dates}</th>
                   <th data-field='created_at' data-sort='created_at' class='center' data-cell-class='center' data-format='datetime' data-i18n>{LNG_Created}</th>
                   <th data-field='status' data-filter='true' data-type='select' data-sort='status' class='center' data-cell-class='center' data-formatter='formatTableOptionStatus'
                       data-i18n>{LNG_Status}</th>
