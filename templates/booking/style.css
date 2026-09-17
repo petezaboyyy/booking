@@ -64,8 +64,23 @@
   padding: 0 !important;
   cursor: pointer;
   flex-shrink: 0;
-  accent-color: var(--roomly-primary, #2563eb);
   border-radius: 4px;
+  /* Drawn here rather than left to accent-color: a browser decides the tick's
+     colour from the accent's luminance, and some skins repaint form controls
+     entirely, so the conflict red could not be relied on to show. */
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1.5px solid var(--roomly-border, rgba(148, 163, 184, 0.6));
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 11px 11px;
+}
+
+.booking-occurrence-preview .booking-occurrence-item input[type="checkbox"]:checked {
+  background-color: var(--roomly-primary, #2563eb);
+  border-color: var(--roomly-primary, #2563eb);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 .booking-occurrence-preview .booking-occurrence-item label {
   min-width: 0;
@@ -3141,7 +3156,11 @@ div.modal {
 
 .booking-occurrence-item.has-conflict input[type="checkbox"] {
   /* A blue tick inside a red chip looks like a rendering mistake. */
-  accent-color: #ef4444;
+  border-color: #ef4444 !important;
+}
+
+.booking-occurrence-item.has-conflict input[type="checkbox"]:checked {
+  background-color: #ef4444 !important;
 }
 
 .booking-occurrence-preview .booking-occurrence-item.has-conflict:hover {
@@ -3160,11 +3179,8 @@ div.modal {
   box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1) !important;
 }
 
-[data-theme='dark'] .booking-occurrence-item.has-conflict input[type="checkbox"] {
-  /* Not the lighter #f87171 used for the border: the browser picks the tick's
-     colour from the accent's luminance, and a light accent gets a dark tick,
-     which shrinks to a pale box that does not read as red at all. */
-  accent-color: #ef4444;
+[data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item input[type="checkbox"] {
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 [data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item.has-conflict:hover {
