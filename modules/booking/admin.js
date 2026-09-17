@@ -817,27 +817,26 @@ function initConflictChecker(element, data, isRoomly = true) {
 
     const applyConflictHighlightsToOccurrences = () => {
         if (!preview || !currentConflicts.length) return;
-        const conflictDates = new Set(currentConflicts.map(c => c.date));
         const isThai = getLocaleTag() === 'th';
-        const tagText = isThai ? 'ชนกับรายการที่อนุมัติแล้ว' : 'Approved conflict';
+        // Keyed by date so the tooltip can name the approved slot holding it.
+        const conflictByDate = new Map(currentConflicts.map(c => [c.date, c]));
 
         preview.querySelectorAll('.booking-occurrence-item').forEach(item => {
             const date = item.dataset.date || (item.querySelector('input[type="checkbox"]')?.id || '').replace('occurrence_', '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
-            if (date && conflictDates.has(date)) {
+            const conflict = date ? conflictByDate.get(date) : null;
+            // Earlier builds wrote the warning into the chip as a text tag, which
+            // made the chip several lines tall. The conflict now reads as colour,
+            // with the detail on hover, so chips keep a uniform size.
+            item.querySelectorAll('.roomly-conflict-tag').forEach(t => t.remove());
+            if (conflict) {
                 item.classList.add('has-conflict');
-                if (!item.querySelector('.roomly-conflict-tag')) {
-                    const tag = document.createElement('span');
-                    tag.className = 'roomly-conflict-tag';
-                    tag.textContent = tagText;
-                    // A sibling of the label, not a child of it: the label is
-                    // white-space: nowrap so ordinary dates stay on one line, and
-                    // a tag inside it had nowhere to break, so it spilled outside
-                    // the chip. As a chip child it takes a row of its own.
-                    item.appendChild(tag);
-                }
+                const slot = conflict.approved_time_range || conflict.time_range || '';
+                item.title = (isThai
+                    ? `ชนกับรายการที่อนุมัติแล้ว ${slot}`
+                    : `Conflicts with an approved booking ${slot}`).trim();
             } else {
                 item.classList.remove('has-conflict');
-                item.querySelectorAll('.roomly-conflict-tag').forEach(t => t.remove());
+                item.removeAttribute('title');
             }
         });
     };

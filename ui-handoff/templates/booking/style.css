@@ -3120,56 +3120,28 @@ div.modal {
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.26) !important;
 }
 
-/* Occurrence item conflict tag */
-.booking-occurrence-item.has-conflict {
-  border-color: rgba(239, 68, 68, 0.6) !important;
-  background-color: rgba(239, 68, 68, 0.1) !important;
+/* A conflicting date reads as colour alone, with the detail in the chip's
+   tooltip, so every chip keeps the size of the others. The container is
+   repeated in the selectors because the plain-class rule alone loses to the
+   blue ":not(.is-excluded)" chip styling above. */
+.booking-occurrence-item.has-conflict,
+.booking-occurrence-preview .booking-occurrence-item.has-conflict,
+.booking-review-occurrences .booking-occurrence-item.has-conflict {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: #b91c1c !important;
+  cursor: help;
 }
 
-/* Chips sit in a fixed grid column, so the conflict tag gets a row of its own
-   rather than sharing the line with a date that is already nearly as wide as
-   the chip. Wrapping is enabled for every chip: one that needs no tag has a
-   single row and looks unchanged. */
-/* Not scoped to a container: the chip renders in the preview grid today and in
-   the review list elsewhere, and in both the tag must break to its own row
-   rather than be squeezed into whatever width is left beside the date. */
-.booking-occurrence-item {
-  flex-wrap: wrap;
-  row-gap: 4px;
+[data-theme='dark'] .booking-occurrence-item.has-conflict,
+[data-theme='dark'] .booking-occurrence-preview .booking-occurrence-item.has-conflict,
+[data-theme='dark'] .booking-review-occurrences .booking-occurrence-item.has-conflict {
+  border-color: #f87171 !important;
+  background-color: rgba(239, 68, 68, 0.3) !important;
+  color: #fecaca !important;
 }
 
-.booking-occurrence-item .roomly-conflict-tag {
-  flex: 1 0 100%;
-  width: 100%;
-}
 
-.booking-occurrence-preview .booking-occurrence-item.has-conflict label {
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.roomly-conflict-tag {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 0 100%;
-  max-width: 100%;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #dc2626;
-  background: rgba(239, 68, 68, 0.15);
-  border-radius: 6px;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-[data-theme='dark'] .roomly-conflict-tag {
-  color: #fca5a5;
-  background: rgba(239, 68, 68, 0.28);
-  border-color: rgba(239, 68, 68, 0.5);
-}
 
 /* Summary conflict badge */
 .roomly-summary-conflict-alert {
