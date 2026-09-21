@@ -154,6 +154,10 @@ if (defined('ROOT_PATH')) {
                     $db->query("ALTER TABLE `$table_user` ADD `phone1` VARCHAR(20) NULL DEFAULT NULL");
                     $content[] = '<li class="correct">user: เพิ่ม phone1</li>';
                 }
+                if (!$db->fieldExists($table_user, 'backup_email')) {
+                    $db->query("ALTER TABLE `$table_user` ADD `backup_email` VARCHAR(255) NULL DEFAULT NULL");
+                    $content[] = '<li class="correct">user: เพิ่ม backup_email</li>';
+                }
                 if (!$db->fieldExists($table_user, 'tax_id')) {
                     $db->query("ALTER TABLE `$table_user` ADD `tax_id` VARCHAR(13) NULL DEFAULT NULL");
                     $content[] = '<li class="correct">user: เพิ่ม tax_id</li>';
