@@ -317,11 +317,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initProfile(element, data) {
-  const input = element.querySelector('#birthday');
-  const display = element.querySelector('.dropdown-display');
+  const input = element?.querySelector('#birthday');
+  const display = element?.querySelector('.dropdown-display');
 
   const updateAge = () => {
-    if (input.value) {
+    if (!display) return;
+    if (input?.value) {
       const birth = new Date(input.value);
       const age = Math.floor((Date.now() - birth) / 31557600000);
 
@@ -334,13 +335,15 @@ function initProfile(element, data) {
     }
   };
 
-  input.addEventListener('change', updateAge);
-  updateAge();
+  if (input) {
+    input.addEventListener('change', updateAge);
+    updateAge();
 
-  // Return cleanup function (optional)
-  return () => {
-    input.removeEventListener('change', updateAge);
-  };
+    // Return cleanup function (optional)
+    return () => {
+      input.removeEventListener('change', updateAge);
+    };
+  }
 }
 
 function initGeneralSettings(element, data) {

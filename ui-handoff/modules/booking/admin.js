@@ -192,53 +192,6 @@ document.addEventListener('route:changed', () => setTimeout(initCalendarRoomFilt
 document.addEventListener('page:loaded', () => setTimeout(initCalendarRoomFilter, 50));
 document.addEventListener('DOMContentLoaded', () => setTimeout(initCalendarRoomFilter, 100));
 window.addEventListener('pageshow', () => setTimeout(initCalendarRoomFilter, 100));
-
-// The profile page's "Rooms for booking management" field: same searchable,
-// type-to-filter combobox used for picking a room on the booking form, but
-// allowing several rooms instead of one. createRoomlyCombobox() is defined
-// above, generic to both single- and multi-select use.
-function initBookingRoomsField() {
-    const select = document.getElementById('booking_rooms');
-    if (!select || select._roomlyComboboxInitialized) return;
-
-    const combobox = createRoomlyCombobox(select, {
-        searchable: true,
-        multiple: true,
-        placeholder: () => (window.Now && typeof Now.translate === 'function')
-            ? Now.translate('Select or search room...')
-            : 'พิมพ์ค้นหา หรือเลือกห้อง...',
-        getEmptyText: () => (window.Now && typeof Now.translate === 'function')
-            ? Now.translate('No rooms found')
-            : 'ไม่พบห้องที่ตรงกับการค้นหา',
-        renderItemIcon: (iconWrap, opt) => {
-            const img = opt.dataset && opt.dataset.image;
-            if (img) {
-                const imgEl = document.createElement('img');
-                imgEl.src = img;
-                imgEl.alt = '';
-                iconWrap.appendChild(imgEl);
-            } else {
-                iconWrap.innerHTML = '<span class="icon-office" aria-hidden="true"></span>';
-            }
-        }
-    });
-
-    // The select's own options and pre-selected values are populated by the
-    // form's data-options-key/data-attr binding, which can finish after this
-    // runs — re-sync once that settles so the combobox reflects them.
-    if (combobox) {
-        setTimeout(() => combobox.sync(), 150);
-        setTimeout(() => combobox.sync(), 500);
-    }
-}
-
-if (window.EventManager?.on) {
-    EventManager.on('route:changed', () => setTimeout(initBookingRoomsField, 100));
-    EventManager.on('page:loaded', () => setTimeout(initBookingRoomsField, 100));
-}
-document.addEventListener('route:changed', () => setTimeout(initBookingRoomsField, 100));
-document.addEventListener('page:loaded', () => setTimeout(initBookingRoomsField, 100));
-document.addEventListener('DOMContentLoaded', () => setTimeout(initBookingRoomsField, 150));
 setTimeout(initCalendarRoomFilter, 150);
 
 // TableManager Skeleton Loading override
@@ -426,7 +379,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260921-calendar-detail-1';
+const ROOMLY_ROLE_UI_VERSION = '20260921-user-profile-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -442,6 +395,9 @@ function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle
                 + '/templates/' + selectedTemplate
                 + '?v=' + ROOMLY_ROLE_UI_VERSION;
             route.title = isAdmin ? adminTitle : memberTitle;
+            if (routePath === '/profile') {
+                route.menuPath = isAdmin ? '/users' : null;
+            }
         }
 
         document.documentElement.dataset.uiRole = isAdmin ? 'admin' : 'member';
@@ -450,6 +406,19 @@ function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle
 }
 
 EventManager.on('router:initialized', () => {
+    RouterManager.register('/profile', {
+        template: window.location.origin + '/templates/profile-user.html?v=' + ROOMLY_ROLE_UI_VERSION,
+        title: '{LNG_Profile}',
+        beforeEnter: roleTemplateGuard(
+            '/profile',
+            'profile-user.html',
+            'profile.html',
+            '{LNG_Profile}',
+            '{LNG_Edit Profile}'
+        ),
+        requireAuth: true
+    });
+
     RouterManager.register('/rooms', {
         template: window.location.origin + '/templates/booking/catalog.html?v=' + ROOMLY_ROLE_UI_VERSION,
         title: '{LNG_All rooms}',
@@ -1147,528 +1116,6 @@ function initConflictChecker(element, data, isRoomly = true) {
     };
 }
 
-
-// =========================================================================
-// Searchable & Animated Dropdown Combobox for Form Select Elements
-// =========================================================================
-function createRoomlyCombobox(selectEl, config = {}) {
-        if (!selectEl || selectEl._roomlyComboboxInitialized) return null;
-        const container = selectEl.closest('.roomly-select-btn');
-        if (!container) return null;
-
-        container.classList.add('roomly-combobox');
-        const isSearchable = config.searchable !== false;
-
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.className = 'roomly-combobox-input';
-        searchInput.id = `${selectEl.id || 'select'}_search`;
-        searchInput.autocomplete = 'off';
-        searchInput.spellcheck = false;
-        searchInput.placeholder = typeof config.placeholder === 'function'
-            ? config.placeholder()
-            : (config.placeholder || '');
-        searchInput.setAttribute('role', 'combobox');
-        searchInput.setAttribute('aria-expanded', 'false');
-        searchInput.setAttribute('aria-autocomplete', isSearchable ? 'list' : 'none');
-        if (!isSearchable) {
-            searchInput.readOnly = true;
-            searchInput.style.cursor = 'pointer';
-            searchInput.style.userSelect = 'none';
-            searchInput.style.webkitUserSelect = 'none';
-        }
-
-        const clearBtn = document.createElement('button');
-        clearBtn.type = 'button';
-        clearBtn.className = 'roomly-combobox-clear';
-        clearBtn.setAttribute('aria-label', 'Clear selection');
-        clearBtn.innerHTML = '&times;';
-        clearBtn.style.display = 'none';
-
-        const dropdown = document.createElement('div');
-        dropdown.className = 'roomly-combobox-dropdown';
-        dropdown.setAttribute('role', 'listbox');
-        dropdown.style.display = 'none';
-        document.body.appendChild(dropdown);
-
-        container.insertBefore(searchInput, selectEl);
-        if (isSearchable && config.clearable !== false) {
-            container.insertBefore(clearBtn, selectEl);
-        }
-
-        let activeIndex = -1;
-        let isOpen = false;
-        let justFocused = false;
-
-        const updateClearBtn = () => {
-            if (!clearBtn.parentElement) return;
-            const hasValue = config.multiple
-                ? Boolean(selectEl.selectedOptions && selectEl.selectedOptions.length > 0)
-                : Boolean((searchInput.value && searchInput.value.trim()) || (selectEl.value && selectEl.value !== '0'));
-            if (hasValue) {
-                clearBtn.classList.add('is-visible');
-                clearBtn.style.setProperty('display', 'inline-flex', 'important');
-            } else {
-                clearBtn.classList.remove('is-visible');
-                clearBtn.style.setProperty('display', 'none', 'important');
-            }
-        };
-
-        const escapeText = (str) => String(str || '').replace(/[&<>"']/g, m => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-        }[m]));
-
-        const getVisibleItems = () => Array.from(dropdown.querySelectorAll('.roomly-combobox-item')).filter(el => el.style.display !== 'none');
-
-        const highlightItem = (items, index) => {
-            items.forEach((item, i) => {
-                if (i === index) {
-                    item.classList.add('is-highlighted');
-                    item.scrollIntoView({ block: 'nearest' });
-                } else {
-                    item.classList.remove('is-highlighted');
-                }
-            });
-        };
-
-        const updateDropdownPosition = () => {
-            if (!isOpen) return;
-            const rect = container.getBoundingClientRect();
-            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-
-            if (rect.bottom < 0 || rect.top > viewportHeight) {
-                closeDropdown();
-                return;
-            }
-
-            dropdown.style.position = 'fixed';
-            dropdown.style.boxSizing = 'border-box';
-            dropdown.style.zIndex = '100000';
-
-            const width = Math.round(rect.width);
-            dropdown.style.width = `${width}px`;
-            dropdown.style.minWidth = '240px';
-            dropdown.style.maxWidth = `${viewportWidth - 16}px`;
-
-            let left = Math.round(rect.left);
-            if (left + width > viewportWidth - 8) {
-                left = Math.max(8, viewportWidth - width - 8);
-            }
-            if (left < 8) left = 8;
-            dropdown.style.left = `${left}px`;
-
-            const dropdownHeight = Math.min(320, dropdown.offsetHeight || dropdown.scrollHeight || 260);
-            const spaceBelow = viewportHeight - rect.bottom;
-            const spaceAbove = rect.top;
-
-            if (spaceBelow < dropdownHeight + 10 && spaceAbove > spaceBelow) {
-                dropdown.style.top = `${Math.round(Math.max(8, rect.top - dropdownHeight - 6))}px`;
-                dropdown.style.bottom = 'auto';
-            } else {
-                dropdown.style.top = `${Math.round(rect.bottom + 6)}px`;
-                dropdown.style.bottom = 'auto';
-            }
-        };
-
-        const getAvailableOptions = () => {
-            let opts = Array.from(selectEl.options || []).filter(opt => opt.value && opt.value !== '' && opt.value !== '0' && !opt.disabled);
-            if (opts.length === 0 && config.getFallbackOptions) {
-                const fallback = config.getFallbackOptions();
-                if (Array.isArray(fallback)) {
-                    fallback.forEach(item => {
-                        if (item && item.value && item.value !== '' && item.value !== '0') {
-                            const opt = document.createElement('option');
-                            opt.value = String(item.value);
-                            opt.textContent = item.label || item.text || item.name || String(item.value);
-                            if (item.image) opt.dataset.image = item.image;
-                            selectEl.appendChild(opt);
-                        }
-                    });
-                    opts = Array.from(selectEl.options || []).filter(opt => opt.value && opt.value !== '' && opt.value !== '0' && !opt.disabled);
-                }
-            }
-            return opts;
-        };
-
-        const renderItems = (filterQuery = '') => {
-            const query = isSearchable ? filterQuery.trim().toLowerCase() : '';
-            dropdown.innerHTML = '';
-            const options = getAvailableOptions();
-
-            let matchCount = 0;
-            options.forEach(opt => {
-                const text = opt.textContent.trim();
-                const val = String(opt.value);
-                const isMatch = !query || text.toLowerCase().includes(query);
-
-                if (!isMatch) return;
-                matchCount++;
-
-                const isSelected = config.multiple
-                    ? Array.from(selectEl.selectedOptions || []).some(selectedOpt => String(selectedOpt.value) === val)
-                    : String(selectEl.value) === val;
-
-                const item = document.createElement('div');
-                item.className = 'roomly-combobox-item' + (isSelected ? ' is-selected' : '');
-                item.dataset.value = val;
-                item.setAttribute('role', 'option');
-                item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-
-                const iconWrap = document.createElement('span');
-                iconWrap.className = 'roomly-combobox-item-icon';
-                if (typeof config.renderItemIcon === 'function') {
-                    config.renderItemIcon(iconWrap, opt, val, text);
-                } else {
-                    iconWrap.innerHTML = '<span class="icon-bookmark" aria-hidden="true"></span>';
-                }
-                item.appendChild(iconWrap);
-
-                const labelEl = document.createElement('span');
-                labelEl.className = 'roomly-combobox-item-text';
-                if (query && text.toLowerCase().includes(query)) {
-                    const idx = text.toLowerCase().indexOf(query);
-                    const before = text.slice(0, idx);
-                    const match = text.slice(idx, idx + query.length);
-                    const after = text.slice(idx + query.length);
-                    labelEl.innerHTML = `${escapeText(before)}<mark class="roomly-combobox-highlight">${escapeText(match)}</mark>${escapeText(after)}`;
-                } else {
-                    labelEl.textContent = text;
-                }
-                item.appendChild(labelEl);
-
-                if (config.multiple && isSelected) {
-                    const check = document.createElement('span');
-                    check.className = 'roomly-combobox-check';
-                    check.setAttribute('aria-hidden', 'true');
-                    item.appendChild(check);
-                }
-
-                const handleSelect = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    selectOption(val, text);
-                };
-                item.addEventListener('pointerdown', handleSelect);
-                item.addEventListener('click', handleSelect);
-
-                dropdown.appendChild(item);
-            });
-
-            if (matchCount === 0) {
-                const emptyEl = document.createElement('div');
-                emptyEl.className = 'roomly-combobox-empty';
-                const emptyText = typeof config.getEmptyText === 'function'
-                    ? config.getEmptyText()
-                    : (window.Now && typeof Now.translate === 'function'
-                        ? Now.translate('No options found')
-                        : 'ไม่พบรายการที่ตรงกับการค้นหา');
-                emptyEl.textContent = emptyText;
-                dropdown.appendChild(emptyEl);
-            }
-
-            updateDropdownPosition();
-        };
-
-        const openDropdown = (filterQuery = '') => {
-            isOpen = true;
-            if (config.multiple && !filterQuery) {
-                // The closed input shows a summary ("N rooms selected"); starting a
-                // fresh open with that text still in the box would filter the very
-                // next click's re-render (selectOption re-runs renderItems with
-                // whatever the input currently holds) down to zero matches.
-                searchInput.value = '';
-            }
-            renderItems(filterQuery);
-            dropdown.style.display = 'block';
-            dropdown.classList.add('is-open');
-            searchInput.setAttribute('aria-expanded', 'true');
-            container.classList.add('is-open');
-            activeIndex = -1;
-            updateDropdownPosition();
-
-            requestAnimationFrame(() => {
-                updateDropdownPosition();
-                const selectedItem = dropdown.querySelector('.roomly-combobox-item.is-selected');
-                if (selectedItem) {
-                    selectedItem.scrollIntoView({ block: 'nearest' });
-                }
-            });
-        };
-
-        const closeDropdown = () => {
-            if (!isOpen) return;
-            isOpen = false;
-            dropdown.style.display = 'none';
-            dropdown.classList.remove('is-open');
-            searchInput.setAttribute('aria-expanded', 'false');
-            container.classList.remove('is-open');
-            activeIndex = -1;
-            syncInputWithSelect();
-            if (selectEl._userClicked) {
-                selectEl._touched = true;
-                if (typeof config.checkValidity === 'function') config.checkValidity(selectEl);
-            }
-        };
-
-        const syncInputWithSelect = () => {
-            if (config.multiple) {
-                if (isOpen) return; // don't clobber what the user is typing while browsing
-                const selected = Array.from(selectEl.selectedOptions || []).filter(opt => opt.value && opt.value !== '0');
-                if (selected.length === 0) {
-                    searchInput.value = '';
-                } else {
-                    const labels = selected.map(opt => opt.textContent.trim());
-                    const joined = labels.join(', ');
-                    searchInput.value = joined.length > 60
-                        ? `${labels.length} ${(window.Now && typeof Now.translate === 'function') ? Now.translate('Items selected') : 'รายการที่เลือก'}`
-                        : joined;
-                }
-                updateClearBtn();
-                return;
-            }
-            const selectedOpt = selectEl.selectedOptions?.[0];
-            if (selectedOpt && selectedOpt.value && selectedOpt.value !== '0') {
-                searchInput.value = selectedOpt.textContent.trim();
-            } else if (!isOpen) {
-                searchInput.value = '';
-            }
-            updateClearBtn();
-        };
-
-        const selectOption = (val, text) => {
-            if (config.multiple) {
-                const opt = Array.from(selectEl.options).find(o => String(o.value) === val);
-                if (opt) opt.selected = !opt.selected;
-                updateClearBtn();
-                renderItems(searchInput.value || '');
-                const wrap = selectEl.closest('.roomly-field-wrap');
-                if (wrap) wrap.classList.remove('has-error');
-                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-                selectEl.dispatchEvent(new Event('input', { bubbles: true }));
-                if (typeof config.onSelect === 'function') {
-                    config.onSelect(val, text);
-                }
-                return;
-            }
-            selectEl.value = val;
-            Array.from(selectEl.options).forEach((opt, idx) => {
-                opt.selected = (opt.value === val);
-                if (opt.value === val) selectEl.selectedIndex = idx;
-            });
-            searchInput.value = text;
-            updateClearBtn();
-            closeDropdown();
-            const wrap = selectEl.closest('.roomly-field-wrap');
-            if (wrap) wrap.classList.remove('has-error');
-            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-            selectEl.dispatchEvent(new Event('input', { bubbles: true }));
-            if (typeof config.onSelect === 'function') {
-                config.onSelect(val, text);
-            }
-        };
-
-        searchInput.addEventListener('focus', () => {
-            selectEl._userClicked = true;
-            if (!isOpen) {
-                openDropdown('');
-                justFocused = true;
-                setTimeout(() => {
-                    justFocused = false;
-                }, 250);
-            }
-            if (isSearchable) {
-                setTimeout(() => {
-                    searchInput.select();
-                }, 20);
-            }
-        });
-
-        searchInput.addEventListener('click', (e) => {
-            selectEl._userClicked = true;
-            if (justFocused) {
-                justFocused = false;
-                return;
-            }
-            if (isOpen) {
-                closeDropdown();
-            } else {
-                openDropdown('');
-            }
-        });
-
-        searchInput.addEventListener('blur', () => {
-            setTimeout(() => {
-                if (isOpen) return;
-                if (selectEl._userClicked) {
-                    selectEl._touched = true;
-                    if (typeof config.checkValidity === 'function') config.checkValidity(selectEl);
-                }
-            }, 150);
-        });
-
-        if (isSearchable) {
-            searchInput.addEventListener('input', () => {
-                if (!isOpen) {
-                    isOpen = true;
-                    dropdown.style.display = 'block';
-                    dropdown.classList.add('is-open');
-                    searchInput.setAttribute('aria-expanded', 'true');
-                    container.classList.add('is-open');
-                }
-                renderItems(searchInput.value);
-                updateClearBtn();
-                activeIndex = -1;
-            });
-        }
-
-        searchInput.addEventListener('keydown', (e) => {
-            if (!isOpen) {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
-                    e.preventDefault();
-                    openDropdown('');
-                }
-                return;
-            }
-
-            const items = getVisibleItems();
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (items.length === 0) return;
-                activeIndex = (activeIndex + 1) % items.length;
-                highlightItem(items, activeIndex);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (items.length === 0) return;
-                activeIndex = (activeIndex - 1 + items.length) % items.length;
-                highlightItem(items, activeIndex);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (activeIndex >= 0 && items[activeIndex]) {
-                    const item = items[activeIndex];
-                    selectOption(item.dataset.value, item.querySelector('.roomly-combobox-item-text')?.textContent || item.textContent);
-                } else if (items.length === 1) {
-                    selectOption(items[0].dataset.value, items[0].querySelector('.roomly-combobox-item-text')?.textContent || items[0].textContent);
-                }
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                closeDropdown();
-            } else if (e.key === 'Tab') {
-                closeDropdown();
-            }
-        });
-
-        clearBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            selectEl._userClicked = true;
-            if (config.multiple) {
-                Array.from(selectEl.options).forEach(opt => { opt.selected = false; });
-            } else {
-                selectEl.value = '';
-                selectEl.selectedIndex = 0;
-                Array.from(selectEl.options).forEach((opt, idx) => {
-                    opt.selected = (idx === 0);
-                });
-            }
-            searchInput.value = '';
-            updateClearBtn();
-            closeDropdown();
-            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-            selectEl.dispatchEvent(new Event('input', { bubbles: true }));
-            if (typeof config.onSelect === 'function') {
-                config.onSelect('', '');
-            }
-        });
-
-        const arrow = container.querySelector('.roomly-select-arrow');
-        if (arrow) {
-            arrow.style.cursor = 'pointer';
-            arrow.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                selectEl._userClicked = true;
-                if (isOpen) {
-                    closeDropdown();
-                } else {
-                    searchInput.focus();
-                    openDropdown('');
-                }
-            });
-        }
-
-        container.addEventListener('pointerdown', () => {
-            selectEl._userClicked = true;
-        });
-
-        container.addEventListener('click', (e) => {
-            selectEl._userClicked = true;
-            if (e.target === clearBtn || clearBtn.contains(e.target) || dropdown.contains(e.target) || e.target === searchInput || (arrow && arrow.contains(e.target))) return;
-            if (!isOpen) {
-                searchInput.focus();
-                openDropdown('');
-            } else {
-                closeDropdown();
-            }
-        });
-
-        // Stop pointerdown inside dropdown from closing it
-        dropdown.addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
-        });
-
-        const onDocClick = (e) => {
-            if (!container.contains(e.target) && !dropdown.contains(e.target)) {
-                closeDropdown();
-                if (selectEl._userClicked) {
-                    selectEl._touched = true;
-                    if (typeof config.checkValidity === 'function') config.checkValidity(selectEl);
-                }
-            }
-        };
-        document.addEventListener('pointerdown', onDocClick);
-
-        const onViewportChange = () => {
-            if (isOpen) {
-                updateDropdownPosition();
-            }
-        };
-        window.addEventListener('scroll', onViewportChange, true);
-        window.addEventListener('resize', onViewportChange);
-
-        const observer = new MutationObserver(() => {
-            syncInputWithSelect();
-            if (isOpen) renderItems(searchInput.value || '');
-        });
-        observer.observe(selectEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['value', 'selected'] });
-
-        selectEl.addEventListener('change', syncInputWithSelect);
-
-        selectEl._roomlyComboboxInitialized = true;
-        syncInputWithSelect();
-
-        return {
-            open: openDropdown,
-            close: closeDropdown,
-            sync: () => {
-                syncInputWithSelect();
-                if (isOpen) renderItems(searchInput.value || '');
-            },
-            destroy: () => {
-                document.removeEventListener('pointerdown', onDocClick);
-                window.removeEventListener('scroll', onViewportChange, true);
-                window.removeEventListener('resize', onViewportChange);
-                observer.disconnect();
-                selectEl.removeEventListener('change', syncInputWithSelect);
-                searchInput.remove();
-                clearBtn.remove();
-                dropdown.remove();
-                container.classList.remove('roomly-combobox');
-                selectEl._roomlyComboboxInitialized = false;
-            }
-        };
-}
-
 function initBookingForm(element, data) {
     const isRoomly = element.classList.contains('roomly-booking-form')
         || Boolean(element.querySelector('.roomly-reservation-surface'))
@@ -1733,17 +1180,11 @@ function initBookingForm(element, data) {
     const beginTimeInput = element.querySelector('#begin_time');
     const endDateInput = element.querySelector('#end_date');
     const endTimeInput = element.querySelector('#end_time');
-    const courseCodeField = element.querySelector('#course-code-field');
-    const courseCodeInput = element.querySelector('#course_code');
 
     // Summary Card & Room Picker elements
     const summaryRoomName = element.querySelector('#summary-room-name');
     const summaryRoomImg = element.querySelector('#summary-room-img');
     const summaryRoomIcon = element.querySelector('#summary-room-icon');
-    const summaryRoomMeta = element.querySelector('#summary-room-meta');
-    const summaryRoomNumber = element.querySelector('#summary-room-number');
-    const summaryRoomBuilding = element.querySelector('#summary-room-building');
-    const summaryRoomSeats = element.querySelector('#summary-room-seats');
     const pickerBadge = element.querySelector('#roomly-selected-badge');
     const pickerImg = element.querySelector('#roomly-picker-img');
     const pickerIcon = element.querySelector('#roomly-picker-icon');
@@ -1755,50 +1196,16 @@ function initBookingForm(element, data) {
 
     // Build room image map from data options or preloaded data
     const roomImageMap = new Map();
-    // Room number/building/seats set by admins on the Rooms admin page - shown
-    // in the summary card below so a booker can see them without having to
-    // guess from the name alone.
-    const roomMetaMap = new Map();
     if (data?.options?.room_id && Array.isArray(data.options.room_id)) {
         data.options.room_id.forEach(opt => {
             if (opt.value && opt.image) {
                 roomImageMap.set(String(opt.value), opt.image);
-            }
-            if (opt.value && (opt.room_number || opt.building || opt.seats)) {
-                roomMetaMap.set(String(opt.value), {
-                    number: opt.room_number || '',
-                    building: opt.building || '',
-                    seats: opt.seats || ''
-                });
             }
         });
     }
     if (data?.room_id && data?.room_image) {
         roomImageMap.set(String(data.room_id), data.room_image);
     }
-
-    // Topic -> category id, so the course-code field can key off a specific
-    // Categories entry (id 1) instead of matching its name, which admins can
-    // rename freely.
-    const topicCategoryMap = new Map();
-    if (data?.options?.topic && Array.isArray(data.options.topic)) {
-        data.options.topic.forEach(opt => {
-            if (opt.value) topicCategoryMap.set(String(opt.value), String(opt.category_id || ''));
-        });
-    }
-
-    const updateCourseCodeVisibility = () => {
-        if (!courseCodeField || !courseCodeInput || !topicInput) return;
-        const categoryId = topicCategoryMap.get(String(topicInput.value || '')) || '';
-        const show = categoryId === '1';
-        courseCodeField.style.display = show ? '' : 'none';
-        courseCodeInput.toggleAttribute('required', show);
-        if (!show) {
-            courseCodeInput._touched = false;
-            const wrap = courseCodeInput.closest('.roomly-field-wrap');
-            if (wrap) wrap.classList.remove('has-error');
-        }
-    };
 
     const pickerBadges = Array.from(element.querySelectorAll('.roomly-picker-badge, .roomly-room-badge'));
     const onAnyBadgeClick = (e) => {
@@ -1900,7 +1307,6 @@ function initBookingForm(element, data) {
 
     const updateLiveSummary = () => {
         ensureSelectPlaceholders();
-        updateCourseCodeVisibility();
         // 1. Room Name & Room Image (1/4 of summary card)
         if (roomIdInput) {
             const selectedOpt = roomIdInput.selectedOptions?.[0];
@@ -1916,20 +1322,6 @@ function initBookingForm(element, data) {
                     summaryRoomName.textContent = '—';
                     summaryRoomName.classList.remove('has-selection');
                 }
-            }
-
-            // Room number / building / seats, as set on the Rooms admin page
-            if (summaryRoomMeta) {
-                const meta = roomText ? (roomMetaMap.get(String(roomVal)) || {}) : {};
-                if (summaryRoomNumber) summaryRoomNumber.textContent = meta.number || '';
-                if (summaryRoomBuilding) summaryRoomBuilding.textContent = meta.building || '';
-                if (summaryRoomSeats) {
-                    summaryRoomSeats.textContent = meta.seats
-                        ? `${meta.seats} ${Now.translate('Seats')}`
-                        : '';
-                }
-                const hasMeta = Boolean(meta.number || meta.building || meta.seats);
-                summaryRoomMeta.style.display = hasMeta ? '' : 'none';
             }
 
             // Update Summary Room Image (1/4 of the card)
@@ -2123,17 +1515,11 @@ function initBookingForm(element, data) {
         beginDateInput,
         beginTimeInput,
         endDateInput,
-        endTimeInput,
-        courseCodeInput
+        endTimeInput
     ].filter(Boolean);
 
     function isFieldBlank(input) {
         if (!input) return false;
-        if (input.id === 'course_code' && !input.hasAttribute('required')) {
-            // Only required when the selected topic is category id 1; the
-            // required attribute is toggled alongside the field's visibility.
-            return false;
-        }
         const val = input.value ? input.value.trim() : '';
         if (!val) return true;
         if (input.id === 'room_id') {
@@ -2295,13 +1681,480 @@ function initBookingForm(element, data) {
     };
     element.addEventListener('submit', onSubmit, true);
 
+    // =========================================================================
+    // Searchable & Animated Dropdown Combobox for Form Select Elements
+    // =========================================================================
+    function createRoomlyCombobox(selectEl, config = {}) {
+        if (!selectEl || selectEl._roomlyComboboxInitialized) return null;
+        const container = selectEl.closest('.roomly-select-btn');
+        if (!container) return null;
+
+        container.classList.add('roomly-combobox');
+        const isSearchable = config.searchable !== false;
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'roomly-combobox-input';
+        searchInput.id = `${selectEl.id || 'select'}_search`;
+        searchInput.autocomplete = 'off';
+        searchInput.spellcheck = false;
+        searchInput.placeholder = typeof config.placeholder === 'function'
+            ? config.placeholder()
+            : (config.placeholder || '');
+        searchInput.setAttribute('role', 'combobox');
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.setAttribute('aria-autocomplete', isSearchable ? 'list' : 'none');
+        if (!isSearchable) {
+            searchInput.readOnly = true;
+            searchInput.style.cursor = 'pointer';
+            searchInput.style.userSelect = 'none';
+            searchInput.style.webkitUserSelect = 'none';
+        }
+
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'roomly-combobox-clear';
+        clearBtn.setAttribute('aria-label', 'Clear selection');
+        clearBtn.innerHTML = '&times;';
+        clearBtn.style.display = 'none';
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'roomly-combobox-dropdown';
+        dropdown.setAttribute('role', 'listbox');
+        dropdown.style.display = 'none';
+        document.body.appendChild(dropdown);
+
+        container.insertBefore(searchInput, selectEl);
+        if (isSearchable && config.clearable !== false) {
+            container.insertBefore(clearBtn, selectEl);
+        }
+
+        let activeIndex = -1;
+        let isOpen = false;
+        let justFocused = false;
+
+        const updateClearBtn = () => {
+            if (!clearBtn.parentElement) return;
+            const hasValue = Boolean((searchInput.value && searchInput.value.trim()) || (selectEl.value && selectEl.value !== '0'));
+            if (hasValue) {
+                clearBtn.classList.add('is-visible');
+                clearBtn.style.setProperty('display', 'inline-flex', 'important');
+            } else {
+                clearBtn.classList.remove('is-visible');
+                clearBtn.style.setProperty('display', 'none', 'important');
+            }
+        };
+
+        const escapeText = (str) => String(str || '').replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        }[m]));
+
+        const getVisibleItems = () => Array.from(dropdown.querySelectorAll('.roomly-combobox-item')).filter(el => el.style.display !== 'none');
+
+        const highlightItem = (items, index) => {
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('is-highlighted');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('is-highlighted');
+                }
+            });
+        };
+
+        const updateDropdownPosition = () => {
+            if (!isOpen) return;
+            const rect = container.getBoundingClientRect();
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+            if (rect.bottom < 0 || rect.top > viewportHeight) {
+                closeDropdown();
+                return;
+            }
+
+            dropdown.style.position = 'fixed';
+            dropdown.style.boxSizing = 'border-box';
+            dropdown.style.zIndex = '100000';
+
+            const width = Math.round(rect.width);
+            dropdown.style.width = `${width}px`;
+            dropdown.style.minWidth = '240px';
+            dropdown.style.maxWidth = `${viewportWidth - 16}px`;
+
+            let left = Math.round(rect.left);
+            if (left + width > viewportWidth - 8) {
+                left = Math.max(8, viewportWidth - width - 8);
+            }
+            if (left < 8) left = 8;
+            dropdown.style.left = `${left}px`;
+
+            const dropdownHeight = Math.min(320, dropdown.offsetHeight || dropdown.scrollHeight || 260);
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            if (spaceBelow < dropdownHeight + 10 && spaceAbove > spaceBelow) {
+                dropdown.style.top = `${Math.round(Math.max(8, rect.top - dropdownHeight - 6))}px`;
+                dropdown.style.bottom = 'auto';
+            } else {
+                dropdown.style.top = `${Math.round(rect.bottom + 6)}px`;
+                dropdown.style.bottom = 'auto';
+            }
+        };
+
+        const getAvailableOptions = () => {
+            let opts = Array.from(selectEl.options || []).filter(opt => opt.value && opt.value !== '' && opt.value !== '0' && !opt.disabled);
+            if (opts.length === 0 && config.getFallbackOptions) {
+                const fallback = config.getFallbackOptions();
+                if (Array.isArray(fallback)) {
+                    fallback.forEach(item => {
+                        if (item && item.value && item.value !== '' && item.value !== '0') {
+                            const opt = document.createElement('option');
+                            opt.value = String(item.value);
+                            opt.textContent = item.label || item.text || item.name || String(item.value);
+                            if (item.image) opt.dataset.image = item.image;
+                            selectEl.appendChild(opt);
+                        }
+                    });
+                    opts = Array.from(selectEl.options || []).filter(opt => opt.value && opt.value !== '' && opt.value !== '0' && !opt.disabled);
+                }
+            }
+            return opts;
+        };
+
+        const renderItems = (filterQuery = '') => {
+            const query = isSearchable ? filterQuery.trim().toLowerCase() : '';
+            dropdown.innerHTML = '';
+            const options = getAvailableOptions();
+
+            let matchCount = 0;
+            options.forEach(opt => {
+                const text = opt.textContent.trim();
+                const val = String(opt.value);
+                const isMatch = !query || text.toLowerCase().includes(query);
+
+                if (!isMatch) return;
+                matchCount++;
+
+                const item = document.createElement('div');
+                item.className = 'roomly-combobox-item' + (String(selectEl.value) === val ? ' is-selected' : '');
+                item.dataset.value = val;
+                item.setAttribute('role', 'option');
+                item.setAttribute('aria-selected', String(selectEl.value) === val ? 'true' : 'false');
+
+                const iconWrap = document.createElement('span');
+                iconWrap.className = 'roomly-combobox-item-icon';
+                if (typeof config.renderItemIcon === 'function') {
+                    config.renderItemIcon(iconWrap, opt, val, text);
+                } else {
+                    iconWrap.innerHTML = '<span class="icon-bookmark" aria-hidden="true"></span>';
+                }
+                item.appendChild(iconWrap);
+
+                const labelEl = document.createElement('span');
+                labelEl.className = 'roomly-combobox-item-text';
+                if (query && text.toLowerCase().includes(query)) {
+                    const idx = text.toLowerCase().indexOf(query);
+                    const before = text.slice(0, idx);
+                    const match = text.slice(idx, idx + query.length);
+                    const after = text.slice(idx + query.length);
+                    labelEl.innerHTML = `${escapeText(before)}<mark class="roomly-combobox-highlight">${escapeText(match)}</mark>${escapeText(after)}`;
+                } else {
+                    labelEl.textContent = text;
+                }
+                item.appendChild(labelEl);
+
+
+                const handleSelect = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectOption(val, text);
+                };
+                item.addEventListener('pointerdown', handleSelect);
+                item.addEventListener('click', handleSelect);
+
+                dropdown.appendChild(item);
+            });
+
+            if (matchCount === 0) {
+                const emptyEl = document.createElement('div');
+                emptyEl.className = 'roomly-combobox-empty';
+                const emptyText = typeof config.getEmptyText === 'function'
+                    ? config.getEmptyText()
+                    : (window.Now && typeof Now.translate === 'function'
+                        ? Now.translate('No options found')
+                        : 'ไม่พบรายการที่ตรงกับการค้นหา');
+                emptyEl.textContent = emptyText;
+                dropdown.appendChild(emptyEl);
+            }
+
+            updateDropdownPosition();
+        };
+
+        const openDropdown = (filterQuery = '') => {
+            isOpen = true;
+            renderItems(filterQuery);
+            dropdown.style.display = 'block';
+            dropdown.classList.add('is-open');
+            searchInput.setAttribute('aria-expanded', 'true');
+            container.classList.add('is-open');
+            activeIndex = -1;
+            updateDropdownPosition();
+
+            requestAnimationFrame(() => {
+                updateDropdownPosition();
+                const selectedItem = dropdown.querySelector('.roomly-combobox-item.is-selected');
+                if (selectedItem) {
+                    selectedItem.scrollIntoView({ block: 'nearest' });
+                }
+            });
+        };
+
+        const closeDropdown = () => {
+            if (!isOpen) return;
+            isOpen = false;
+            dropdown.style.display = 'none';
+            dropdown.classList.remove('is-open');
+            searchInput.setAttribute('aria-expanded', 'false');
+            container.classList.remove('is-open');
+            activeIndex = -1;
+            syncInputWithSelect();
+            if (selectEl._userClicked) {
+                selectEl._touched = true;
+                checkFieldValidity(selectEl);
+            }
+        };
+
+        const syncInputWithSelect = () => {
+            const selectedOpt = selectEl.selectedOptions?.[0];
+            if (selectedOpt && selectedOpt.value && selectedOpt.value !== '0') {
+                searchInput.value = selectedOpt.textContent.trim();
+            } else if (!isOpen) {
+                searchInput.value = '';
+            }
+            updateClearBtn();
+        };
+
+        const selectOption = (val, text) => {
+            selectEl.value = val;
+            Array.from(selectEl.options).forEach((opt, idx) => {
+                opt.selected = (opt.value === val);
+                if (opt.value === val) selectEl.selectedIndex = idx;
+            });
+            searchInput.value = text;
+            updateClearBtn();
+            closeDropdown();
+            const wrap = selectEl.closest('.roomly-field-wrap');
+            if (wrap) wrap.classList.remove('has-error');
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            selectEl.dispatchEvent(new Event('input', { bubbles: true }));
+            if (typeof config.onSelect === 'function') {
+                config.onSelect(val, text);
+            }
+        };
+
+        searchInput.addEventListener('focus', () => {
+            selectEl._userClicked = true;
+            if (!isOpen) {
+                openDropdown('');
+                justFocused = true;
+                setTimeout(() => {
+                    justFocused = false;
+                }, 250);
+            }
+            if (isSearchable) {
+                setTimeout(() => {
+                    searchInput.select();
+                }, 20);
+            }
+        });
+
+        searchInput.addEventListener('click', (e) => {
+            selectEl._userClicked = true;
+            if (justFocused) {
+                justFocused = false;
+                return;
+            }
+            if (isOpen) {
+                closeDropdown();
+            } else {
+                openDropdown('');
+            }
+        });
+
+        searchInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (isOpen) return;
+                if (selectEl._userClicked) {
+                    selectEl._touched = true;
+                    checkFieldValidity(selectEl);
+                }
+            }, 150);
+        });
+
+        if (isSearchable) {
+            searchInput.addEventListener('input', () => {
+                if (!isOpen) {
+                    isOpen = true;
+                    dropdown.style.display = 'block';
+                    dropdown.classList.add('is-open');
+                    searchInput.setAttribute('aria-expanded', 'true');
+                    container.classList.add('is-open');
+                }
+                renderItems(searchInput.value);
+                updateClearBtn();
+                activeIndex = -1;
+            });
+        }
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (!isOpen) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
+                    e.preventDefault();
+                    openDropdown('');
+                }
+                return;
+            }
+
+            const items = getVisibleItems();
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (items.length === 0) return;
+                activeIndex = (activeIndex + 1) % items.length;
+                highlightItem(items, activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (items.length === 0) return;
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                highlightItem(items, activeIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    const item = items[activeIndex];
+                    selectOption(item.dataset.value, item.querySelector('.roomly-combobox-item-text')?.textContent || item.textContent);
+                } else if (items.length === 1) {
+                    selectOption(items[0].dataset.value, items[0].querySelector('.roomly-combobox-item-text')?.textContent || items[0].textContent);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeDropdown();
+            } else if (e.key === 'Tab') {
+                closeDropdown();
+            }
+        });
+
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectEl._userClicked = true;
+            selectEl.value = '';
+            selectEl.selectedIndex = 0;
+            Array.from(selectEl.options).forEach((opt, idx) => {
+                opt.selected = (idx === 0);
+            });
+            searchInput.value = '';
+            updateClearBtn();
+            closeDropdown();
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            selectEl.dispatchEvent(new Event('input', { bubbles: true }));
+            if (typeof config.onSelect === 'function') {
+                config.onSelect('', '');
+            }
+        });
+
+        const arrow = container.querySelector('.roomly-select-arrow');
+        if (arrow) {
+            arrow.style.cursor = 'pointer';
+            arrow.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectEl._userClicked = true;
+                if (isOpen) {
+                    closeDropdown();
+                } else {
+                    searchInput.focus();
+                    openDropdown('');
+                }
+            });
+        }
+
+        container.addEventListener('pointerdown', () => {
+            selectEl._userClicked = true;
+        });
+
+        container.addEventListener('click', (e) => {
+            selectEl._userClicked = true;
+            if (e.target === clearBtn || clearBtn.contains(e.target) || dropdown.contains(e.target) || e.target === searchInput || (arrow && arrow.contains(e.target))) return;
+            if (!isOpen) {
+                searchInput.focus();
+                openDropdown('');
+            } else {
+                closeDropdown();
+            }
+        });
+
+        // Stop pointerdown inside dropdown from closing it
+        dropdown.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+        });
+
+        const onDocClick = (e) => {
+            if (!container.contains(e.target) && !dropdown.contains(e.target)) {
+                closeDropdown();
+                if (selectEl._userClicked) {
+                    selectEl._touched = true;
+                    checkFieldValidity(selectEl);
+                }
+            }
+        };
+        document.addEventListener('pointerdown', onDocClick);
+
+        const onViewportChange = () => {
+            if (isOpen) {
+                updateDropdownPosition();
+            }
+        };
+        window.addEventListener('scroll', onViewportChange, true);
+        window.addEventListener('resize', onViewportChange);
+
+        const observer = new MutationObserver(() => {
+            syncInputWithSelect();
+            if (isOpen) renderItems(searchInput.value || '');
+        });
+        observer.observe(selectEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['value', 'selected'] });
+
+        selectEl.addEventListener('change', syncInputWithSelect);
+
+        selectEl._roomlyComboboxInitialized = true;
+        syncInputWithSelect();
+
+        return {
+            open: openDropdown,
+            close: closeDropdown,
+            sync: () => {
+                syncInputWithSelect();
+                if (isOpen) renderItems(searchInput.value || '');
+            },
+            destroy: () => {
+                document.removeEventListener('pointerdown', onDocClick);
+                window.removeEventListener('scroll', onViewportChange, true);
+                window.removeEventListener('resize', onViewportChange);
+                observer.disconnect();
+                selectEl.removeEventListener('change', syncInputWithSelect);
+                searchInput.remove();
+                clearBtn.remove();
+                dropdown.remove();
+                container.classList.remove('roomly-combobox');
+                selectEl._roomlyComboboxInitialized = false;
+            }
+        };
+    }
 
     // 1. Room Combobox
     let roomCombobox = null;
     if (roomIdInput) {
         roomCombobox = createRoomlyCombobox(roomIdInput, {
             searchable: true,
-            checkValidity: checkFieldValidity,
             placeholder: () => (window.Now && typeof Now.translate === 'function')
                 ? Now.translate('Select or search room...')
                 : 'พิมพ์ค้นหา หรือเลือกห้อง...',
@@ -2331,7 +2184,6 @@ function initBookingForm(element, data) {
     if (topicInput) {
         topicCombobox = createRoomlyCombobox(topicInput, {
             searchable: true,
-            checkValidity: checkFieldValidity,
             placeholder: () => (window.Now && typeof Now.translate === 'function')
                 ? Now.translate('Select or search topic...')
                 : 'พิมพ์ค้นหา หรือเลือกหัวข้อ...',
@@ -2354,7 +2206,6 @@ function initBookingForm(element, data) {
         scheduleTypeCombobox = createRoomlyCombobox(scheduleType, {
             searchable: false,
             clearable: false,
-            checkValidity: checkFieldValidity,
             placeholder: () => (window.Now && typeof Now.translate === 'function')
                 ? Now.translate('Select repeat option...')
                 : 'เลือกรูปแบบการเกิดซ้ำ...',
@@ -2891,38 +2742,6 @@ function initBookingForm(element, data) {
         const origOpen = proto.open;
         if (typeof origOpen === 'function') {
             proto.open = function() {
-                // Default the booking form's start/end date pickers to today
-                // when opened empty, so someone booking for today doesn't have
-                // to click it in. selectDate() would normally close a plain
-                // 'date' picker on pick, so close() is stubbed out for this one
-                // programmatic call - the calendar still opens right after via
-                // origOpen, letting them pick a different day if they want.
-                // Scoped to begin_date/end_date: this prototype backs every
-                // <input type="date"> in the app (e.g. profile's birthday
-                // field), which must not get this default.
-                const fieldId = this._original?.id;
-                if (!this.selectedDate
-                    && this.type !== 'time'
-                    && !this.disabled
-                    && !this.readonly
-                    && (fieldId === 'begin_date' || fieldId === 'end_date')
-                    && typeof this.selectDate === 'function') {
-                    let defaultDate = new Date();
-                    defaultDate.setHours(0, 0, 0, 0);
-                    if (typeof this._isDateDisabled === 'function' && this._isDateDisabled(defaultDate)) {
-                        // Today is outside the field's allowed range (e.g.
-                        // end_date's min is tied to begin_date) - fall back to
-                        // the earliest allowed day instead of skipping it.
-                        defaultDate = this.min ? new Date(this.min) : null;
-                    }
-                    if (defaultDate) {
-                        const originalClose = this.close;
-                        this.close = () => {};
-                        this.selectDate(defaultDate);
-                        this.close = originalClose;
-                    }
-                }
-
                 const res = origOpen.apply(this, arguments);
                 fixCalendarHeaderElements(this);
                 return res;

@@ -130,10 +130,26 @@ class Controller extends ApiController
             } else {
                 // Not an admin cannot update these fields
                 $save['username'] = $user->username;
-                $save['permission'] = $user->permission;
+                $save['permission'] = is_array($user->permission)
+                    ? (empty($user->permission) ? '' : ','.implode(',', $user->permission).',')
+                    : (string) $user->permission;
                 $save['status'] = $user->status;
                 $save['active'] = $user->active;
                 $save['metas'] = $user->metas;
+            }
+
+            // Retain address fields if not present in request (e.g. member profile form)
+            if (!$request->post('address')->exists() && isset($user->address)) {
+                $save['address'] = $user->address;
+            }
+            if (!$request->post('address2')->exists() && isset($user->address2)) {
+                $save['address2'] = $user->address2;
+            }
+            if (!$request->post('provinceID')->exists() && isset($user->provinceID)) {
+                $save['provinceID'] = (int) $user->provinceID;
+            }
+            if (!$request->post('zipcode')->exists() && isset($user->zipcode)) {
+                $save['zipcode'] = $user->zipcode;
             }
 
             $db = \Kotchasan\DB::create();
@@ -234,8 +250,9 @@ class Controller extends ApiController
         foreach (self::$cfg->login_fields as $field) {
             $k = $field == 'email' || $field === 'username' ? 'username' : $field;
             if (empty($save[$k])) {
-                if (isset($user->{$k})) {
+                if (isset($user->{$k}) && !empty($user->{$k})) {
                     $save[$k] = $user->{$k};
+                    $checking[$k] = $save[$k];
                 }
             } else {
                 if ($field == 'email' && !in_array('username', self::$cfg->login_fields)) {

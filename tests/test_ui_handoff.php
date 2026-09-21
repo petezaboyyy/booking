@@ -19,8 +19,10 @@ $files = [
     'images/login-visual-building.jpg',
     'images/login-visual-dark.jpg',
     'images/login-visual-light.jpg',
+    'templates/profile-user.html',
     'js/main.js',
     'js/components/GallerySlideshow.js',
+    'modules/booking/admin.js',
     'index.html'
 ];
 

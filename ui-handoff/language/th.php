@@ -382,6 +382,7 @@ return array(
   'Core Settings' => 'การตั้งค่าหลัก',
   'Correct Reservation' => 'แก้ไขการจอง',
   'Cost' => 'ต้นทุน',
+  'Course code' => 'รหัสวิชา',
   'Could not activate theme' => 'ไม่สามารถเปิดใช้งานธีมได้',
   'Country' => 'ประเทศ',
   'Cover' => 'ปก',

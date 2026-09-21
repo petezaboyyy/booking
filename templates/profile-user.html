@@ -1,0 +1,216 @@
+<div class='roomly-dashboard roomly-profile-page'>
+  <header class='roomly-topbar'>
+    <a class='roomly-brand' href='/' aria-label='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
+      <img class='roomly-brand-logo' src='/images/logo.png' alt='{LNG_ระบบจองห้องคณะสัตวแพทยศาสตร์}'>
+      <span class='roomly-brand-text'>
+        <span data-i18n>ระบบจองห้องคณะสัตวแพทยศาสตร์</span>
+        <small data-i18n>มหาวิทยาลัยเชียงใหม่</small>
+      </span>
+    </a>
+    <nav class='roomly-nav' aria-label='Main navigation'>
+      <a href='/'>
+        <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
+        <span data-i18n>Dashboard</span>
+      </a>
+      <a href='/my-bookings'>
+        <span class='roomly-menu-icon icon-list' aria-hidden='true'></span>
+        <span data-i18n>My bookings</span>
+      </a>
+      <a href='/booking'>
+        <span class='roomly-menu-icon icon-new' aria-hidden='true'></span>
+        <span data-i18n>Book a room</span>
+      </a>
+      <a href='/rooms'>
+        <span class='roomly-menu-icon icon-office' aria-hidden='true'></span>
+        <span data-i18n>All rooms</span>
+      </a>
+    </nav>
+    <div class='roomly-user-actions'>
+      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='Switch language' aria-label='Switch language'>
+        <span class='roomly-language-icon icon-language' aria-hidden='true'></span>
+        <span class='roomly-language-option roomly-language-th'>TH</span>
+        <span class='roomly-language-divider' aria-hidden='true'>/</span>
+        <span class='roomly-language-option roomly-language-en'>EN</span>
+      </button>
+      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='Toggle theme' aria-label='Toggle theme'>
+        <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
+        <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
+      </button>
+      <div class='roomly-profile-data' data-component='api' data-endpoint='api/index/auth/me'>
+        <a class='roomly-profile is-active' data-if='data.id > 0' data-attr='href:&quot;profile?id=&quot; + data.id'>
+          <img class='roomly-avatar' data-attr='src:data.avatar,alt:data.name'>
+          <span class='roomly-profile-copy'>
+            <strong data-text='data.name'>User</strong>
+            <small data-i18n>Profile</small>
+          </span>
+        </a>
+        <a class='roomly-icon-button' data-if='data.id > 0' href='/logout' title='{LNG_Logout}' aria-label='{LNG_Logout}'>
+          <span class='icon-signout' aria-hidden='true'></span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class='roomly-content roomly-profile-content'>
+    <section class='roomly-page-heading'>
+      <div class='roomly-page-heading-copy'>
+        <div class='roomly-page-heading-icon icon-profile' aria-hidden='true'></div>
+        <div>
+          <h1 id='profile-page-title' data-i18n>Edit profile</h1>
+          <p class='roomly-page-description' data-i18n>Personal and contact information</p>
+        </div>
+      </div>
+    </section>
+
+    <form class='roomly-profile-form' data-form="profile" data-validate="true" data-reset="true" action="api/index/profile/save" method="post" data-ajax-submit="true" data-load-query-params="true" data-load-api="api/index/profile/get" autocomplete="off" data-on-load="initProfile">
+      <!-- Requester / Profile Identity Strip -->
+      <div class='roomly-requester-strip roomly-profile-identity'>
+        <div class='roomly-requester-avatar-badge' aria-hidden='true'>
+          <span class='icon-user'></span>
+        </div>
+        <div class='roomly-requester-info'>
+          <span class='roomly-requester-label' data-i18n>Profile</span>
+          <div class='roomly-requester-name-row'>
+            <strong class='roomly-requester-name' data-text="name || '—'">User</strong>
+            <span class='roomly-status-pill roomly-profile-username-badge' data-text="username"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Form Surface -->
+      <div class='roomly-reservation-surface'>
+        <div class='roomly-form-card roomly-profile-card'>
+
+          <!-- Section 1: Personal Information -->
+          <div class='roomly-form-section'>
+            <div class='roomly-section-header'>
+              <div class='roomly-section-icon roomly-icon-personal' aria-hidden='true'>
+                <span class='icon-user'></span>
+              </div>
+              <div>
+                <h3 class='roomly-section-title' data-i18n>Personal Information</h3>
+                <p class='roomly-section-subtitle' data-i18n>Basic identity and personal details</p>
+              </div>
+            </div>
+
+            <div class='roomly-section-fields'>
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='name'>
+                    <span data-i18n>Full Name</span>
+                    <span class='roomly-required-star' aria-hidden='true'>*</span>
+                  </label>
+                  <span class='form-control icon-profile'>
+                    <input type='text' id='name' name='name' data-attr='value:name' required maxlength='150' autocomplete='off'>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='department' data-i18n>Department</label>
+                  <span class='form-control icon-group'>
+                    <select id='department' name='department' data-attr="value:metas['department'][0],disabled:!isSuperAdmin" data-options-key='department'>
+                      <option value='' data-i18n>Not specified</option>
+                    </select>
+                  </span>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='sex' data-i18n>Gender</label>
+                  <span class='form-control icon-sex'>
+                    <select id='sex' name='sex' data-options-key='sex' data-attr='value:sex'>
+                      <option value='' data-i18n>Not specified</option>
+                    </select>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='birthday' data-i18n>Birthday</label>
+                  <span class='form-control icon-calendar'>
+                    <input type='date' id='birthday' name='birthday' data-attr='value:birthday'>
+                  </span>
+                  <div class='dropdown-display roomly-birthday-display'></div>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='id_card' data-i18n>ID Card</label>
+                  <span class='form-control icon-profile'>
+                    <input type='text' id='id_card' name='id_card' data-attr='value:id_card' maxlength='13'>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='tax_id' data-i18n>Tax ID</label>
+                  <span class='form-control icon-profile'>
+                    <input type='text' id='tax_id' name='tax_id' data-attr='value:tax_id' maxlength='13'>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Contact Information -->
+          <div class='roomly-form-section'>
+            <div class='roomly-section-header'>
+              <div class='roomly-section-icon roomly-icon-contact' aria-hidden='true'>
+                <span class='icon-phone'></span>
+              </div>
+              <div>
+                <h3 class='roomly-section-title' data-i18n>Contact Information</h3>
+                <p class='roomly-section-subtitle' data-i18n>Communication channels and organization</p>
+              </div>
+            </div>
+
+            <div class='roomly-section-fields'>
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='phone' data-i18n>Phone</label>
+                  <span class='form-control icon-phone'>
+                    <input type='tel' id='phone' name='phone' data-attr='value:phone' maxlength='20' autocomplete='off'>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='phone1' data-i18n>Fax</label>
+                  <span class='form-control icon-print'>
+                    <input type='tel' id='phone1' name='phone1' data-attr='value:phone1' maxlength='20' autocomplete='off'>
+                  </span>
+                </div>
+              </div>
+
+              <div class='form-group'>
+                <div class='width50'>
+                  <label for='website' data-i18n>Website</label>
+                  <span class='form-control icon-link'>
+                    <input type='url' id='website' name='website' data-attr='value:website' maxlength='255' placeholder='https://' autocomplete='off'>
+                  </span>
+                </div>
+                <div class='width50'>
+                  <label for='company' data-i18n>Company</label>
+                  <span class='form-control icon-office'>
+                    <input type='text' id='company' name='company' data-attr='value:company' maxlength='64' autocomplete='off'>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions Bottom Bar -->
+          <fieldset class='submit roomly-form-actions'>
+            <div class='roomly-actions-btn-group'>
+              <a href='/' class='btn btn-secondary roomly-cancel-btn'>
+                <span class='icon-reply' aria-hidden='true'></span>
+                <span data-i18n>Cancel</span>
+              </a>
+              <button type='submit' class='btn btn-primary roomly-submit-btn'>
+                <span class='icon-save' aria-hidden='true'></span>
+                <span data-i18n>Save</span>
+              </button>
+            </div>
+            <input type='hidden' name='id' data-attr='value:id'>
+          </fieldset>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+

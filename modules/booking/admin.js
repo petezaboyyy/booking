@@ -379,7 +379,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260921-calendar-detail-1';
+const ROOMLY_ROLE_UI_VERSION = '20260921-user-profile-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -395,6 +395,9 @@ function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle
                 + '/templates/' + selectedTemplate
                 + '?v=' + ROOMLY_ROLE_UI_VERSION;
             route.title = isAdmin ? adminTitle : memberTitle;
+            if (routePath === '/profile') {
+                route.menuPath = isAdmin ? '/users' : null;
+            }
         }
 
         document.documentElement.dataset.uiRole = isAdmin ? 'admin' : 'member';
@@ -403,6 +406,19 @@ function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle
 }
 
 EventManager.on('router:initialized', () => {
+    RouterManager.register('/profile', {
+        template: window.location.origin + '/templates/profile-user.html?v=' + ROOMLY_ROLE_UI_VERSION,
+        title: '{LNG_Profile}',
+        beforeEnter: roleTemplateGuard(
+            '/profile',
+            'profile-user.html',
+            'profile.html',
+            '{LNG_Profile}',
+            '{LNG_Edit Profile}'
+        ),
+        requireAuth: true
+    });
+
     RouterManager.register('/rooms', {
         template: window.location.origin + '/templates/booking/catalog.html?v=' + ROOMLY_ROLE_UI_VERSION,
         title: '{LNG_All rooms}',
