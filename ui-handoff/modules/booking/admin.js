@@ -1738,6 +1738,10 @@ function initBookingForm(element, data) {
     const summaryRoomName = element.querySelector('#summary-room-name');
     const summaryRoomImg = element.querySelector('#summary-room-img');
     const summaryRoomIcon = element.querySelector('#summary-room-icon');
+    const summaryRoomMeta = element.querySelector('#summary-room-meta');
+    const summaryRoomNumber = element.querySelector('#summary-room-number');
+    const summaryRoomBuilding = element.querySelector('#summary-room-building');
+    const summaryRoomSeats = element.querySelector('#summary-room-seats');
     const pickerBadge = element.querySelector('#roomly-selected-badge');
     const pickerImg = element.querySelector('#roomly-picker-img');
     const pickerIcon = element.querySelector('#roomly-picker-icon');
@@ -1749,10 +1753,21 @@ function initBookingForm(element, data) {
 
     // Build room image map from data options or preloaded data
     const roomImageMap = new Map();
+    // Room number/building/seats set by admins on the Rooms admin page - shown
+    // in the summary card below so a booker can see them without having to
+    // guess from the name alone.
+    const roomMetaMap = new Map();
     if (data?.options?.room_id && Array.isArray(data.options.room_id)) {
         data.options.room_id.forEach(opt => {
             if (opt.value && opt.image) {
                 roomImageMap.set(String(opt.value), opt.image);
+            }
+            if (opt.value && (opt.room_number || opt.building || opt.seats)) {
+                roomMetaMap.set(String(opt.value), {
+                    number: opt.room_number || '',
+                    building: opt.building || '',
+                    seats: opt.seats || ''
+                });
             }
         });
     }
@@ -1875,6 +1890,20 @@ function initBookingForm(element, data) {
                     summaryRoomName.textContent = '—';
                     summaryRoomName.classList.remove('has-selection');
                 }
+            }
+
+            // Room number / building / seats, as set on the Rooms admin page
+            if (summaryRoomMeta) {
+                const meta = roomText ? (roomMetaMap.get(String(roomVal)) || {}) : {};
+                if (summaryRoomNumber) summaryRoomNumber.textContent = meta.number || '';
+                if (summaryRoomBuilding) summaryRoomBuilding.textContent = meta.building || '';
+                if (summaryRoomSeats) {
+                    summaryRoomSeats.textContent = meta.seats
+                        ? `${meta.seats} ${Now.translate('Seats')}`
+                        : '';
+                }
+                const hasMeta = Boolean(meta.number || meta.building || meta.seats);
+                summaryRoomMeta.style.display = hasMeta ? '' : 'none';
             }
 
             // Update Summary Room Image (1/4 of the card)

@@ -405,17 +405,13 @@ class Controller extends \Gcms\Controller
      */
     public static function getRoomOptions(bool $activeOnly = true, ?int $includeId = null, ?array $roomIds = null, bool $showRoomNumber = false): array
     {
-        $columns = ['R.id', 'R.name', 'R.is_active'];
-        if ($showRoomNumber) {
-            $columns[] = 'RoomNumber.value room_number';
-        }
         $query = \Kotchasan\Model::createQuery()
-            ->select(...$columns)
-            ->from('rooms R');
+            ->select('R.id', 'R.name', 'R.is_active', 'R.detail', 'R.color', 'RoomNumber.value room_number', 'Building.value building', 'Seats.value seats')
+            ->from('rooms R')
+            ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT')
+            ->join('rooms_meta Building', [['Building.room_id', 'R.id'], ['Building.name', 'building']], 'LEFT')
+            ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT');
 
-        if ($showRoomNumber) {
-            $query->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT');
-        }
         $query->orderBy($showRoomNumber ? 'RoomNumber.value' : 'R.name');
 
         if ($roomIds !== null) {
@@ -443,7 +439,11 @@ class Controller extends \Gcms\Controller
             $options[] = [
                 'value' => (string) $item->id,
                 'text' => $label,
-                'image' => self::getRoomFirstImageUrl((int) $item->id) ?: ''
+                'image' => self::getRoomFirstImageUrl((int) $item->id) ?: '',
+                'room_number' => $roomNumber,
+                'building' => (string) ($item->building ?? ''),
+                'seats' => (string) ($item->seats ?? ''),
+                'detail' => (string) ($item->detail ?? '')
             ];
         }
 

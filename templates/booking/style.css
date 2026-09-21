@@ -1947,6 +1947,32 @@
   color: var(--roomly-primary);
 }
 
+.roomly-summary-room-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+
+.roomly-summary-room-meta-item {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--roomly-muted);
+  white-space: nowrap;
+}
+
+.roomly-summary-room-meta-item:empty {
+  display: none;
+}
+
+.roomly-summary-room-meta-item + .roomly-summary-room-meta-item:not(:empty)::before {
+  content: '\2022';
+  margin-right: 8px;
+  color: var(--roomly-muted);
+  opacity: .6;
+}
+
 /* Summary items list */
 .roomly-summary-items {
   display: flex;
