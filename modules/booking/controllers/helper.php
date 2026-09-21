@@ -457,34 +457,31 @@ class Controller extends \Gcms\Controller
      */
     public static function getUseOptions(): array
     {
-        return BookingCategory::init()->toOptions('use');
+        // Categories are admin-managed and rarely change; skip the 1-hour
+        // query cache so a rename shows up on the booking form right away
+        // instead of the next time it happens to expire.
+        return BookingCategory::init(true, true, false)->toOptions('use');
     }
 
     /**
-     * Topic options based on category 'use' with English i18n support.
-     * Returns a sequential array of ['value' => $thValue, 'text' => $enText, 'label' => $enText].
+     * Topic options based on the 'use' category.
+     * Returns a sequential array of ['value' => $text, 'text' => $text, 'label' => $text],
+     * always the category's current name as set on the Categories admin page.
      *
      * @param string|null $currentTopic
      * @return array
      */
     public static function getTopicOptions(?string $currentTopic = null): array
     {
-        $categories = BookingCategory::init()->toOptions('use', true);
+        $categories = BookingCategory::init(true, true, false)->toOptions('use', true);
         $options = [];
-        $map = [
-            '1' => ['en' => 'Meeting', 'th' => 'ประชุม'],
-            '2' => ['en' => 'Seminar', 'th' => 'สัมมนา'],
-            '3' => ['en' => 'Banquet', 'th' => 'จัดเลี้ยง']
-        ];
 
         foreach ($categories as $cat) {
-            $catId = (string) $cat['value'];
             $thText = $cat['text'];
-            $enText = $map[$catId]['en'] ?? $thText;
             $options[] = [
                 'value' => $thText,
-                'text' => $enText,
-                'label' => $enText
+                'text' => $thText,
+                'label' => $thText
             ];
         }
 
