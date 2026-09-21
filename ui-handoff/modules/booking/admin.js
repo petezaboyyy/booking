@@ -1372,6 +1372,13 @@ function createRoomlyCombobox(selectEl, config = {}) {
 
         const openDropdown = (filterQuery = '') => {
             isOpen = true;
+            if (config.multiple && !filterQuery) {
+                // The closed input shows a summary ("N rooms selected"); starting a
+                // fresh open with that text still in the box would filter the very
+                // next click's re-render (selectOption re-runs renderItems with
+                // whatever the input currently holds) down to zero matches.
+                searchInput.value = '';
+            }
             renderItems(filterQuery);
             dropdown.style.display = 'block';
             dropdown.classList.add('is-open');
