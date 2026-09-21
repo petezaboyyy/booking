@@ -379,7 +379,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260917-logout-everywhere-1';
+const ROOMLY_ROLE_UI_VERSION = '20260921-calendar-detail-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
