@@ -77,9 +77,6 @@ class View extends \Kotchasan\KBase
             $content[] = '<tr><td class="item"><span class="icon-ban">{LNG_Cancelled dates}</span></td><td class="item"> : </td><td class="item">'.$escape($index['cancelled_dates_text']).'</td></tr>';
         }
         $content[] = '<tr><td class="item"><span class="icon-group">{LNG_Attendees number}</span></td><td class="item"> : </td><td class="item">'.$escape($index['attendees']).'</td></tr>';
-        if (!empty($index['use_text'])) {
-            $content[] = '<tr><td class="item"><span class="icon-menus">{LNG_Use for}</span></td><td class="item"> : </td><td class="item">'.$escape($index['use_text']).'</td></tr>';
-        }
         if (!empty($index['accessories_text'])) {
             $content[] = '<tr><td class="item"><span class="icon-list">{LNG_Accessories}</span></td><td class="item"> : </td><td class="item">'.$escape($index['accessories_text']).'</td></tr>';
         }
