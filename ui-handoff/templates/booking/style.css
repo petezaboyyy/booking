@@ -1134,7 +1134,7 @@
 /* DropdownPanel styling for multi-select checklist & date picker */
 .dropdown-panel {
   position: fixed !important;
-  z-index: 100000 !important;
+  z-index: 1000011 !important;
   background: var(--roomly-surface, #ffffff) !important;
   border: 1px solid var(--roomly-outline, rgba(200, 215, 235, 0.6)) !important;
   border-radius: 14px !important;
