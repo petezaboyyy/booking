@@ -2830,6 +2830,38 @@ function initBookingForm(element, data) {
         const origOpen = proto.open;
         if (typeof origOpen === 'function') {
             proto.open = function() {
+                // Default the booking form's start/end date pickers to today
+                // when opened empty, so someone booking for today doesn't have
+                // to click it in. selectDate() would normally close a plain
+                // 'date' picker on pick, so close() is stubbed out for this one
+                // programmatic call - the calendar still opens right after via
+                // origOpen, letting them pick a different day if they want.
+                // Scoped to begin_date/end_date: this prototype backs every
+                // <input type="date"> in the app (e.g. profile's birthday
+                // field), which must not get this default.
+                const fieldId = this._original?.id;
+                if (!this.selectedDate
+                    && this.type !== 'time'
+                    && !this.disabled
+                    && !this.readonly
+                    && (fieldId === 'begin_date' || fieldId === 'end_date')
+                    && typeof this.selectDate === 'function') {
+                    let defaultDate = new Date();
+                    defaultDate.setHours(0, 0, 0, 0);
+                    if (typeof this._isDateDisabled === 'function' && this._isDateDisabled(defaultDate)) {
+                        // Today is outside the field's allowed range (e.g.
+                        // end_date's min is tied to begin_date) - fall back to
+                        // the earliest allowed day instead of skipping it.
+                        defaultDate = this.min ? new Date(this.min) : null;
+                    }
+                    if (defaultDate) {
+                        const originalClose = this.close;
+                        this.close = () => {};
+                        this.selectDate(defaultDate);
+                        this.close = originalClose;
+                    }
+                }
+
                 const res = origOpen.apply(this, arguments);
                 fixCalendarHeaderElements(this);
                 return res;
