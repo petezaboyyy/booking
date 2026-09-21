@@ -98,6 +98,7 @@ CREATE TABLE `{prefix}_reservation` (
   `member_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `topic` varchar(150) DEFAULT NULL,
+  `course_code` varchar(50) DEFAULT NULL,
   `comment` text DEFAULT NULL,
   `attendees` int(11) NOT NULL,
   `begin` datetime DEFAULT NULL,

@@ -75,6 +75,20 @@ class Controller extends ApiController
             // Parse input data
             $save = $this->parseInput($request);
 
+            // If use is not explicitly provided, map from topic. Resolved before
+            // validation runs so validateAndPrepareSaveData() can tell which
+            // category the topic belongs to (e.g. to require course_code for
+            // category id 1) without duplicating this lookup.
+            if (empty($save['use']) && !empty($save['topic'])) {
+                $useCategories = \Booking\Category\Controller::init()->toOptions('use', true);
+                foreach ($useCategories as $cat) {
+                    if ($cat['text'] === $save['topic']) {
+                        $save['use'] = (string) $cat['value'];
+                        break;
+                    }
+                }
+            }
+
             // Check if booking exists and user has permission to edit
             $booking = Model::get($login, $request->post('id')->toInt());
             if (!$booking) {
@@ -90,23 +104,6 @@ class Controller extends ApiController
             if (!empty($errors)) {
                 // Error response
                 return $this->formErrorResponse($errors, 400);
-            }
-
-            // If use is not explicitly provided, map from topic (supports both Thai and English)
-            if (empty($save['use']) && !empty($save['topic'])) {
-                $useCategories = \Booking\Category\Controller::init()->toOptions('use', true);
-                $enToTh = [
-                    'Meeting' => 'ประชุม',
-                    'Seminar' => 'สัมนา',
-                    'Banquet' => 'จัดเลี้ยง'
-                ];
-                $normTopic = $enToTh[$save['topic']] ?? $save['topic'];
-                foreach ($useCategories as $cat) {
-                    if ($cat['text'] === $save['topic'] || $cat['text'] === $normTopic) {
-                        $save['use'] = (string) $cat['value'];
-                        break;
-                    }
-                }
             }
 
             $meta = [
@@ -173,6 +170,7 @@ class Controller extends ApiController
             'accessories' => $request->post('accessories', [])->toInt(),
             'comment' => $request->post('comment')->textarea(),
             'topic' => $request->post('topic')->topic(),
+            'course_code' => $request->post('course_code')->topic(),
             'attendees' => $request->post('attendees')->toInt(),
             'room_id' => $request->post('room_id')->toInt(),
             'use' => $request->post('use')->topic()
@@ -198,6 +196,10 @@ class Controller extends ApiController
         }
         if ($save['topic'] === '') {
             $errors['topic'] = 'Please fill in';
+        }
+        // Category id 1 (as set on the Categories admin page) needs a course code.
+        if ((string) ($save['use'] ?? '') === '1' && trim((string) $save['course_code']) === '') {
+            $errors['course_code'] = 'Please fill in';
         }
         if ($save['begin_date'] === '') {
             $errors['begin_date'] = 'Please fill in';

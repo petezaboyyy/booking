@@ -1733,6 +1733,8 @@ function initBookingForm(element, data) {
     const beginTimeInput = element.querySelector('#begin_time');
     const endDateInput = element.querySelector('#end_date');
     const endTimeInput = element.querySelector('#end_time');
+    const courseCodeField = element.querySelector('#course-code-field');
+    const courseCodeInput = element.querySelector('#course_code');
 
     // Summary Card & Room Picker elements
     const summaryRoomName = element.querySelector('#summary-room-name');
@@ -1774,6 +1776,29 @@ function initBookingForm(element, data) {
     if (data?.room_id && data?.room_image) {
         roomImageMap.set(String(data.room_id), data.room_image);
     }
+
+    // Topic -> category id, so the course-code field can key off a specific
+    // Categories entry (id 1) instead of matching its name, which admins can
+    // rename freely.
+    const topicCategoryMap = new Map();
+    if (data?.options?.topic && Array.isArray(data.options.topic)) {
+        data.options.topic.forEach(opt => {
+            if (opt.value) topicCategoryMap.set(String(opt.value), String(opt.category_id || ''));
+        });
+    }
+
+    const updateCourseCodeVisibility = () => {
+        if (!courseCodeField || !courseCodeInput || !topicInput) return;
+        const categoryId = topicCategoryMap.get(String(topicInput.value || '')) || '';
+        const show = categoryId === '1';
+        courseCodeField.style.display = show ? '' : 'none';
+        courseCodeInput.toggleAttribute('required', show);
+        if (!show) {
+            courseCodeInput._touched = false;
+            const wrap = courseCodeInput.closest('.roomly-field-wrap');
+            if (wrap) wrap.classList.remove('has-error');
+        }
+    };
 
     const pickerBadges = Array.from(element.querySelectorAll('.roomly-picker-badge, .roomly-room-badge'));
     const onAnyBadgeClick = (e) => {
@@ -1875,6 +1900,7 @@ function initBookingForm(element, data) {
 
     const updateLiveSummary = () => {
         ensureSelectPlaceholders();
+        updateCourseCodeVisibility();
         // 1. Room Name & Room Image (1/4 of summary card)
         if (roomIdInput) {
             const selectedOpt = roomIdInput.selectedOptions?.[0];
@@ -2097,11 +2123,17 @@ function initBookingForm(element, data) {
         beginDateInput,
         beginTimeInput,
         endDateInput,
-        endTimeInput
+        endTimeInput,
+        courseCodeInput
     ].filter(Boolean);
 
     function isFieldBlank(input) {
         if (!input) return false;
+        if (input.id === 'course_code' && !input.hasAttribute('required')) {
+            // Only required when the selected topic is category id 1; the
+            // required attribute is toggled alongside the field's visibility.
+            return false;
+        }
         const val = input.value ? input.value.trim() : '';
         if (!val) return true;
         if (input.id === 'room_id') {

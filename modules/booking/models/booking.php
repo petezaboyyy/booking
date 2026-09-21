@@ -31,6 +31,7 @@ class Model extends \Kotchasan\Model
                 'room_name' => '',
                 'room_image' => $prefillRoomId > 0 ? (Helper::getRoomFirstImageUrl($prefillRoomId) ?: '') : '',
                 'topic' => '',
+                'course_code' => '',
                 'reason' => '',
                 'comment' => '',
                 'attendees' => '',

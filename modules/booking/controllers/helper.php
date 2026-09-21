@@ -465,8 +465,10 @@ class Controller extends \Gcms\Controller
 
     /**
      * Topic options based on the 'use' category.
-     * Returns a sequential array of ['value' => $text, 'text' => $text, 'label' => $text],
-     * always the category's current name as set on the Categories admin page.
+     * Returns a sequential array of ['value' => $text, 'text' => $text, 'label' => $text,
+     * 'category_id' => $id], always the category's current name as set on the
+     * Categories admin page. category_id lets the frontend key behaviour (e.g. the
+     * course-code field) off a specific category without depending on its name.
      *
      * @param string|null $currentTopic
      * @return array
@@ -481,7 +483,8 @@ class Controller extends \Gcms\Controller
             $options[] = [
                 'value' => $thText,
                 'text' => $thText,
-                'label' => $thText
+                'label' => $thText,
+                'category_id' => (string) $cat['value']
             ];
         }
 
@@ -494,7 +497,7 @@ class Controller extends \Gcms\Controller
                 }
             }
             if (!$found) {
-                $options[] = ['value' => $currentTopic, 'text' => $currentTopic, 'label' => $currentTopic];
+                $options[] = ['value' => $currentTopic, 'text' => $currentTopic, 'label' => $currentTopic, 'category_id' => ''];
             }
         }
         return $options;
