@@ -1339,7 +1339,7 @@ function createRoomlyCombobox(selectEl, config = {}) {
 
                 if (config.multiple && isSelected) {
                     const check = document.createElement('span');
-                    check.className = 'roomly-combobox-check icon-check';
+                    check.className = 'roomly-combobox-check';
                     check.setAttribute('aria-hidden', 'true');
                     item.appendChild(check);
                 }

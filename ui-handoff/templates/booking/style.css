@@ -3013,15 +3013,18 @@ div.modal {
   font-weight: 700 !important;
 }
 
-/* Checkmark */
+/* Selected-item marker: a filled bullet point */
 .roomly-combobox-check {
-  font-size: 14px !important;
-  color: var(--roomly-primary, #006591) !important;
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  border-radius: 50% !important;
+  background: var(--roomly-primary, #006591) !important;
   flex-shrink: 0 !important;
 }
 
 [data-theme='dark'] .roomly-combobox-check {
-  color: #75d1ff !important;
+  background: #75d1ff !important;
 }
 
 /* Empty state */
