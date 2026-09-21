@@ -30,7 +30,7 @@ class BootstrapMigrations
     {
         // The marker is versioned: adding a migration must not be skipped on a
         // container whose datas/ still carries an older run's marker.
-        $marker = $rootPath.$dataFolder.'migrations/schema-v2.done';
+        $marker = $rootPath.$dataFolder.'migrations/schema-v3.done';
         if (is_file($marker)) {
             return;
         }
