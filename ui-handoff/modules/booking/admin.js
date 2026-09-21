@@ -367,6 +367,70 @@ if (window.MultiSelectElementFactory) {
     };
 }
 
+// MultiSelectElementFactory: opt-in type-to-filter search box inside the
+// options dropdown, for selects marked data-searchable="true" (e.g. the
+// "Rooms for booking management" field, which can list every room).
+if (window.MultiSelectElementFactory) {
+    const originalCreateOptionsList = MultiSelectElementFactory.createOptionsList.bind(MultiSelectElementFactory);
+    MultiSelectElementFactory.createOptionsList = function(instance) {
+        originalCreateOptionsList(instance);
+
+        const { element, dropdown } = instance;
+        if (!element || element.dataset.searchable !== 'true' || !dropdown) return;
+
+        const items = Array.from(dropdown.querySelectorAll('li[data-index]'));
+        if (!items.length) return;
+
+        const searchWrap = document.createElement('li');
+        searchWrap.className = 'multi-select-search-wrap';
+        searchWrap.setAttribute('role', 'presentation');
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'multi-select-search-input';
+        searchInput.placeholder = Now.translate('Type to search');
+        searchInput.autocomplete = 'off';
+        searchInput.spellcheck = false;
+        searchWrap.appendChild(searchInput);
+        dropdown.insertBefore(searchWrap, dropdown.firstChild);
+
+        const noMatch = document.createElement('li');
+        noMatch.className = 'multi-select-empty multi-select-no-match';
+        noMatch.textContent = Now.translate('No results');
+        dropdown.appendChild(noMatch);
+
+        searchInput.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                const panel = instance.dropdownPanel;
+                if (panel && panel.isOpen() && panel.currentTarget === instance.trigger) {
+                    panel.hide();
+                    instance.trigger.setAttribute('aria-expanded', 'false');
+                    instance.trigger.focus();
+                }
+            }
+            // Keep typing (including Space/Arrow keys) inside the input instead of
+            // letting the dropdown's own keyboard handler toggle the highlighted item.
+            event.stopPropagation();
+        });
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim().toLowerCase();
+            let visibleCount = 0;
+            items.forEach(item => {
+                const matches = !query || item.textContent.trim().toLowerCase().includes(query);
+                // The framework's stylesheet sets `display: flex !important` on every
+                // list item, so an inline style can't hide it — toggle a class instead.
+                item.classList.toggle('multi-select-filtered-out', !matches);
+                if (matches) visibleCount++;
+            });
+            noMatch.classList.toggle('is-visible', visibleCount === 0);
+        });
+
+        setTimeout(() => searchInput.focus(), 60);
+    };
+}
+
 window.addEventListener('resize', () => {
     const elementManager = window.Now?.getManager?.('element');
     if (elementManager && window.MultiSelectElementFactory) {
