@@ -28,6 +28,41 @@
           <p class="login-message" data-i18n>Use your Chiang Mai University account</p>
         </div>
 
+        <!-- Email sign-in. Every block below is gated on microsoft_only, so a
+             deployment flips BOOKING_MICROSOFT_ONLY and the page follows. -->
+        <fieldset class="roomly-login-fields" data-if="!data.microsoft_only">
+          <div>
+            <label for="login_username" data-i18n>{LNG_Username}/{LNG_Email}</label>
+            <span class="form-control icon-email">
+              <input maxlength="50" type="text" id="login_username" name="username" autocomplete="username" autofocus data-persist="local" data-persist-key="login_username"
+                     data-persist-ttl-days="30">
+            </span>
+          </div>
+          <div>
+            <label for="login_password" data-i18n>Password</label>
+            <span class="form-control icon-password">
+              <input maxlength="50" type="password" id="login_password" name="password" autocomplete="current-password">
+            </span>
+          </div>
+          <div>
+            <div class="form-group roomly-login-options">
+              <div class="width50">
+                <input type="checkbox" id="remember" class="switch" name="remember" value="1" data-persist="local" data-persist-key="login_remember">
+                <label for="remember" data-i18n>Remember Me</label>
+              </div>
+              <div class="width50 right" data-if="data.user_forgot === 1">
+                <a href="forgot" data-i18n>Forgot Password</a>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="center roomly-login-submit" data-if="!data.microsoft_only">
+          <button type="submit" class="btn btn-primary fullwidth large icon-signin" data-i18n>Log in</button>
+        </fieldset>
+        <div class="social-divider" data-if="!data.microsoft_only">
+          <span data-i18n>Or continue with</span>
+        </div>
+
         <!-- Microsoft SSO -->
         <fieldset class="center roomly-login-sso">
           <div class="social-login-buttons">
@@ -41,6 +76,10 @@
           <span class="roomly-login-guest-divider"><span data-i18n>or</span></span>
           <a href="/" class="btn roomly-login-guest-btn icon-calendar" data-i18n>Continue as guest</a>
           <p class="comment" data-i18n>View the booking calendar without signing in.</p>
+        </div>
+
+        <div class="center roomly-login-register" data-if="!data.microsoft_only && data.user_register === 1">
+          <span data-i18n>Don't have an account?</span> <a href="register" data-i18n>Sign up</a>
         </div>
       </div>
     </section>

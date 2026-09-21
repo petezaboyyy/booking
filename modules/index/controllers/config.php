@@ -64,6 +64,29 @@ class Controller extends ApiController
      *
      * @return Response
      */
+    /**
+     * Report the sign-in policy the server actually enforces.
+     *
+     * With Microsoft as the only way in, auth.php answers login, register,
+     * forgot and resetpassword with 403. Saying user_register is still 1 here
+     * makes the frontend offer forms that cannot work, so the flags are
+     * reported off and microsoft_only is published for route guards.
+     *
+     * @param array $config
+     *
+     * @return array
+     */
+    private static function applySignInPolicy(array $config): array
+    {
+        $config['microsoft_only'] = \Gcms\MicrosoftOAuth::microsoftOnly();
+        if ($config['microsoft_only']) {
+            $config['user_register'] = 0;
+            $config['user_forgot'] = 0;
+        }
+
+        return $config;
+    }
+
     public function login(Request $request)
     {
         // Validate HTTP method
@@ -83,7 +106,7 @@ class Controller extends ApiController
 
         $config['microsoft_login_url'] = \Gcms\MicrosoftOAuth::configured(self::$cfg)
             ? \Gcms\MicrosoftOAuth::baseUrl(self::$cfg->microsoft_redirect_uri).'microsoft/login.php' : '';
-        $config['microsoft_only'] = \Gcms\MicrosoftOAuth::microsoftOnly();
+        $config = self::applySignInPolicy($config);
 
         // Add logo URL if exists
         $img = DATA_FOLDER.'images/logo'.self::$cfg->stored_img_type;
@@ -138,6 +161,8 @@ class Controller extends ApiController
                 $config[$key] = self::$cfg->$key;
             }
         }
+
+        $config = self::applySignInPolicy($config);
 
         // Check authentication and add user
         $login = $this->authenticateRequest($request);

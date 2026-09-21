@@ -216,6 +216,7 @@ CREATE TABLE `{prefix}_user` (
   `address` varchar(64) DEFAULT NULL,
   `address2` varchar(64) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
+  `backup_email` varchar(255) DEFAULT NULL,
   `phone1` varchar(20) DEFAULT NULL,
   `provinceID` smallint(3) DEFAULT NULL,
   `province` varchar(64) DEFAULT NULL,

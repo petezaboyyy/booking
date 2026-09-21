@@ -496,7 +496,12 @@ EventManager.on('router:initialized', () => {
             '{LNG_Dashboard}',
             '{LNG_Reservation calendar}'
         ),
-        requireAuth: true,
+        // Public, matching js/main.js. This registration runs on
+        // router:initialized and so overwrites the route config there — with
+        // requireAuth true here, "Continue as guest" bounced straight back to
+        // the login page. Guests read the calendar; every booking route below
+        // still requires an account, and the API refuses them anyway.
+        requireAuth: false,
         requireGuest: false
     });
 });

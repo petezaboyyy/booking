@@ -209,12 +209,8 @@ class Controller extends ApiController
             'name' => $request->post('name')->topic(),
             'sex' => $request->post('sex')->filter('fm'),
             'birthday' => $request->post('birthday')->date(),
-            'id_card' => $request->post('id_card')->number(),
-            'tax_id' => $request->post('tax_id')->number(),
             'phone' => $request->post('phone')->phone(),
-            'phone1' => $request->post('phone1')->phone(),
-            'website' => $request->post('website')->url(),
-            'company' => $request->post('company')->topic(),
+            'backup_email' => $request->post('backup_email')->oneLine(255),
             'address' => $request->post('address')->textarea(),
             'address2' => $request->post('address2')->textarea(),
             'provinceID' => $request->post('provinceID')->toInt(),
@@ -270,15 +266,13 @@ class Controller extends ApiController
             }
         }
 
-        $save['id_card'] = $save['id_card'] === '' ? null : $save['id_card'];
-
         if (empty($checking) && $user->active === 1) {
             $k = reset(self::$cfg->login_fields);
             $errors[$k] = 'Please fill in';
         }
 
-        // Validate password (if provided)
-        if ($request->post('password')->exists()) {
+        // Passwords are set only when creating an account; SSO users cannot change them here.
+        if ($user->id === 0 && $request->post('password')->exists()) {
             $password = $request->post('password')->password();
             $repassword = $request->post('repassword')->password();
             if ($password !== '' || $repassword !== '') {
@@ -307,6 +301,12 @@ class Controller extends ApiController
             if (!UserRepository::isFieldUnique('phone', $save['phone'], $user->id)) {
                 $errors['phone'] = 'Already exist';
             }
+        }
+
+        if (empty($save['backup_email'])) {
+            $save['backup_email'] = null;
+        } elseif (!Validator::email($save['backup_email'])) {
+            $errors['backup_email'] = 'Invalid email';
         }
 
         return $errors;
