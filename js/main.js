@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             requireAuth: false
           },
           '/login': {
-            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260916-microsoft-only',
+            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260921-email-form-1',
             title: '{LNG_Login}',
             requireGuest: true,
             requireAuth: false
