@@ -8,6 +8,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentPath = window.location.pathname;
     const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
 
+    // Password flows do not exist when Microsoft is the only way in: auth.php
+    // answers login, register, forgot and resetpassword with 403. Without this
+    // the routes still render their forms to anyone who types the URL.
+    const blockWhenMicrosoftOnly = async () => {
+      try {
+        const response = await fetch('api/index/config/login', {headers: {Accept: 'application/json'}});
+        const body = await response.json();
+        if (body?.data?.microsoft_only) {
+          return '/login';
+        }
+      } catch (err) {
+        // Fail open on a network error: the API still refuses the submit.
+        console.warn('[auth] could not read the sign-in policy', err);
+      }
+      return true;
+    };
+
     // Initialize framework
     await Now.init({
       // Environment mode: 'development' or 'production'
@@ -140,24 +157,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             requireAuth: false
           },
           '/forgot': {
+            beforeEnter: blockWhenMicrosoftOnly,
             template: 'forgot.html',
             title: '{LNG_Forgot Password}',
             requireGuest: true,
             requireAuth: false
           },
           '/register': {
+            beforeEnter: blockWhenMicrosoftOnly,
             template: 'register.html',
             title: '{LNG_Register}',
             requireGuest: true,
             requireAuth: false
           },
           '/reset-password': {
+            beforeEnter: blockWhenMicrosoftOnly,
             template: 'reset-password.html',
             title: '{LNG_Reset Password}',
             requireGuest: true,
             requireAuth: false
           },
           '/activate': {
+            beforeEnter: blockWhenMicrosoftOnly,
             template: 'activate.html',
             title: '{LNG_Activate Account}',
             requireGuest: true,
