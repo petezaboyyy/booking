@@ -13,10 +13,8 @@ namespace Index\Profile;
 use Booking\Helper\Controller as BookingHelper;
 use Gcms\Api as ApiController;
 use Index\UserRepository\Model as UserRepository;
-use Kotchasan\File;
 use Kotchasan\Http\Request;
 use Kotchasan\Http\Response;
-use Kotchasan\Language;
 use Kotchasan\Validator;
 
 /**
@@ -60,26 +58,6 @@ class Controller extends ApiController
                 return $this->redirectResponse('/404', 'No data available', 404);
             }
 
-            foreach (self::$cfg->member_images as $key => $label) {
-                // Avatar image
-                $avatar = self::getAvatarUrl($user->id, $key);
-                if ($avatar !== null) {
-                    $user->$key = [
-                        [
-                            'url' => $avatar,
-                            'name' => $user->id.self::$cfg->stored_img_type
-                        ]
-                    ];
-                } else {
-                    $user->$key = [
-                        [
-                            'url' => WEB_URL.'images/no-image.webp',
-                            'name' => 'Choose file'
-                        ]
-                    ];
-                }
-            }
-
             $user->provinceID = empty($user->provinceID) ? null : $user->provinceID;
             $user->isSuperAdmin = $isSuperAdmin;
 
@@ -92,7 +70,7 @@ class Controller extends ApiController
                     'status' => \Gcms\Controller::getUserStatusOptions(),
                     'active' => \Gcms\Controller::getUserActiveOptions(),
                     'permission' => \Gcms\Controller::getPermissionOptions(),
-                    'booking_rooms' => BookingHelper::getRoomOptions(false),
+                    'booking_rooms' => BookingHelper::getRoomOptions(false, null, null, true),
                     'department' => \Gcms\Category::init()->toOptions('department')
                 ]
             ], 'User details retrieved');
@@ -177,33 +155,6 @@ class Controller extends ApiController
                     $save['id'] = $db->nextId('user');
                 }
 
-                // File storage directory
-                $dir = ROOT_PATH.DATA_FOLDER;
-                // Upload file
-                foreach ($request->getUploadedFiles() as $item => $file) {
-                    // Name of file to upload
-                    if (isset(self::$cfg->member_images[$item])) {
-                        $image = $save['id'].self::$cfg->stored_img_type;
-                        if (!File::makeDirectory($dir.$item.'/')) {
-                            // The directory cannot be created.
-                            $errors[$item] = Language::replace('Directory %s cannot be created or is read-only.', DATA_FOLDER.$item.'/');
-                        } elseif ($file->hasUploadFile()) {
-                            try {
-                                if ($item === 'avatar') {
-                                    $file->cropImage(self::$cfg->member_img_typies, $dir.$item.'/'.$image, self::$cfg->member_img_size, self::$cfg->member_img_size);
-                                } else {
-                                    $file->resizeImage(self::$cfg->img_typies, $dir.$item.'/', $image, self::$cfg->stored_img_size);
-                                }
-                            } catch (\Exception $exc) {
-                                // Unable to upload
-                                $errors[$item] = Language::get($exc->getMessage());
-                            }
-                        } elseif ($err = $file->getErrorMessage()) {
-                            // Upload error
-                            $errors[$item] = $err;
-                        }
-                    }
-                }
             }
 
             if (empty($errors)) {
@@ -221,79 +172,6 @@ class Controller extends ApiController
             return $this->formErrorResponse($errors, 400);
         } catch (\Exception $e) {
             // Error response
-            return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
-        }
-    }
-
-    /**
-     * Remove avatar
-     *
-     * Called from FileElementFactory with:
-     * - action: 'delete'
-     * - url: file URL (when data-file-reference="url")
-     *
-     * @param Request $request
-     *
-     * @return Response
-     */
-    public function removeAvatar(Request $request)
-    {
-        try {
-            ApiController::validateMethod($request, 'POST');
-            $this->validateCsrfToken($request);
-
-            // Authentication check (required)
-            $login = $this->authenticateRequest($request);
-            if (!$login) {
-                return $this->redirectResponse('/login', 'Unauthorized', 401);
-            }
-
-            // Validate action from FileElementFactory
-            $action = $request->post('action')->filter('a-z');
-            if ($action !== 'delete') {
-                return $this->errorResponse('Invalid action', 400);
-            }
-
-            // Extract user ID from URL (format: .../avatar/123.webp)
-            $fileUrl = $request->post('url')->url();
-            if (empty($fileUrl)) {
-                return $this->errorResponse('File URL is required', 400);
-            }
-
-            // Parse user ID from filename
-            if (preg_match('/avatar\/(\d+)'.preg_quote(self::$cfg->stored_img_type, '/').'$/', $fileUrl, $matches)) {
-                $userId = (int) $matches[1];
-            } else {
-                return $this->errorResponse('Invalid file URL format', 400);
-            }
-
-            $user = \Index\Profile\Model::get($userId);
-
-            if (!$user) {
-                return $this->errorResponse('No data available', 404);
-            }
-
-            $isAdmin = \Kotchasan\Login::isAdmin($login);
-
-            // Permission check: Admin can delete any, user can only delete own
-            if (!$isAdmin && $login->id != $user->id) {
-                return $this->errorResponse('You can only edit your own profile', 403);
-            }
-
-            // Remove avatar file
-            $dir = ROOT_PATH.DATA_FOLDER;
-            $image = $dir.'avatar/'.$user->id.self::$cfg->stored_img_type;
-            if (file_exists($image)) {
-                unlink($image);
-
-                // Log
-                \Index\Log\Model::add($user->id, 'index', 'Delete', 'Remove avatar: '.$user->id, $login->id);
-
-                return $this->successResponse('Removed successfully');
-            }
-
-            return $this->errorResponse('File not found', 404);
-        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }
     }

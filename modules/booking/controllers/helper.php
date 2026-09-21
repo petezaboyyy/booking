@@ -394,20 +394,29 @@ class Controller extends \Gcms\Controller
     }
 
     /**
-     * Vehicle options.
+     * Room options.
      *
      * @param bool $activeOnly
      * @param int|null $includeId
      * @param array<int>|null $roomIds
+     * @param bool $showRoomNumber
      *
      * @return array
      */
-    public static function getRoomOptions(bool $activeOnly = true, ?int $includeId = null, ?array $roomIds = null): array
+    public static function getRoomOptions(bool $activeOnly = true, ?int $includeId = null, ?array $roomIds = null, bool $showRoomNumber = false): array
     {
+        $columns = ['R.id', 'R.name', 'R.is_active'];
+        if ($showRoomNumber) {
+            $columns[] = 'RoomNumber.value room_number';
+        }
         $query = \Kotchasan\Model::createQuery()
-            ->select('R.id', 'R.name', 'R.is_active')
-            ->from('rooms R')
-            ->orderBy('R.name');
+            ->select(...$columns)
+            ->from('rooms R');
+
+        if ($showRoomNumber) {
+            $query->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT');
+        }
+        $query->orderBy($showRoomNumber ? 'RoomNumber.value' : 'R.name');
 
         if ($roomIds !== null) {
             $query->where(['R.id', self::normalizeRoomIds($roomIds)]);
@@ -426,7 +435,8 @@ class Controller extends \Gcms\Controller
 
         $options = [];
         foreach ($query->fetchAll() as $item) {
-            $label = (string) $item->name;
+            $roomNumber = (string) ($item->room_number ?? '');
+            $label = $showRoomNumber && $roomNumber !== '' ? $roomNumber : (string) $item->name;
             if ((int) $item->is_active !== 1) {
                 $label .= ' ({LNG_Inactive})';
             }
