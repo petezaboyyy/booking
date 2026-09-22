@@ -44,3 +44,26 @@ if (!calendar.eventMatchesFilter(event, 'C002 204321')) {
 console.log('ok   normalized calendar event renders course code');
 console.log('ok   dashboard calendar finds an event by course code');
 console.log('ok   dashboard calendar combines room and course-code terms');
+
+// Same start time, scrambled room order - a month cell used to fall back to
+// sorting by the event title string, which only looked room-ordered by
+// coincidence (room code happens to lead the title). Assert the room field
+// itself drives the tiebreak.
+const sameSlot = (room, id) => ({
+  id, title: `R-${room}, 08:00-12:00`,
+  start: '2026-09-22 08:00:00', end: '2026-09-22 12:00:00',
+  allDay: false, room_number: room
+});
+const scrambled = calendar.normalizeEvents(
+  ['0006', '0002', '0001', '0029', '0004'].map((room, i) => sameSlot(room, i)),
+  calendar.config
+);
+const monthOrder = calendar
+  .getMonthInlineEventsForDate(scrambled, new Date(2026, 8, 22))
+  .map(e => e.room_number);
+const expected = ['0001', '0002', '0004', '0006', '0029'];
+if (monthOrder.join(',') !== expected.join(',')) {
+  throw new Error(`Month cell did not sort same-time events by room: got ${monthOrder.join(',')}`);
+}
+
+console.log('ok   month cell sorts same-time events by room, not by title text');

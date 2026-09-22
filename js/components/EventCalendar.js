@@ -1727,7 +1727,9 @@ const EventCalendar = {
           return timeA - timeB;
         }
 
-        return String(eventA.title || '').localeCompare(String(eventB.title || ''));
+        const roomA = String(eventA?.room_number || eventA?.room_name || eventA.title || '');
+        const roomB = String(eventB?.room_number || eventB?.room_name || eventB.title || '');
+        return roomA.localeCompare(roomB, undefined, {numeric: true, sensitivity: 'base'});
       });
   },
 
