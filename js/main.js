@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           enabled: true,
           autoGuard: true,
           defaultRequireAuth: true,
-          publicPaths: ['/', '/login', '/404'],
+          publicPaths: ['/', '/login', '/404', '/rooms'],
           guestOnlyPaths: ['/login'],
           redirects: {
             unauthenticated: '/login',

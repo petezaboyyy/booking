@@ -11,7 +11,13 @@ use Kotchasan\Http\Request;
 class Controller extends ApiController
 {
     /**
-     * Return active rooms for the member-facing catalog.
+     * Return active rooms for the room catalog.
+     *
+     * Open to anonymous visitors, like the calendar. What comes back is the
+     * room itself — name, building, number, seats, description, photos — which
+     * is the same public information a sign on the door carries. No booking,
+     * no member and no internal note is joined in, and only rooms marked
+     * active are selected, so a room taken out of service stays hidden.
      *
      * @param Request $request
      *
@@ -21,11 +27,6 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'GET');
-
-            $login = $this->authenticateRequest($request);
-            if (!$login) {
-                return $this->errorResponse('Unauthorized', 401);
-            }
 
             return $this->successResponse([
                 'items' => Model::getItems(true)
@@ -39,6 +40,9 @@ class Controller extends ApiController
     /**
      * Return a single room detail modal payload.
      *
+     * Public for the same reason lists() is, and the second argument keeps it
+     * to active rooms so an id typed into the URL cannot reveal a retired one.
+     *
      * @param Request $request
      *
      * @return \Kotchasan\Http\Response
@@ -47,11 +51,6 @@ class Controller extends ApiController
     {
         try {
             ApiController::validateMethod($request, 'GET');
-
-            $login = $this->authenticateRequest($request);
-            if (!$login) {
-                return $this->errorResponse('Unauthorized', 401);
-            }
 
             $data = Model::get($request->get('id')->toInt(), true);
             if ($data === null) {

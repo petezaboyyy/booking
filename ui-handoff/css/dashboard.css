@@ -3893,3 +3893,15 @@ html[data-theme='dark'] .roomly-theme-sun {
     flex: 1;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Signed-out visitors                                                 */
+/* ------------------------------------------------------------------ */
+/* A guest may read the calendar and browse the rooms; everything else
+   needs an account. roleTemplateGuard() puts data-ui-role="guest" on
+   <html>, and anything marked data-member-only disappears rather than
+   offering a link that only bounces to /login. This hides, it does not
+   protect: the router still refuses those routes. */
+html[data-ui-role='guest'] [data-member-only] {
+  display: none !important;
+}

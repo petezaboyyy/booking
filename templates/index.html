@@ -12,11 +12,13 @@
         <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
         <span data-i18n>Dashboard</span>
       </a>
-      <a href='/my-bookings'>
+      <!-- Hidden from a signed-out visitor: both routes need an account, so
+           offering them would only bounce to /login. -->
+      <a href='/my-bookings' data-member-only>
         <span class='roomly-menu-icon icon-list' aria-hidden='true'></span>
         <span data-i18n>My bookings</span>
       </a>
-      <a href='/booking'>
+      <a href='/booking' data-member-only>
         <span class='roomly-menu-icon icon-new' aria-hidden='true'></span>
         <span data-i18n>Book a room</span>
       </a>

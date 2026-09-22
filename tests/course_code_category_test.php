@@ -27,7 +27,17 @@ $checks = [
     [strpos($booking, 'Model::requiresCourseCode') !== false, 'server validation reads the same setting'],
     [strpos($calendar, "'R.course_code'") !== false && strpos($calendar, "'course_code' => trim") !== false, 'calendar events include the course code'],
     [strpos($bookingAdmin, "Now.translate('Course code')") !== false && strpos($bookingAdmin, 'event?.data?.course_code') !== false, 'calendar day modal reads the normalized event course code'],
-    [strpos($index, 'admin-data-on-load-1') !== false, 'calendar script cache is refreshed'],
+    // Pinning the literal version meant this failed on every bump, which
+    // trains you to edit the test instead of reading it. What actually has to
+    // hold is that the script tag and the constant that versions the
+    // templates it loads carry the same value, so a browser never pairs a new
+    // script with a cached template.
+    [
+        preg_match('/admin\\.js\\?v=([^"\']+)/', $index, $tagVersion)
+        && preg_match("/ROOMLY_ROLE_UI_VERSION = '([^']+)'/", $roomlyAdminJs, $constVersion)
+        && $tagVersion[1] === $constVersion[1],
+        'the admin.js cache-buster matches ROOMLY_ROLE_UI_VERSION, so script and templates refresh together'
+    ],
     [strpos($bookingModel, "'R.course_code'") !== false && strpos($bookingModel, "'course_code' => trim") !== false, 'booking details include the course code'],
     [strpos($bookingView, 'LNG_Course code') !== false && strpos($bookingView, "course_code']") !== false, 'booking detail modal displays a provided course code'],
     [strpos($categories, "'cellElement' => 'checkbox'") !== false && strpos($categories, 'category-course-code-toggle') !== false, 'admin page renders a per-row toggle'],

@@ -434,7 +434,22 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260921-user-profile-2';
+const ROOMLY_ROLE_UI_VERSION = '20260922-guest-rooms-1';
+
+/**
+ * Has this visitor signed in at all?
+ *
+ * api/index/auth/me answers an anonymous caller with a Guest whose id is 0,
+ * so an id is not enough on its own; AuthManager is asked first and the id is
+ * the fallback for the moment before it has settled.
+ */
+function isGuestVisitor(authManager, user) {
+    if (typeof authManager?.isAuthenticated === 'function') {
+        return !authManager.isAuthenticated();
+    }
+
+    return !(Number(user?.id) > 0);
+}
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -455,7 +470,12 @@ function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle
             }
         }
 
-        document.documentElement.dataset.uiRole = isAdmin ? 'admin' : 'member';
+        // A visitor who has not signed in gets 'guest', which the stylesheet
+        // uses to drop the links that would only bounce them to /login. The
+        // router still refuses those routes; this stops offering them.
+        document.documentElement.dataset.uiRole = isGuestVisitor(authManager, user)
+            ? 'guest'
+            : (isAdmin ? 'admin' : 'member');
         return true;
     };
 }
@@ -483,7 +503,11 @@ EventManager.on('router:initialized', () => {
             'booking/catalog-admin.html',
             '{LNG_All rooms}'
         ),
-        requireAuth: true
+        // Public, like the calendar: a visitor may see which rooms exist
+        // before deciding whether signing in is worth it. The catalog API is
+        // open to match; booking from here still sends them to /login.
+        requireAuth: false,
+        requireGuest: false
     });
 
     RouterManager.register('/my-bookings', {
