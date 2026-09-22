@@ -9,6 +9,9 @@
                         <h1 class="icon-valid" data-i18n>Booking approvals</h1>
                         <p data-i18n>Review pending and processed room reservation requests</p>
                     </div>
+                    <!-- admin.js puts the Download CSV button here once the table has
+                         rendered; it needs the ticked rows, so it cannot be static. -->
+                    <div class="header-actions" id="approvals_header_actions"></div>
                 </header>
                 <div class="content-body">
                     <form data-table-filter="bookingApprovals" class="table_nav">

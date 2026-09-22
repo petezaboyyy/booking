@@ -653,26 +653,43 @@ function syncDeleteOnlyBulkAction(tableId) {
  * table:selectionChange, and the export endpoint re-checks that the caller is
  * an admin and that each request is actually approved.
  */
-const csvExportTables = new Set(['bookingApprovals']);
+// tableId -> id of the header container the button lives in.
+const csvExportTables = new Map([['bookingApprovals', 'approvals_header_actions']]);
 const csvExportSelection = new Map();
-// id -> status for the rows currently rendered, so the button can tell which
-// of the ticked rows the export would actually accept.
+// id -> status for the rows currently rendered, so the button can tell whether
+// everything ticked is exportable.
 const csvExportRowStatus = new Map();
 const CSV_EXPORTABLE_STATUS = 1;
 
+/**
+ * The ticked ids, but only when every one of them is approved.
+ * A selection with anything else in it exports nothing: mixing the two is
+ * almost always a mis-click, and silently dropping rows from the file is
+ * worse than refusing.
+ */
 function csvExportableIds(tableId) {
     const statuses = csvExportRowStatus.get(tableId);
     const selected = csvExportSelection.get(tableId) || [];
-    if (!statuses) return selected;
+    if (!statuses || selected.length === 0) return [];
 
-    return selected.filter(id => Number(statuses.get(String(id))) === CSV_EXPORTABLE_STATUS);
+    const allApproved = selected.every(id => Number(statuses.get(String(id))) === CSV_EXPORTABLE_STATUS);
+
+    return allApproved ? selected : [];
 }
 
 function syncCsvExportButton(tableId) {
     if (!csvExportTables.has(tableId)) return;
 
-    const actionButton = document.getElementById(`action_button_${tableId}`);
-    if (!actionButton || !actionButton.parentElement) return;
+    const container = document.getElementById(csvExportTables.get(tableId));
+    if (!container) return;
+
+    // Same gate as the checkboxes: no bulk action bar means no permission to
+    // select rows, so there is nothing to export.
+    if (!document.getElementById(`action_button_${tableId}`)) {
+        const stale = document.getElementById(`export_csv_${tableId}`);
+        if (stale) stale.remove();
+        return;
+    }
 
     let button = document.getElementById(`export_csv_${tableId}`);
     if (!button) {
@@ -692,19 +709,17 @@ function syncCsvExportButton(tableId) {
             // stays on the approvals page.
             window.location.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(exportable.join(','))}`;
         });
-        actionButton.parentElement.insertBefore(button, actionButton.nextSibling);
+        container.appendChild(button);
     }
 
     // Every row keeps its checkbox so bulk Delete still reaches cancelled and
-    // rejected requests. Only approved ones are worth exporting, so the button
-    // sends just those and says so when the two counts differ.
+    // rejected requests; the button just refuses anything but approved ones.
     const selected = csvExportSelection.get(tableId) || [];
     const exportable = csvExportableIds(tableId);
-    const label = Now.translate('Download CSV');
-    button.textContent = exportable.length < selected.length
-        ? `${label} (${exportable.length}/${selected.length})`
-        : label;
     button.disabled = exportable.length === 0;
+    button.title = selected.length > 0 && exportable.length === 0
+        ? Now.translate('Only approved requests can be exported')
+        : '';
 }
 
 EventManager.on('table:selectionChange', event => {
