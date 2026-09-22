@@ -3258,3 +3258,25 @@ div.modal {
 
 
 
+.category-course-code-toggle[type="checkbox"] {
+  appearance: none;
+  width: 2.75rem;
+  height: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: #64748b;
+  background-image: radial-gradient(circle at .7rem 50%, #fff 0, #fff .45rem, transparent .5rem);
+  cursor: pointer;
+  transition: background-color .18s ease, background-position .18s ease;
+}
+
+.category-course-code-toggle[type="checkbox"]:checked {
+  border-color: #10b981;
+  background-color: #10b981;
+  background-image: radial-gradient(circle at calc(100% - .7rem) 50%, #fff 0, #fff .45rem, transparent .5rem);
+}
+
+.category-course-code-toggle[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, .25);
+  outline-offset: 2px;
+}

@@ -86,7 +86,7 @@ class Model extends \Kotchasan\Model
      *
      * @return array
      */
-    public static function getColumns($multiLanguage)
+    public static function getColumns($multiLanguage, $type = null)
     {
         $columns = [
             [

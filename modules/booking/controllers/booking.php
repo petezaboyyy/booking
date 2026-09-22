@@ -76,9 +76,8 @@ class Controller extends ApiController
             $save = $this->parseInput($request);
 
             // If use is not explicitly provided, map from topic. Resolved before
-            // validation runs so validateAndPrepareSaveData() can tell which
-            // category the topic belongs to (e.g. to require course_code for
-            // category id 1) without duplicating this lookup.
+            // validation runs so validateAndPrepareSaveData() can apply the
+            // selected category's course-code setting.
             if (empty($save['use']) && !empty($save['topic'])) {
                 $useCategories = \Booking\Category\Controller::init()->toOptions('use', true);
                 foreach ($useCategories as $cat) {
@@ -197,8 +196,7 @@ class Controller extends ApiController
         if ($save['topic'] === '') {
             $errors['topic'] = 'Please fill in';
         }
-        // Category id 1 (as set on the Categories admin page) needs a course code.
-        if ((string) ($save['use'] ?? '') === '1' && trim((string) $save['course_code']) === '') {
+        if (\Booking\Categories\Model::requiresCourseCode($save['use'] ?? '') && trim((string) $save['course_code']) === '') {
             $errors['course_code'] = 'Please fill in';
         }
         if ($save['begin_date'] === '') {

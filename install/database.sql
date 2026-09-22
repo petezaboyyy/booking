@@ -21,6 +21,7 @@ CREATE TABLE `{prefix}_category` (
   `language` varchar(2) DEFAULT '',
   `topic` varchar(150) NOT NULL,
   `color` varchar(16) DEFAULT NULL,
+  `requires_course_code` tinyint(1) NOT NULL DEFAULT 0,
   `is_active` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -41,6 +42,10 @@ INSERT INTO `{prefix}_category` (`type`, `category_id`, `topic`, `color`, `is_ac
 ('accessories', '1', 'เครื่องคอมพิวเตอร์', '', 1);
 
 -- --------------------------------------------------------
+
+UPDATE `{prefix}_category`
+SET `requires_course_code` = 1
+WHERE `type` = 'use' AND `category_id` = '1';
 
 --
 -- Table structure for table `{prefix}_language`
