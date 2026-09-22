@@ -1,6 +1,7 @@
 <?php
 /* language/th.php */
 return array(
+  'Filter by room number, name, or course code...' => 'ค้นหาห้อง เลขห้อง หรือรหัสวิชา...',
   'Computer' => 'เครื่องคอมพิวเตอร์',
   'Projector' => 'จอโปรเจ็คเตอร์',
   'Visualizer' => 'เครื่องฉายแผ่นใส',

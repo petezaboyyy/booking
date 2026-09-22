@@ -19,6 +19,8 @@ const event = calendar.normalizeEvents([{
   start: '2026-09-25 10:00:00',
   end: '2026-09-25 12:00:00',
   allDay: false,
+  room_number: 'C002',
+  room_name: 'ห้องเรียน 2',
   description: 'การเรียน',
   course_code: '204321'
 }], calendar.config)[0];
@@ -32,4 +34,13 @@ if (!html.includes('Course code: 204321')) {
   throw new Error('Normalized calendar event did not render its course code');
 }
 
+if (!calendar.eventMatchesFilter(event, '204321')) {
+  throw new Error('Dashboard calendar did not find an event by course code');
+}
+if (!calendar.eventMatchesFilter(event, 'C002 204321')) {
+  throw new Error('Dashboard calendar did not combine room and course-code terms');
+}
+
 console.log('ok   normalized calendar event renders course code');
+console.log('ok   dashboard calendar finds an event by course code');
+console.log('ok   dashboard calendar combines room and course-code terms');

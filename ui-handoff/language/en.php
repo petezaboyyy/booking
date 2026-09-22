@@ -74,6 +74,7 @@ return array(
   'TIME_FORMAT' => 'H:i',
   'YEAR_OFFSET' => 0,
   'Filter by room number or name...' => 'Filter by room number or name...',
+  'Filter by room number, name, or course code...' => 'Filter by room number, name, or course code...',
   'Search room or number...' => 'Filter room or number...',
   'Filter room or number...' => 'Filter room or number...',
   'Clear filter' => 'Clear filter',
