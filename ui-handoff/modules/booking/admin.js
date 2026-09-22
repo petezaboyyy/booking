@@ -3,8 +3,16 @@
 if (window.EventCalendar && !EventCalendar._bookingTopicDescriptionsEnabled) {
     const originalBuildModalEventItem = EventCalendar.buildModalEventItem.bind(EventCalendar);
     EventCalendar.buildModalEventItem = (instance, event, options = {}) => {
-        const eventWithTopicLabel = event?.description
-            ? {...event, description: `${Now.translate('Topic')}: ${event.description}`}
+        const descriptionParts = [];
+        if (event?.description) {
+            descriptionParts.push(`${Now.translate('Topic')}: ${event.description}`);
+        }
+        const courseCode = String(event?.course_code || event?.data?.course_code || '').trim();
+        if (courseCode) {
+            descriptionParts.push(`${Now.translate('Course code')}: ${courseCode}`);
+        }
+        const eventWithTopicLabel = descriptionParts.length > 0
+            ? {...event, description: descriptionParts.join(' · ')}
             : event;
         return originalBuildModalEventItem(instance, eventWithTopicLabel, {
             ...options,
