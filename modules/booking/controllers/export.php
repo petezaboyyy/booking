@@ -22,6 +22,13 @@ use Kotchasan\Language;
 class Controller extends ApiController
 {
     /**
+     * Ceiling on how many requests one download may cover. A term of daily
+     * bookings is already hundreds of rows; this stops a tick-everything
+     * click turning into an unbounded query.
+     */
+    const MAX_REQUESTS = 200;
+
+    /**
      * One row per approved date of one approved request.
      *
      * @param Request $request
@@ -45,9 +52,23 @@ class Controller extends ApiController
                 return $this->errorResponse('Permission required', 403);
             }
 
-            $id = $request->get('id')->toInt();
-            if ($id <= 0) {
+            // The approvals table sends the ticked rows as ids; the single-id
+            // form is kept so one request can still be linked to directly.
+            $ids = array_values(array_unique(array_filter(array_map(
+                'intval',
+                preg_split('/[\s,]+/', $request->get('ids')->toString(), -1, PREG_SPLIT_NO_EMPTY)
+            ))));
+            if (empty($ids)) {
+                $single = $request->get('id')->toInt();
+                if ($single > 0) {
+                    $ids = [$single];
+                }
+            }
+            if (empty($ids)) {
                 return $this->errorResponse('No data available', 404);
+            }
+            if (count($ids) > self::MAX_REQUESTS) {
+                return $this->errorResponse('Select fewer requests to export at once', 400);
             }
 
             // Status is read from the database, never from the URL. The query
@@ -55,7 +76,7 @@ class Controller extends ApiController
             // are approved, so a pending, rejected or fully cancelled request
             // falls through to the error below instead of producing an empty
             // file.
-            $rows = BookingModel::getApprovedExportRows($id);
+            $rows = BookingModel::getApprovedExportRows($ids);
             if (empty($rows)) {
                 return $this->errorResponse('This booking has no approved dates to export', 404);
             }
@@ -112,11 +133,18 @@ class Controller extends ApiController
                 Language::get('Approved at')
             ];
 
-            \Index\Log\Model::add($id, 'booking', 'Export', 'Booking CSV exported: '.$id, $login->id, null, [
-                'approved_occurrences' => count($datas)
-            ]);
+            \Index\Log\Model::add(
+                count($ids) === 1 ? $ids[0] : 0,
+                'booking',
+                'Export',
+                'Booking CSV exported: '.implode(', ', $ids),
+                $login->id,
+                null,
+                ['reservation_ids' => $ids, 'approved_occurrences' => count($datas)]
+            );
 
-            \Export\Export\Controller::csv('booking-'.$id.'-'.date('Ymd'), $header, $datas);
+            $name = count($ids) === 1 ? 'booking-'.$ids[0] : 'booking-'.count($ids).'-requests';
+            \Export\Export\Controller::csv($name.'-'.date('Ymd'), $header, $datas);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }

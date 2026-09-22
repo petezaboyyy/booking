@@ -645,17 +645,67 @@ function syncDeleteOnlyBulkAction(tableId) {
     actionButton.classList.add('btn-danger');
 }
 
+/**
+ * "Download CSV" beside the bulk Delete button on the approvals table.
+ *
+ * It is a plain link, not a table action: TableManager posts actions over
+ * AJAX, which cannot hand the browser a file. The ticked ids come from
+ * table:selectionChange, and the export endpoint re-checks that the caller is
+ * an admin and that each request is actually approved.
+ */
+const csvExportTables = new Set(['bookingApprovals']);
+const csvExportSelection = new Map();
+
+function syncCsvExportButton(tableId) {
+    if (!csvExportTables.has(tableId)) return;
+
+    const actionButton = document.getElementById(`action_button_${tableId}`);
+    if (!actionButton || !actionButton.parentElement) return;
+
+    let link = document.getElementById(`export_csv_${tableId}`);
+    if (!link) {
+        link = document.createElement('a');
+        link.id = `export_csv_${tableId}`;
+        link.className = 'btn btn-success icon-download';
+        link.dataset.i18n = 'Download CSV';
+        link.textContent = Now.translate('Download CSV');
+        actionButton.parentElement.insertBefore(link, actionButton.nextSibling);
+    }
+
+    const ids = csvExportSelection.get(tableId) || [];
+    if (ids.length === 0) {
+        link.removeAttribute('href');
+        link.setAttribute('aria-disabled', 'true');
+        link.classList.add('disabled');
+    } else {
+        link.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(ids.join(','))}`;
+        link.removeAttribute('aria-disabled');
+        link.classList.remove('disabled');
+    }
+}
+
 EventManager.on('table:selectionChange', event => {
-    syncDeleteOnlyBulkAction(event.data?.tableId);
+    const tableId = event.data?.tableId;
+    if (csvExportTables.has(tableId)) {
+        csvExportSelection.set(tableId, (event.data?.selectedRows || []).filter(Boolean));
+        syncCsvExportButton(tableId);
+    }
+    syncDeleteOnlyBulkAction(tableId);
 });
 
 EventManager.on('table:render', event => {
-    syncDeleteOnlyBulkAction(event.data?.tableId);
+    const tableId = event.data?.tableId;
+    // A re-render rebuilds the action bar, so the link has to be put back and
+    // the stale selection dropped along with the checkboxes.
+    csvExportSelection.set(tableId, []);
+    syncDeleteOnlyBulkAction(tableId);
+    syncCsvExportButton(tableId);
 });
 
 const refreshDeleteOnlyBulkActions = () => {
     requestAnimationFrame(() => {
         deleteOnlyBulkActionTables.forEach(tableId => syncDeleteOnlyBulkAction(tableId));
+        csvExportTables.forEach(tableId => syncCsvExportButton(tableId));
     });
 };
 EventManager.on('route:changed', refreshDeleteOnlyBulkActions);

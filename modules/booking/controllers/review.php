@@ -61,11 +61,6 @@ class Controller extends ApiController
             $approvedOccurrences = count(array_filter($occurrences, static function ($occurrence) {
                 return $occurrence['status'] === Helper::STATUS_APPROVED;
             }));
-            // Shows or hides the button only. Booking\Export\Controller repeats
-            // every one of these checks against the database.
-            $canExportCsv = ApiController::isAdmin($login)
-                && (int) $row->status === Helper::STATUS_APPROVED
-                && $approvedOccurrences > 0;
 
             return $this->successResponse([
                 'id' => (int) $row->id,
@@ -89,8 +84,6 @@ class Controller extends ApiController
                 'version' => (int) ($row->version ?? 1),
                 'occurrence_count' => count($occurrences),
                 'approved_occurrence_count' => $approvedOccurrences,
-                'can_export_csv' => $canExportCsv,
-                'export_csv_url' => $canExportCsv ? 'export.php?module=booking&typ=csv&id='.(int) $row->id : '',
                 'occurrences' => $occurrences
             ], 'Review data retrieved');
         } catch (\Exception $e) {

@@ -133,6 +133,39 @@ try {
     check(Model::getApprovedExportRows($approved) === [], 'with every date cancelled there is nothing to export — no empty file');
 
     // =====================================================================
+    echo "\n[3b] Several requests export together\n";
+    // =====================================================================
+    $a = makeBooking((int) $room->id, (int) $member->id, '_multi_a', '2037-06-01 08:00:00', '2037-06-03 09:00:00');
+    $b = makeBooking((int) $room->id, (int) $member->id, '_multi_b', '2037-07-01 10:00:00', '2037-07-02 11:00:00');
+    Model::approveReservation($a, 1, ['approve' => 1, 'reason' => '']);
+    Model::approveReservation($b, 1, ['approve' => 1, 'reason' => '']);
+
+    $both = Model::getApprovedExportRows([$a, $b]);
+    check(count($both) === 5, 'three days plus two days gives five rows ('.count($both).')');
+    $idsSeen = array_values(array_unique(array_map(static function ($row) {
+        return (int) $row->id;
+    }, $both)));
+    sort($idsSeen);
+    $expected = [$a, $b];
+    sort($expected);
+    check($idsSeen === $expected, 'both request ids appear, so rows stay attributable');
+
+    $dates = array_map(static function ($row) {
+        return (string) $row->begin;
+    }, $both);
+    $sortedDates = $dates;
+    sort($sortedDates);
+    check($dates === $sortedDates, 'the combined rows are still in date order');
+
+    $pendingC = makeBooking((int) $room->id, (int) $member->id, '_multi_c', '2037-08-01 10:00:00', '2037-08-01 11:00:00');
+    check(
+        count(Model::getApprovedExportRows([$a, $pendingC])) === 3,
+        'mixing an approved and a pending request exports only the approved one'
+    );
+    check(Model::getApprovedExportRows([$pendingC, 0, -5]) === [], 'a selection with nothing approved exports nothing');
+    check(count(Model::getApprovedExportRows([$a, $a, $a])) === 3, 'the same id ticked twice is not duplicated');
+
+    // =====================================================================
     echo "\n[4] Who is allowed to press the button\n";
     // =====================================================================
     check(ApiController::isAdmin((object) ['status' => 1]) === true, 'an admin is allowed');

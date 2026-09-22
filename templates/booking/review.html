@@ -11,10 +11,6 @@
                             <p data-i18n>Inspect booking details and decide the current approval step</p>
                         </div>
                         <div class="header-actions">
-                            <!-- Admins only, and only once the request is approved with at
-                                 least one date still standing. The export endpoint checks
-                                 the same things again, so hiding this is convenience. -->
-                            <a class="btn btn-success icon-download" data-if="can_export_csv" data-attr="href:export_csv_url" data-i18n>Download CSV</a>
                             <a class="btn btn-warning icon-list" href="/approvals" data-i18n>Booking approvals</a>
                         </div>
                     </header>

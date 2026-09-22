@@ -752,13 +752,14 @@ class Model extends \Kotchasan\Model
      * request that is not approved, or whose dates were all cancelled, simply
      * returns nothing and the caller refuses the download.
      *
-     * @param int $id
+     * @param array|int $ids One reservation id, or several to export together
      *
      * @return array
      */
-    public static function getApprovedExportRows(int $id): array
+    public static function getApprovedExportRows($ids): array
     {
-        if ($id <= 0) {
+        $ids = array_values(array_unique(array_filter(array_map('intval', is_array($ids) ? $ids : [$ids]))));
+        if (empty($ids)) {
             return [];
         }
 
@@ -793,7 +794,7 @@ class Model extends \Kotchasan\Model
             ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
             ->join('user_meta MemberDept', [['MemberDept.member_id', 'R.member_id'], ['MemberDept.name', 'department']], 'LEFT')
             ->where([
-                ['R.id', $id],
+                ['R.id', $ids],
                 ['R.status', Helper::STATUS_APPROVED],
                 ['O.status', Helper::STATUS_APPROVED]
             ])
