@@ -65,6 +65,9 @@ class View extends \Kotchasan\KBase
         if (!empty($index['topic'])) {
             $content[] = '<tr><td class="item"><span class="icon-file">{LNG_Topic}</span></td><td class="item"> : </td><td class="item">'.$escapeMultiline($index['topic']).'</td></tr>';
         }
+        if (trim((string) ($index['course_code'] ?? '')) !== '') {
+            $content[] = '<tr><td class="item"><span class="icon-file">{LNG_Course code}</span></td><td class="item"> : </td><td class="item">'.$escape($index['course_code']).'</td></tr>';
+        }
         if (!empty($index['comment'])) {
             $content[] = '<tr><td class="item"><span class="icon-comments">{LNG_Notes}</span></td><td class="item"> : </td><td class="item">'.$escapeMultiline($index['comment']).'</td></tr>';
         }
