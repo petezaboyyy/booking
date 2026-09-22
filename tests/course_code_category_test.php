@@ -8,6 +8,8 @@ $categories = file_get_contents($root.'/modules/booking/models/categories.php');
 $schema = file_get_contents($root.'/install/database.sql');
 $tableManagerSrc = file_get_contents($root.'/Now/js/TableManager.js');
 $tableManagerDist = file_get_contents($root.'/Now/dist/now.table.min.js');
+$adminBookingForm = file_get_contents($root.'/templates/booking/booking-recurring-admin.html');
+$roomlyAdminJs = file_get_contents($root.'/ui-handoff/modules/booking/admin.js');
 
 $checks = [
     [strpos($admin, "categoryId === '1'") === false, 'frontend has no fixed category ID'],
@@ -17,7 +19,9 @@ $checks = [
     [strpos($categories, "'cellClass' => 'checkbox'") !== false, 'toggle cell uses the checkbox cell class so its wrapper renders as a switch, not an empty box'],
     [strpos($schema, '`requires_course_code` tinyint(1) NOT NULL DEFAULT 0') !== false, 'schema stores the setting'],
     [strpos($tableManagerSrc, "value === true || value === 1 || value === '1' || value === 'true'") !== false, 'TableManager source treats numeric 1 as checked'],
-    [strpos($tableManagerDist, '!0===l||1===l||"1"===l||"true"===l') !== false, 'built now.table.min.js bundle matches the source fix (bundle must be rebuilt after TableManager.js changes)']
+    [strpos($tableManagerDist, '!0===l||1===l||"1"===l||"true"===l') !== false, 'built now.table.min.js bundle matches the source fix (bundle must be rebuilt after TableManager.js changes)'],
+    [strpos($adminBookingForm, "id='course-code-field'") !== false && strpos($adminBookingForm, "id='course_code'") !== false, 'admin booking form has a course code field (it used to be missing, so admins could not save bookings for categories that require one)'],
+    [strpos($roomlyAdminJs, 'topicCourseCodeRequirementMap') !== false && strpos($roomlyAdminJs, 'updateCourseCodeVisibility') !== false, 'admin booking form JS wires up the course-code requirement/visibility logic']
 ];
 
 $failed = 0;

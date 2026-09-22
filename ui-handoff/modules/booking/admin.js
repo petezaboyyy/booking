@@ -426,7 +426,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260921-user-profile-2';
+const ROOMLY_ROLE_UI_VERSION = '20260922-admin-booking-parity-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -1698,6 +1698,61 @@ function initBookingForm(element, data) {
         const recurrenceGroup = recurrenceDays ? recurrenceDays.closest('.width50, .roomly-recurrence-days-group') : null;
         const useInput = element.querySelector('#use');
         const topicInput = element.querySelector('#topic');
+        const roomIdInput = element.querySelector('#room_id');
+        const courseCodeField = element.querySelector('#course-code-field');
+        const courseCodeInput = element.querySelector('#course_code');
+        const roomMetaEl = element.querySelector('#admin-room-meta');
+
+        // Each "Use for" category independently controls whether course code is
+        // required. The admin form keeps `use` (category id) as the visible
+        // field and `topic` (category name) as the hidden mirror, so the
+        // requirement is looked up by the same text `topic` carries.
+        const topicCourseCodeRequirementMap = new Map();
+        if (data?.options?.topic && Array.isArray(data.options.topic)) {
+            data.options.topic.forEach(opt => {
+                if (opt.value) topicCourseCodeRequirementMap.set(String(opt.value), Boolean(opt.requires_course_code));
+            });
+        }
+
+        const updateCourseCodeVisibility = () => {
+            if (!courseCodeField || !courseCodeInput || !topicInput) return;
+            const show = topicCourseCodeRequirementMap.get(String(topicInput.value || '')) === true;
+            courseCodeField.style.display = show ? '' : 'none';
+            courseCodeInput.toggleAttribute('required', show);
+        };
+
+        // Room number/building/seats set on the Rooms admin page - shown next
+        // to the picker so staff can see them without leaving the form.
+        const roomImageMap = new Map();
+        const roomMetaMap = new Map();
+        if (data?.options?.room_id && Array.isArray(data.options.room_id)) {
+            data.options.room_id.forEach(opt => {
+                if (opt.value && opt.image) roomImageMap.set(String(opt.value), opt.image);
+                if (opt.value && (opt.room_number || opt.building || opt.seats)) {
+                    roomMetaMap.set(String(opt.value), {
+                        number: opt.room_number || '',
+                        building: opt.building || '',
+                        seats: opt.seats || ''
+                    });
+                }
+            });
+        }
+
+        const updateRoomMetaPreview = () => {
+            if (!roomMetaEl || !roomIdInput) return;
+            const meta = roomMetaMap.get(String(roomIdInput.value || ''));
+            if (!meta || (!meta.number && !meta.building && !meta.seats)) {
+                roomMetaEl.style.display = 'none';
+                roomMetaEl.textContent = '';
+                return;
+            }
+            const parts = [];
+            if (meta.building) parts.push(meta.building);
+            if (meta.number) parts.push(`${Now.translate('Room')} ${meta.number}`);
+            if (meta.seats) parts.push(`${meta.seats} ${Now.translate('Seats')}`);
+            roomMetaEl.textContent = parts.join(' · ');
+            roomMetaEl.style.display = '';
+        };
 
         const syncTopicFromUse = () => {
             if (!topicInput || !useInput) return;
@@ -1705,6 +1760,7 @@ function initBookingForm(element, data) {
             topicInput.value = useInput.value
                 ? (selectedOption?.textContent?.trim() || useInput.value)
                 : '';
+            updateCourseCodeVisibility();
         };
 
         const scheduleChange = () => {
@@ -1725,16 +1781,151 @@ function initBookingForm(element, data) {
             useInput.addEventListener('change', syncTopicFromUse);
             syncTopicFromUse();
         }
+        if (roomIdInput) {
+            roomIdInput.addEventListener('change', updateRoomMetaPreview);
+            updateRoomMetaPreview();
+        }
+        // The `use`/`room_id` <option> lists can still be populating async when
+        // this runs, so re-check once they've had time to land (mirrors the
+        // retry timers the member form uses for the same race).
+        const courseCodeRetryTimer1 = setTimeout(syncTopicFromUse, 300);
+        const courseCodeRetryTimer2 = setTimeout(syncTopicFromUse, 600);
+        const roomMetaRetryTimer1 = setTimeout(updateRoomMetaPreview, 300);
+        const roomMetaRetryTimer2 = setTimeout(updateRoomMetaPreview, 600);
+
+        // Searchable room picker - the same combobox used on the member form,
+        // wired up here because the admin form's room field opted in via the
+        // `roomly-select-btn` wrapper class.
+        let roomCombobox = null;
+        if (roomIdInput) {
+            roomCombobox = createRoomlyCombobox(roomIdInput, {
+                searchable: true,
+                getFallbackOptions: () => data?.options?.room_id,
+                renderItemIcon: (iconWrap, opt, val) => {
+                    const img = (opt.dataset && opt.dataset.image) || roomImageMap.get(val) || '';
+                    if (img) {
+                        const imgEl = document.createElement('img');
+                        imgEl.src = img;
+                        iconWrap.appendChild(imgEl);
+                    } else {
+                        iconWrap.innerHTML = '<span class="icon-office" aria-hidden="true"></span>';
+                    }
+                }
+            });
+        }
 
         const occurrencePickerCleanup = initOccurrencePicker(element, data);
-        const conflictCheckerInstance = initConflictChecker(element, data, false);
+        const conflictCheckerInstance = initConflictChecker(element, data, true);
+
+        // Room booking calendar popup - lets staff check a room's schedule
+        // before saving, same modal markup/component as the member form.
+        const openModalBtn = document.getElementById('btn-open-calendar-modal');
+        const modal = document.getElementById('roomly-calendar-modal');
+        const closeModalBtn = document.getElementById('btn-close-calendar-modal');
+        let onModalKeyDown = null;
+        let onModalBackdropClick = null;
+        let onOpenModalClick = null;
+        let onCloseModalClick = null;
+
+        if (openModalBtn && modal) {
+            const openModal = () => {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+                modal.classList.add('is-active', 'show');
+                modal.setAttribute('aria-hidden', 'false');
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+
+                const calEl = modal.querySelector('#modal-roomly-calendar');
+                if (calEl && window.EventCalendar) {
+                    if (calEl._eventCalendar) {
+                        try {
+                            if (typeof EventCalendar.cleanupInstance === 'function') {
+                                EventCalendar.cleanupInstance(calEl._eventCalendar);
+                            }
+                        } catch (e) { /* ignore */ }
+                        delete calEl._eventCalendar;
+                        if (EventCalendar.state && EventCalendar.state.instances) {
+                            EventCalendar.state.instances.delete(calEl);
+                        }
+                        calEl.innerHTML = '';
+                    }
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            EventCalendar.create(calEl, {
+                                api: 'api/booking/calendar',
+                                onEventClickApi: 'api/booking/view?id={id}',
+                                view: 'month',
+                                showToday: true,
+                                showViewSwitcher: true,
+                                showPeriodPicker: true,
+                                showFilter: true,
+                                filterTarget: '#modal_calendar_room_filter',
+                                onDateClick: (date, instance) => {
+                                    const events = typeof EventCalendar.getEventsForDate === 'function'
+                                        ? EventCalendar.getEventsForDate(EventCalendar.getFilteredEvents(instance), date)
+                                        : [];
+                                    EventCalendar.showDayDetailModal(instance, date, events);
+                                }
+                            });
+                        });
+                    });
+                }
+            };
+
+            const closeModal = () => {
+                modal.classList.remove('is-active', 'show');
+                modal.setAttribute('aria-hidden', 'true');
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+            };
+
+            onOpenModalClick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openModal();
+            };
+            onCloseModalClick = (e) => {
+                e.preventDefault();
+                closeModal();
+            };
+            onModalBackdropClick = (e) => {
+                if (e.target === modal) closeModal();
+            };
+            onModalKeyDown = (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+                    closeModal();
+                }
+            };
+
+            openModalBtn.addEventListener('click', onOpenModalClick);
+            if (closeModalBtn) closeModalBtn.addEventListener('click', onCloseModalClick);
+            modal.addEventListener('click', onModalBackdropClick);
+            document.addEventListener('keydown', onModalKeyDown);
+        }
 
         return () => {
+            clearTimeout(courseCodeRetryTimer1);
+            clearTimeout(courseCodeRetryTimer2);
+            clearTimeout(roomMetaRetryTimer1);
+            clearTimeout(roomMetaRetryTimer2);
             if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
             if (useInput) useInput.removeEventListener('change', syncTopicFromUse);
+            if (roomIdInput) roomIdInput.removeEventListener('change', updateRoomMetaPreview);
+            if (roomCombobox) roomCombobox.destroy();
             if (typeof occurrencePickerCleanup === 'function') occurrencePickerCleanup();
             if (conflictCheckerInstance && typeof conflictCheckerInstance.destroy === 'function') {
                 conflictCheckerInstance.destroy();
+            }
+            if (openModalBtn && onOpenModalClick) openModalBtn.removeEventListener('click', onOpenModalClick);
+            if (closeModalBtn && onCloseModalClick) closeModalBtn.removeEventListener('click', onCloseModalClick);
+            if (modal && onModalBackdropClick) modal.removeEventListener('click', onModalBackdropClick);
+            if (onModalKeyDown) document.removeEventListener('keydown', onModalKeyDown);
+            if (modal) {
+                modal.classList.remove('is-active', 'show');
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
             }
         };
     }

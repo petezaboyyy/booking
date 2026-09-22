@@ -16,11 +16,12 @@
               <p data-i18n>Create or update a room reservation request</p>
             </div>
             <div class='header-actions'>
+              <button type='button' class='btn btn-secondary icon-calendar' id='btn-open-calendar-modal' data-i18n>Room booking calendar</button>
               <a class='btn btn-info icon-office' href='/rooms' data-i18n>All rooms</a>
               <a class='btn btn-warning icon-list' href='/my-bookings' data-i18n>My bookings</a>
             </div>
           </header>
-          <div class='content-body'>
+          <div class='content-body roomly-admin-booking-content'>
             <fieldset>
               <legend data-i18n>Requester</legend>
               <div>
@@ -35,11 +36,13 @@
               <div class='form-group'>
                 <div class='width50'>
                   <label for='room_id' data-i18n>Room</label>
-                  <span class='form-control icon-office'>
+                  <span class='form-control roomly-select-btn'>
                     <select id='room_id' name='room_id' data-options-key='room_id' data-attr='value:room_id'>
                       <option value='' data-i18n>Please select</option>
                     </select>
+                    <span class='roomly-select-arrow icon-chevron-down icon-down' aria-hidden='true'></span>
                   </span>
+                  <div class='comment' id='admin-room-meta' style='display: none;'></div>
                 </div>
                 <div class='width50'>
                   <label for='attendees' data-i18n>Attendees number</label>
@@ -57,6 +60,12 @@
                     </select>
                   </span>
                   <input type='hidden' id='topic' name='topic' data-attr='value:topic'>
+                </div>
+                <div class='width50' id='course-code-field' style='display: none;'>
+                  <label for='course_code' data-i18n>Course code</label>
+                  <span class='form-control icon-bookmark'>
+                    <input type='text' id='course_code' name='course_code' data-attr='value:course_code' maxlength='50' placeholder='{LNG_e.g. 261101}' data-i18n-placeholder='e.g. 261101'>
+                  </span>
                 </div>
               </div>
               <div class='form-group'>
@@ -91,7 +100,16 @@
                   </span>
                 </div>
               </div>
-              <div id='booking_conflict_alert' class='comment error roomly-conflict-alert' style='display: none;'></div>
+              <div id='booking_conflict_alert' class='roomly-conflict-alert' style='display: none;' role='alert' aria-live='polite'>
+                <div class='roomly-conflict-alert-header'>
+                  <span class='roomly-conflict-alert-icon icon-warning' aria-hidden='true'></span>
+                  <strong class='roomly-conflict-alert-title' data-i18n>Conflicts with an approved booking</strong>
+                </div>
+                <div class='roomly-conflict-alert-body'>
+                  <p class='roomly-conflict-alert-msg'></p>
+                  <div class='roomly-conflict-alert-slots'></div>
+                </div>
+              </div>
               <div class='form-group'>
                 <div class='width50'>
                   <label for='schedule_type' data-i18n>Repeat</label>
@@ -152,6 +170,42 @@
           </div>
         </div>
       </form>
+
+      <!-- Room Booking Calendar Modal Popup -->
+      <div id='roomly-calendar-modal' class='roomly-modal-backdrop' aria-hidden='true' role='dialog' aria-labelledby='roomly-modal-calendar-title'>
+        <div class='roomly-modal-dialog roomly-calendar-modal-dialog'>
+          <header class='roomly-modal-header'>
+            <div class='roomly-modal-title-wrap'>
+              <span class='roomly-modal-title-icon icon-calendar' aria-hidden='true'></span>
+              <div>
+                <h3 id='roomly-modal-calendar-title' class='roomly-modal-title' data-i18n>Reservation calendar</h3>
+                <p class='roomly-modal-subtitle' data-i18n>Check room schedule to avoid overlap</p>
+              </div>
+            </div>
+            <button type='button' class='roomly-modal-close-btn' id='btn-close-calendar-modal' aria-label='Close'>&times;</button>
+          </header>
+          <div class='roomly-modal-body'>
+            <div class='roomly-calendar-filter-bar'>
+              <div class='roomly-calendar-filter-wrap'>
+                <span class='roomly-calendar-filter-icon icon-search' aria-hidden='true'></span>
+                <input type='text' id='modal_calendar_room_filter' data-calendar-filter class='roomly-calendar-filter-input' placeholder='ค้นหาห้อง หรือเลขห้อง...' data-i18n='Filter by room number or name...' autocomplete='off'>
+                <button type='button' class='roomly-calendar-filter-clear' data-calendar-filter-clear aria-label='Clear filter' style='display:none;'>&times;</button>
+              </div>
+            </div>
+            <div id='modal-roomly-calendar'
+                 class='roomly-calendar'
+                 data-api='api/booking/calendar'
+                 data-on-event-click-api='api/booking/view?id={reservationId}'
+                 data-view='month'
+                 data-show-today='true'
+                 data-show-view-switcher='true'
+                 data-show-period-picker='true'
+                 data-show-filter='true'
+                 data-filter-target='#modal_calendar_room_filter'>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
   <footer class='footer'>
