@@ -662,26 +662,28 @@ function syncCsvExportButton(tableId) {
     const actionButton = document.getElementById(`action_button_${tableId}`);
     if (!actionButton || !actionButton.parentElement) return;
 
-    let link = document.getElementById(`export_csv_${tableId}`);
-    if (!link) {
-        link = document.createElement('a');
-        link.id = `export_csv_${tableId}`;
-        link.className = 'btn btn-success icon-download';
-        link.dataset.i18n = 'Download CSV';
-        link.textContent = Now.translate('Download CSV');
-        actionButton.parentElement.insertBefore(link, actionButton.nextSibling);
+    let button = document.getElementById(`export_csv_${tableId}`);
+    if (!button) {
+        // A button, not a link: the router claims anchor clicks and would treat
+        // export.php as an SPA route, landing on the 404 page instead of
+        // downloading. Nothing intercepts a button.
+        button = document.createElement('button');
+        button.id = `export_csv_${tableId}`;
+        button.type = 'button';
+        button.className = 'btn btn-success icon-download';
+        button.dataset.i18n = 'Download CSV';
+        button.textContent = Now.translate('Download CSV');
+        button.addEventListener('click', () => {
+            const selected = csvExportSelection.get(tableId) || [];
+            if (selected.length === 0) return;
+            // Content-Disposition: attachment means the browser downloads and
+            // stays on the approvals page.
+            window.location.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(selected.join(','))}`;
+        });
+        actionButton.parentElement.insertBefore(button, actionButton.nextSibling);
     }
 
-    const ids = csvExportSelection.get(tableId) || [];
-    if (ids.length === 0) {
-        link.removeAttribute('href');
-        link.setAttribute('aria-disabled', 'true');
-        link.classList.add('disabled');
-    } else {
-        link.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(ids.join(','))}`;
-        link.removeAttribute('aria-disabled');
-        link.classList.remove('disabled');
-    }
+    button.disabled = (csvExportSelection.get(tableId) || []).length === 0;
 }
 
 EventManager.on('table:selectionChange', event => {
