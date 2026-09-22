@@ -27,7 +27,7 @@ $checks = [
     [strpos($booking, 'Model::requiresCourseCode') !== false, 'server validation reads the same setting'],
     [strpos($calendar, "'R.course_code'") !== false && strpos($calendar, "'course_code' => trim") !== false, 'calendar events include the course code'],
     [strpos($bookingAdmin, "Now.translate('Course code')") !== false && strpos($bookingAdmin, 'event?.data?.course_code') !== false, 'calendar day modal reads the normalized event course code'],
-    [strpos($index, 'course-code-fix-1') !== false, 'calendar script cache is refreshed'],
+    [strpos($index, 'admin-data-on-load-1') !== false, 'calendar script cache is refreshed'],
     [strpos($bookingModel, "'R.course_code'") !== false && strpos($bookingModel, "'course_code' => trim") !== false, 'booking details include the course code'],
     [strpos($bookingView, 'LNG_Course code') !== false && strpos($bookingView, "course_code']") !== false, 'booking detail modal displays a provided course code'],
     [strpos($categories, "'cellElement' => 'checkbox'") !== false && strpos($categories, 'category-course-code-toggle') !== false, 'admin page renders a per-row toggle'],
@@ -36,7 +36,8 @@ $checks = [
     [strpos($tableManagerSrc, "value === true || value === 1 || value === '1' || value === 'true'") !== false, 'TableManager source treats numeric 1 as checked'],
     [strpos($tableManagerDist, '!0===l||1===l||"1"===l||"true"===l') !== false, 'built now.table.min.js bundle matches the source fix (bundle must be rebuilt after TableManager.js changes)'],
     [strpos($adminBookingForm, "id='course-code-field'") !== false && strpos($adminBookingForm, "id='course_code'") !== false, 'admin booking form has a course code field (it used to be missing, so admins could not save bookings for categories that require one)'],
-    [strpos($roomlyAdminJs, 'topicCourseCodeRequirementMap') !== false && strpos($roomlyAdminJs, 'updateCourseCodeVisibility') !== false, 'admin booking form JS wires up the course-code requirement/visibility logic']
+    [strpos($roomlyAdminJs, 'topicCourseCodeRequirementMap') !== false && strpos($roomlyAdminJs, 'updateCourseCodeVisibility') !== false, 'admin booking form JS wires up the course-code requirement/visibility logic'],
+    [strpos($adminBookingForm, "data-on-load='initBookingForm'") !== false, "admin booking form's <form> has data-on-load so initBookingForm reruns with the loaded options.topic/options.use payload - without it, initBookingForm only ever sees the empty pre-load data and the course-code field never shows, no matter which category is selected"]
 ];
 
 $failed = 0;

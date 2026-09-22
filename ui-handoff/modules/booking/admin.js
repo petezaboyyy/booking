@@ -434,7 +434,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260922-course-code-fix-1';
+const ROOMLY_ROLE_UI_VERSION = '20260922-admin-data-on-load-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
