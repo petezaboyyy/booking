@@ -768,21 +768,14 @@ class Model extends \Kotchasan\Model
                 'R.id',
                 'R.topic',
                 'R.course_code',
-                'R.comment',
                 'R.attendees',
-                'R.created_at',
-                'R.department',
                 'U.name member_name',
                 'U.username member_email',
                 'Room.name room_name',
                 'RoomNumber.value room_number',
                 'Building.value room_building',
-                'UseMeta.value use_id',
-                'Accessories.value accessories',
-                'MemberDept.value member_department',
                 'O.begin',
-                'O.end',
-                'O.updated_at approved_at'
+                'O.end'
             )
             ->from('reservation R')
             ->join('reservation_occurrence O', ['O.reservation_id', 'R.id'])
@@ -790,9 +783,6 @@ class Model extends \Kotchasan\Model
             ->join('rooms Room', ['Room.id', 'R.room_id'], 'LEFT')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'Room.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Building', [['Building.room_id', 'Room.id'], ['Building.name', 'building']], 'LEFT')
-            ->join('reservation_data UseMeta', [['UseMeta.reservation_id', 'R.id'], ['UseMeta.name', 'use']], 'LEFT')
-            ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
-            ->join('user_meta MemberDept', [['MemberDept.member_id', 'R.member_id'], ['MemberDept.name', 'department']], 'LEFT')
             ->where([
                 ['R.id', $ids],
                 ['R.status', Helper::STATUS_APPROVED],

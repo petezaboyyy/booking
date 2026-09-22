@@ -174,7 +174,7 @@ try {
     check(ApiController::isAdmin(null) === false, 'an anonymous caller is refused');
 
     // =====================================================================
-    echo "\n[4b] Only approved rows can be ticked\n";
+    echo "\n[4b] Checkboxes stay on every row so Delete keeps working\n";
     // =====================================================================
     $options = (new \ReflectionMethod(\Booking\Approvals\Controller::class, 'getOptions'));
     $options->setAccessible(true);
@@ -183,11 +183,21 @@ try {
         [],
         (object) ['id' => 1, 'status' => 1, 'permission' => ['super_admin']]
     )['_table'];
+    check(!empty($table['showCheckbox']), 'an admin gets checkboxes');
     check(
-        ($table['checkboxCondition'] ?? '') === '${status == '.Helper::STATUS_APPROVED.'}',
-        'the table only offers a checkbox on approved rows'
+        empty($table['checkboxCondition']),
+        'no row is locked out of selection — cancelled and rejected requests must stay deletable'
     );
-    check(!empty($table['showCheckbox']), 'an admin still gets checkboxes at all');
+    check(
+        ($table['actions']['delete'] ?? '') === 'Delete',
+        'bulk delete is still offered'
+    );
+    // The export, not the checkbox, is what refuses a non-approved request.
+    $mixed = Model::getApprovedExportRows([$a, $rejected, $pendingC]);
+    check(
+        count($mixed) === 3 && (int) $mixed[0]->id === $a,
+        'ticking approved, rejected and pending together exports only the approved one'
+    );
 
     // =====================================================================
     echo "\n[5] Cells are safe for a spreadsheet\n";
@@ -204,7 +214,7 @@ try {
     check(cell(42) === '42', 'a number becomes its text');
 
     // =====================================================================
-    echo "\n[6] The export carries nothing private beyond the requester\n";
+    echo "\n[6] The sheet carries what a schedule needs and no more\n";
     // =====================================================================
     $fresh = makeBooking((int) $room->id, (int) $member->id, '_fields', '2037-05-04 13:00:00', '2037-05-04 14:00:00');
     Model::approveReservation($fresh, 1, ['approve' => 1, 'reason' => '']);
@@ -212,7 +222,13 @@ try {
     foreach (['password', 'salt', 'token', 'line_uid', 'telegram_id', 'permission', 'activatecode'] as $secret) {
         check(!property_exists($row, $secret), 'the query never selects '.$secret);
     }
-    check(property_exists($row, 'member_email'), 'it does carry the requester email, which the sheet is for');
+    foreach (['member_name', 'member_email', 'room_name', 'room_number', 'room_building', 'begin', 'end', 'topic', 'attendees'] as $needed) {
+        check(property_exists($row, $needed), 'the sheet can show '.$needed);
+    }
+    // Columns dropped as noise are no longer fetched either.
+    foreach (['comment', 'created_at', 'approved_at', 'use_id', 'accessories', 'department', 'member_department'] as $dropped) {
+        check(!property_exists($row, $dropped), 'no longer queries '.$dropped.', which the sheet stopped showing');
+    }
 } finally {
     foreach (array_unique($createdIds) as $id) {
         $db->delete('reservation_occurrence', ['reservation_id', $id], 0);

@@ -6,7 +6,6 @@
 namespace Booking\Export;
 
 use Booking\Booking\Model as BookingModel;
-use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
 use Kotchasan\Language;
@@ -81,34 +80,28 @@ class Controller extends ApiController
                 return $this->errorResponse('This booking has no approved dates to export', 404);
             }
 
-            $dayNames = Language::get('DATE_LONG', []);
+            // Who booked, when, and which room — plus the few things a room
+            // needs prepared for. Dropped as noise: department (nothing ever
+            // sets it), weekday (the date says it), purpose (duplicates the
+            // topic), accessories and notes (usually empty, and notes are free
+            // text that stretches the row), and the submitted/approved
+            // timestamps, which are workflow history rather than a schedule.
             $datas = [];
             foreach ($rows as $row) {
                 $begin = (string) $row->begin;
                 $end = (string) $row->end;
-                $department = (string) ($row->department ?? '');
-                if ($department === '') {
-                    $department = (string) ($row->member_department ?? '');
-                }
+                $room = trim((string) $row->room_number.' '.(string) $row->room_name);
                 $datas[] = array_map([self::class, 'cell'], [
                     $row->id,
                     $row->member_name,
                     $row->member_email,
-                    Helper::getDepartmentName($department) ?: $department,
-                    $row->room_number,
-                    $row->room_name,
+                    $room,
                     $row->room_building,
-                    trim((string) $row->course_code.' '.(string) $row->topic),
-                    Helper::getUseLabel($row->use_id ?? ''),
                     substr($begin, 0, 10),
-                    $dayNames[(int) date('w', strtotime($begin))] ?? '',
                     substr($begin, 11, 5),
                     substr($end, 11, 5),
-                    $row->attendees,
-                    Helper::formatAccessoryNames($row->accessories ?? ''),
-                    $row->comment,
-                    $row->created_at,
-                    $row->approved_at
+                    trim((string) $row->course_code.' '.(string) $row->topic),
+                    $row->attendees
                 ]);
             }
 
@@ -116,21 +109,13 @@ class Controller extends ApiController
                 Language::get('Request ID'),
                 Language::get('Requester'),
                 Language::get('Email'),
-                Language::get('Department'),
-                Language::get('Room No.'),
                 Language::get('Room'),
                 Language::get('Building'),
-                Language::get('Topic'),
-                Language::get('Use for'),
                 Language::get('Date'),
-                Language::get('Day'),
                 Language::get('Begin time'),
                 Language::get('End time'),
-                Language::get('Attendees number'),
-                Language::get('Accessories'),
-                Language::get('Notes'),
-                Language::get('Created'),
-                Language::get('Approved at')
+                Language::get('Topic'),
+                Language::get('Attendees number')
             ];
 
             \Index\Log\Model::add(

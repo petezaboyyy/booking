@@ -655,6 +655,18 @@ function syncDeleteOnlyBulkAction(tableId) {
  */
 const csvExportTables = new Set(['bookingApprovals']);
 const csvExportSelection = new Map();
+// id -> status for the rows currently rendered, so the button can tell which
+// of the ticked rows the export would actually accept.
+const csvExportRowStatus = new Map();
+const CSV_EXPORTABLE_STATUS = 1;
+
+function csvExportableIds(tableId) {
+    const statuses = csvExportRowStatus.get(tableId);
+    const selected = csvExportSelection.get(tableId) || [];
+    if (!statuses) return selected;
+
+    return selected.filter(id => Number(statuses.get(String(id))) === CSV_EXPORTABLE_STATUS);
+}
 
 function syncCsvExportButton(tableId) {
     if (!csvExportTables.has(tableId)) return;
@@ -674,16 +686,25 @@ function syncCsvExportButton(tableId) {
         button.dataset.i18n = 'Download CSV';
         button.textContent = Now.translate('Download CSV');
         button.addEventListener('click', () => {
-            const selected = csvExportSelection.get(tableId) || [];
-            if (selected.length === 0) return;
+            const exportable = csvExportableIds(tableId);
+            if (exportable.length === 0) return;
             // Content-Disposition: attachment means the browser downloads and
             // stays on the approvals page.
-            window.location.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(selected.join(','))}`;
+            window.location.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(exportable.join(','))}`;
         });
         actionButton.parentElement.insertBefore(button, actionButton.nextSibling);
     }
 
-    button.disabled = (csvExportSelection.get(tableId) || []).length === 0;
+    // Every row keeps its checkbox so bulk Delete still reaches cancelled and
+    // rejected requests. Only approved ones are worth exporting, so the button
+    // sends just those and says so when the two counts differ.
+    const selected = csvExportSelection.get(tableId) || [];
+    const exportable = csvExportableIds(tableId);
+    const label = Now.translate('Download CSV');
+    button.textContent = exportable.length < selected.length
+        ? `${label} (${exportable.length}/${selected.length})`
+        : label;
+    button.disabled = exportable.length === 0;
 }
 
 EventManager.on('table:selectionChange', event => {
@@ -697,9 +718,16 @@ EventManager.on('table:selectionChange', event => {
 
 EventManager.on('table:render', event => {
     const tableId = event.data?.tableId;
-    // A re-render rebuilds the action bar, so the link has to be put back and
-    // the stale selection dropped along with the checkboxes.
-    csvExportSelection.set(tableId, []);
+    if (csvExportTables.has(tableId)) {
+        // A re-render rebuilds the action bar, so the button has to be put back
+        // and the stale selection dropped along with the checkboxes.
+        csvExportSelection.set(tableId, []);
+        csvExportRowStatus.set(tableId, new Map(
+            (event.data?.data || [])
+                .filter(row => row && row.id !== undefined && row.id !== null)
+                .map(row => [String(row.id), row.status])
+        ));
+    }
     syncDeleteOnlyBulkAction(tableId);
     syncCsvExportButton(tableId);
 });
