@@ -1718,18 +1718,21 @@ const EventCalendar = {
     return events
       .filter(event => this.shouldRenderMonthInlineEvent(event, date))
       .sort((eventA, eventB) => {
+        // Room first, then time - matches the day-detail modal's order
+        // (showDayDetailModal), so the inline preview and the "+N more"
+        // list read the same way instead of two different orderings.
+        const roomA = String(eventA?.room_number || eventA?.room_name || eventA.title || '');
+        const roomB = String(eventB?.room_number || eventB?.room_name || eventB.title || '');
+        const roomCompare = roomA.localeCompare(roomB, undefined, {numeric: true, sensitivity: 'base'});
+        if (roomCompare !== 0) {
+          return roomCompare;
+        }
+
         const occurrenceA = this.getTimedOccurrenceForDate(eventA, date, 'month');
         const occurrenceB = this.getTimedOccurrenceForDate(eventB, date, 'month');
         const timeA = occurrenceA?.start?.getTime() ?? eventA.start.getTime();
         const timeB = occurrenceB?.start?.getTime() ?? eventB.start.getTime();
-
-        if (timeA !== timeB) {
-          return timeA - timeB;
-        }
-
-        const roomA = String(eventA?.room_number || eventA?.room_name || eventA.title || '');
-        const roomB = String(eventB?.room_number || eventB?.room_name || eventB.title || '');
-        return roomA.localeCompare(roomB, undefined, {numeric: true, sensitivity: 'base'});
+        return timeA - timeB;
       });
   },
 

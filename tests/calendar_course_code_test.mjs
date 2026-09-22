@@ -67,3 +67,31 @@ if (monthOrder.join(',') !== expected.join(',')) {
 }
 
 console.log('ok   month cell sorts same-time events by room, not by title text');
+
+// Different time slots, same rooms - the day-detail modal groups by room
+// then time within it (R-0001 08:00, R-0001 13:00, R-0002 08:00, ...). The
+// month cell's inline preview must read the same way, not time-first, or
+// the "+N more" list and the visible chips disagree on ordering.
+const slot = (room, startH, endH, id) => ({
+  id, title: `R-${room}, ${String(startH).padStart(2, '0')}:00-${String(endH).padStart(2, '0')}:00`,
+  start: `2026-09-22 ${String(startH).padStart(2, '0')}:00:00`,
+  end: `2026-09-22 ${String(endH).padStart(2, '0')}:00:00`,
+  allDay: false, room_number: room
+});
+const mixedTimes = calendar.normalizeEvents([
+  slot('0004', 13, 16, 1), slot('0001', 8, 12, 2), slot('0002', 13, 16, 3),
+  slot('0001', 13, 16, 4), slot('0004', 8, 12, 5), slot('0002', 8, 12, 6)
+], calendar.config);
+const mixedOrder = calendar
+  .getMonthInlineEventsForDate(mixedTimes, new Date(2026, 8, 22))
+  .map(e => e.title);
+const mixedExpected = [
+  'R-0001, 08:00-12:00', 'R-0001, 13:00-16:00',
+  'R-0002, 08:00-12:00', 'R-0002, 13:00-16:00',
+  'R-0004, 08:00-12:00', 'R-0004, 13:00-16:00'
+];
+if (mixedOrder.join('|') !== mixedExpected.join('|')) {
+  throw new Error(`Month cell did not group different-time events by room first: got ${mixedOrder.join('|')}`);
+}
+
+console.log('ok   month cell groups events by room first, then by time within the room');
