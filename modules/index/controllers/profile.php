@@ -119,8 +119,14 @@ class Controller extends ApiController
 
             // Admin-only fields
             if ($isSuperAdmin) {
-                $permission = $request->post('permission', [])->filter('a-z0-9_');
+                $permission = self::normalizePermissions($request->postRaw('permission', []), $login);
                 $save['permission'] = empty($permission) ? '' : ','.implode(',', $permission).',';
+                if (in_array('super_admin', $permission, true)) {
+                    // A super admin must also be an active administrator.
+                    // Keep this equivalent to the former manual TiDB update.
+                    $save['status'] = 1;
+                    $save['active'] = 1;
+                }
                 $roomIds = BookingHelper::normalizeRoomIds($request->post('booking_rooms', [])->toInt());
                 $validRoomIds = array_map('intval', array_column(BookingHelper::getRoomOptions(false), 'value'));
                 $save['metas'][BookingHelper::META_BOOKING_ROOMS] = array_values(array_intersect($roomIds, $validRoomIds));
@@ -229,6 +235,52 @@ class Controller extends ApiController
         }
 
         return $save;
+    }
+
+    /**
+     * Normalize the tags payload and keep only registered permission keys.
+     *
+     * @param mixed $input
+     * @param object|null $login
+     * @return array
+     */
+    private static function normalizePermissions($input, $login = null): array
+    {
+        if (is_string($input)) {
+            $decoded = json_decode($input, true);
+            $input = is_array($decoded) ? $decoded : explode(',', trim($input, ','));
+        }
+
+        $values = [];
+        $flatten = static function ($items) use (&$flatten, &$values): void {
+            foreach (is_array($items) ? $items : [$items] as $item) {
+                if (is_array($item)) {
+                    $flatten($item);
+                } elseif (is_scalar($item)) {
+                    $values[] = trim((string) $item);
+                }
+            }
+        };
+        $flatten($input);
+
+        $options = \Gcms\Controller::getPermissionOptions($login);
+        $allowed = array_column($options, 'value');
+        $labels = [];
+        foreach ($options as $option) {
+            if (isset($option['value'], $option['text'])) {
+                $labels[strtolower(trim((string) $option['text']))] = (string) $option['value'];
+            }
+        }
+
+        $permissions = [];
+        foreach ($values as $value) {
+            $permission = $labels[strtolower($value)] ?? strtolower($value);
+            if (in_array($permission, $allowed, true)) {
+                $permissions[$permission] = $permission;
+            }
+        }
+
+        return array_values($permissions);
     }
 
     /**

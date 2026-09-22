@@ -78,6 +78,7 @@ class Controller extends \Kotchasan\KBase
     public static function getPermissionOptions($login = null)
     {
         $permissions = [
+            ['value' => 'super_admin', 'text' => 'Super Admin'],
             ['value' => 'can_config', 'text' => '{LNG_Can configure} {LNG_the system}'],
             ['value' => 'can_view_usage_history', 'text' => '{LNG_Can view} {LNG_system usage history}']
         ];

@@ -89,9 +89,15 @@ class Model extends \Kotchasan\Model
                 $newPermission[] = $permission;
             }
 
+            $save = ['permission' => empty($newPermission) ? '' : ','.implode(',', $newPermission).','];
+            if ($permission === 'super_admin' && $value) {
+                $save['status'] = 1;
+                $save['active'] = 1;
+            }
+
             static::createQuery()
                 ->update('user')
-                ->set(['permission' => empty($newPermission) ? '' : ','.implode(',', $newPermission).','])
+                ->set($save)
                 ->where(['id', $id])
                 ->execute();
         }
