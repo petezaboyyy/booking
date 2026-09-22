@@ -2155,7 +2155,7 @@ html[data-theme='dark'] .roomly-theme-sun {
 }
 
 .roomly-rooms-heading > div:first-child > p {
-  margin: 8px 0 0 68px;
+  margin: 8px 0 0;
   color: var(--roomly-muted);
   font-size: 16px;
   line-height: 1.55;
