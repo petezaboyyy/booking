@@ -80,8 +80,9 @@ class Controller extends ApiController
                 return $this->errorResponse('This booking has no approved dates to export', 404);
             }
 
-            // Who booked, when, and which room — plus the few things a room
-            // needs prepared for. Dropped as noise: department (nothing ever
+            // Who booked, when, which room, and which course — plus the few
+            // things a room needs prepared for. Course code is its own column
+            // so a timetable can be sorted and filtered by it. Dropped as noise: department (nothing ever
             // sets it), weekday (the date says it), purpose (duplicates the
             // topic), accessories and notes (usually empty, and notes are free
             // text that stretches the row), and the submitted/approved
@@ -100,7 +101,8 @@ class Controller extends ApiController
                     substr($begin, 0, 10),
                     substr($begin, 11, 5),
                     substr($end, 11, 5),
-                    trim((string) $row->course_code.' '.(string) $row->topic),
+                    $row->course_code,
+                    $row->topic,
                     $row->attendees
                 ]);
             }
@@ -114,6 +116,7 @@ class Controller extends ApiController
                 Language::get('Date'),
                 Language::get('Begin time'),
                 Language::get('End time'),
+                Language::get('Course code'),
                 Language::get('Topic'),
                 Language::get('Attendees number')
             ];
