@@ -45,7 +45,7 @@ class Model extends \Index\Categories\Model
                 'label' => 'Require course code',
                 'cellElement' => 'checkbox',
                 'class' => 'category-course-code-toggle',
-                'cellClass' => 'center'
+                'cellClass' => 'checkbox'
             ];
         }
 
