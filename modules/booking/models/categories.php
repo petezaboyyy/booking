@@ -11,7 +11,7 @@ class Model extends \Index\Categories\Model
     {
         $languages = \Index\Languages\Model::getLanguageColumns();
         $query = static::createQuery()
-            ->select('category_id', 'topic', 'language', 'requires_course_code')
+            ->select('category_id', 'topic', 'topic_en', 'language', 'requires_course_code')
             ->from('category')
             ->where(['type', $type]);
         $data = [];
@@ -19,6 +19,7 @@ class Model extends \Index\Categories\Model
             if (!isset($data[$item->category_id])) {
                 $data[$item->category_id] = [
                     'id' => $item->category_id,
+                    'topic_en' => (string) $item->topic_en,
                     'requires_course_code' => (int) $item->requires_course_code
                 ];
                 foreach ($languages as $lng) {
@@ -27,7 +28,7 @@ class Model extends \Index\Categories\Model
             }
         }
         if (empty($data)) {
-            $data[0] = ['id' => 1, 'requires_course_code' => 0];
+            $data[0] = ['id' => 1, 'topic_en' => '', 'requires_course_code' => 0];
             foreach ($languages as $lng) {
                 $data[0][$lng] = '';
             }
@@ -40,6 +41,12 @@ class Model extends \Index\Categories\Model
     {
         $columns = parent::getColumns($multiLanguage, $type);
         if ($type === 'use') {
+            $columns[] = [
+                'field' => 'topic_en',
+                'label' => 'English name',
+                'cellElement' => 'text',
+                'size' => 20
+            ];
             $columns[] = [
                 'field' => 'requires_course_code',
                 'label' => 'Require course code',
@@ -75,5 +82,30 @@ class Model extends \Index\Categories\Model
         $requirements = static::courseCodeRequirements();
 
         return !empty($requirements[(string) $categoryId]);
+    }
+
+    /**
+     * Optional English display name per "use" category, keyed by category_id.
+     * Categories without one set are simply absent from the result - callers
+     * fall back to the Thai name, which is always required.
+     *
+     * @return array<string, string>
+     */
+    public static function englishNames(): array
+    {
+        $names = [];
+        $rows = static::createQuery()
+            ->select('category_id', 'topic_en')
+            ->from('category')
+            ->where(['type', 'use'])
+            ->fetchAll();
+        foreach ($rows as $row) {
+            $en = trim((string) $row->topic_en);
+            if ($en !== '') {
+                $names[(string) $row->category_id] = $en;
+            }
+        }
+
+        return $names;
     }
 }

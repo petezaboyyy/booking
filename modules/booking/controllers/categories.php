@@ -6,6 +6,7 @@
 namespace Booking\Categories;
 
 use Kotchasan\Http\Request;
+use Kotchasan\Text;
 
 class Controller extends \Index\Categories\Controller
 {
@@ -27,6 +28,12 @@ class Controller extends \Index\Categories\Controller
         if ($type === 'use') {
             $values = $request->post('requires_course_code', [])->toInt();
             $item['requires_course_code'] = empty($values[$key]) ? 0 : 1;
+
+            // Optional English name shown when the site language is English.
+            // Left blank, the Thai `topic` is used everywhere - see
+            // Helper::localizeCategoryOptionText() and Model::englishNames().
+            $topicEn = $request->post('topic_en', [])->topic();
+            $item['topic_en'] = isset($topicEn[$key]) ? Text::topic($topicEn[$key]) : '';
         }
 
         return $item;

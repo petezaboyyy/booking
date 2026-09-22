@@ -1,5 +1,19 @@
 // Show each booking topic in the calendar's day-list modal. EventCalendar
 // already supports descriptions, but compact day lists hide them by default.
+if (window.EventCalendar && !EventCalendar._bookingCourseCodeFilterEnabled) {
+    const originalEventMatchesFilter = EventCalendar.eventMatchesFilter.bind(EventCalendar);
+    EventCalendar.eventMatchesFilter = (event, query) => {
+        const terms = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const courseCodes = [event?.course_code, event?.courseCode, event?.data?.course_code, event?.data?.courseCode]
+            .filter(Boolean)
+            .map(value => String(value).toLowerCase());
+        return terms.length === 0 || terms.every(term =>
+            originalEventMatchesFilter(event, term) || courseCodes.some(code => code.includes(term))
+        );
+    };
+    EventCalendar._bookingCourseCodeFilterEnabled = true;
+}
+
 if (window.EventCalendar && !EventCalendar._bookingTopicDescriptionsEnabled) {
     const originalBuildModalEventItem = EventCalendar.buildModalEventItem.bind(EventCalendar);
     EventCalendar.buildModalEventItem = (instance, event, options = {}) => {
@@ -61,7 +75,16 @@ if (window.EventCalendar && !EventCalendar._dayDetailModalPatched) {
         const {config} = instance;
         const strings = this.getLocaleStrings(config.locale);
 
-        const eventListHtml = (events || []).map(event => this.buildModalEventItem(instance, event, {
+        // Room, not start time - the API orders by O.begin, so a busy slot
+        // shared by several rooms otherwise lists in whatever order the DB
+        // happened to return, not something a reader can scan by room.
+        const sortedEvents = [...(events || [])].sort((a, b) => {
+            const roomA = String(a?.room_number || a?.room_name || '');
+            const roomB = String(b?.room_number || b?.room_name || '');
+            return roomA.localeCompare(roomB, undefined, {numeric: true, sensitivity: 'base'});
+        });
+
+        const eventListHtml = sortedEvents.map(event => this.buildModalEventItem(instance, event, {
             clickable: true,
             localeStrings: strings,
             context: 'day-list',
@@ -434,7 +457,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260922-guest-rooms-1';
+const ROOMLY_ROLE_UI_VERSION = '20260922-guest-rooms-daylist-1';
 
 /**
  * Has this visitor signed in at all?

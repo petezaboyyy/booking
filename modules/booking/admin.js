@@ -434,7 +434,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260922-guest-rooms-1';
+const ROOMLY_ROLE_UI_VERSION = '20260922-guest-rooms-daylist-1';
 
 /**
  * Has this visitor signed in at all?

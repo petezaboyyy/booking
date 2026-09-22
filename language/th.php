@@ -1,6 +1,7 @@
 <?php
 /* language/th.php */
 return array(
+  'Filter by room number, name, or course code...' => 'ค้นหาห้อง เลขห้อง หรือรหัสวิชา...',
   'Computer' => 'เครื่องคอมพิวเตอร์',
   'Projector' => 'จอโปรเจ็คเตอร์',
   'Visualizer' => 'เครื่องฉายแผ่นใส',
@@ -385,6 +386,7 @@ return array(
   'Cost' => 'ต้นทุน',
   'Course code' => 'รหัสวิชา',
   'Require course code' => 'ต้องกรอกรหัสวิชา',
+  'English name' => 'ชื่อภาษาอังกฤษ (ไม่บังคับ)',
   'Could not activate theme' => 'ไม่สามารถเปิดใช้งานธีมได้',
   'Country' => 'ประเทศ',
   'Cover' => 'ปก',

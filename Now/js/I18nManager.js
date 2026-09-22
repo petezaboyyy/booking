@@ -679,6 +679,15 @@ I18nManager.setStoredLocale = function(locale) {
   } catch (e) {
     console.warn('I18nManager: Unable to write to localStorage', e);
   }
+  try {
+    // The PHP backend (Kotchasan\Language::name()) reads this same cookie to
+    // decide which language to render server-generated text in - e.g. a
+    // booking category's optional English name. Without this, the server
+    // never learns which language the client-side toggle picked.
+    document.cookie = 'my_lang=' + encodeURIComponent(locale) + ';path=/;max-age=2592000;SameSite=Lax';
+  } catch (e) {
+    // non-fatal: worst case the server keeps using its previous language
+  }
 };
 
 // Component: lang-toggle
