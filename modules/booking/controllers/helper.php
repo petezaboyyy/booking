@@ -460,7 +460,39 @@ class Controller extends \Gcms\Controller
         // Categories are admin-managed and rarely change; skip the 1-hour
         // query cache so a rename shows up on the booking form right away
         // instead of the next time it happens to expire.
-        return BookingCategory::init(true, true, false)->toOptions('use');
+        $options = BookingCategory::init(true, true, false)->toOptions('use');
+
+        return self::localizeCategoryOptionText($options);
+    }
+
+    /**
+     * Swaps each option's display text for its English name when the current
+     * site language is English and one is set (Booking\Categories\Model::englishNames()).
+     * The option `value` is left untouched - only the label shown to the user changes.
+     *
+     * @param array $options each item shaped like ['value' => category_id, 'text' => ..., ...]
+     *
+     * @return array
+     */
+    private static function localizeCategoryOptionText(array $options): array
+    {
+        if (Language::name() !== 'en') {
+            return $options;
+        }
+        $englishNames = \Booking\Categories\Model::englishNames();
+        if (empty($englishNames)) {
+            return $options;
+        }
+        foreach ($options as &$opt) {
+            $en = $englishNames[(string) ($opt['value'] ?? '')] ?? '';
+            if ($en !== '') {
+                $opt['text'] = $en;
+                $opt['label'] = $en;
+            }
+        }
+        unset($opt);
+
+        return $options;
     }
 
     /**
@@ -477,16 +509,22 @@ class Controller extends \Gcms\Controller
     {
         $categories = BookingCategory::init(true, true, false)->toOptions('use', true);
         $courseCodeRequirements = \Booking\Categories\Model::courseCodeRequirements();
+        // The booking record always stores the Thai name (`value` below), so a
+        // category keeps the same stored topic no matter what language the
+        // booker had selected - only the label shown in the dropdown changes.
+        $englishNames = Language::name() === 'en' ? \Booking\Categories\Model::englishNames() : [];
         $options = [];
 
         foreach ($categories as $cat) {
             $thText = $cat['text'];
+            $categoryId = (string) $cat['value'];
+            $displayText = $englishNames[$categoryId] ?? $thText;
             $options[] = [
                 'value' => $thText,
-                'text' => $thText,
-                'label' => $thText,
-                'category_id' => (string) $cat['value'],
-                'requires_course_code' => !empty($courseCodeRequirements[(string) $cat['value']])
+                'text' => $displayText,
+                'label' => $displayText,
+                'category_id' => $categoryId,
+                'requires_course_code' => !empty($courseCodeRequirements[$categoryId])
             ];
         }
 

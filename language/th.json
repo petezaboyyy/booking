@@ -383,6 +383,7 @@
     "Cost": "ต้นทุน",
     "Course code": "รหัสวิชา",
     "Require course code": "ต้องกรอกรหัสวิชา",
+    "English name": "ชื่อภาษาอังกฤษ (ไม่บังคับ)",
     "Could not activate theme": "ไม่สามารถเปิดใช้งานธีมได้",
     "Country": "ประเทศ",
     "Cover": "ปก",

@@ -20,6 +20,7 @@ CREATE TABLE `{prefix}_category` (
   `category_id` varchar(10) DEFAULT '0',
   `language` varchar(2) DEFAULT '',
   `topic` varchar(150) NOT NULL,
+  `topic_en` varchar(150) NOT NULL DEFAULT '',
   `color` varchar(16) DEFAULT NULL,
   `requires_course_code` tinyint(1) NOT NULL DEFAULT 0,
   `is_active` tinyint(1) DEFAULT 1
