@@ -61,7 +61,16 @@ if (window.EventCalendar && !EventCalendar._dayDetailModalPatched) {
         const {config} = instance;
         const strings = this.getLocaleStrings(config.locale);
 
-        const eventListHtml = (events || []).map(event => this.buildModalEventItem(instance, event, {
+        // Room, not start time - the API orders by O.begin, so a busy slot
+        // shared by several rooms otherwise lists in whatever order the DB
+        // happened to return, not something a reader can scan by room.
+        const sortedEvents = [...(events || [])].sort((a, b) => {
+            const roomA = String(a?.room_number || a?.room_name || '');
+            const roomB = String(b?.room_number || b?.room_name || '');
+            return roomA.localeCompare(roomB, undefined, {numeric: true, sensitivity: 'base'});
+        });
+
+        const eventListHtml = sortedEvents.map(event => this.buildModalEventItem(instance, event, {
             clickable: true,
             localeStrings: strings,
             context: 'day-list',
