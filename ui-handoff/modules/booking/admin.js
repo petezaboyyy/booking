@@ -1,5 +1,19 @@
 // Show each booking topic in the calendar's day-list modal. EventCalendar
 // already supports descriptions, but compact day lists hide them by default.
+if (window.EventCalendar && !EventCalendar._bookingCourseCodeFilterEnabled) {
+    const originalEventMatchesFilter = EventCalendar.eventMatchesFilter.bind(EventCalendar);
+    EventCalendar.eventMatchesFilter = (event, query) => {
+        const terms = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const courseCodes = [event?.course_code, event?.courseCode, event?.data?.course_code, event?.data?.courseCode]
+            .filter(Boolean)
+            .map(value => String(value).toLowerCase());
+        return terms.length === 0 || terms.every(term =>
+            originalEventMatchesFilter(event, term) || courseCodes.some(code => code.includes(term))
+        );
+    };
+    EventCalendar._bookingCourseCodeFilterEnabled = true;
+}
+
 if (window.EventCalendar && !EventCalendar._bookingTopicDescriptionsEnabled) {
     const originalBuildModalEventItem = EventCalendar.buildModalEventItem.bind(EventCalendar);
     EventCalendar.buildModalEventItem = (instance, event, options = {}) => {
