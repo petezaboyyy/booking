@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")/.."
 
-for t in booking_guardrails_test booking_validation_test booking_security_test booking_occurrence_integration_test; do
+for t in booking_guardrails_test booking_validation_test booking_security_test booking_csv_export_test booking_occurrence_integration_test; do
     printf '\n======== %s ========\n' "$t"
     docker compose exec -T web php "tests/$t.php"
 done

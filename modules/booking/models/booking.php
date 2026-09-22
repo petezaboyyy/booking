@@ -746,6 +746,63 @@ class Model extends \Kotchasan\Model
     }
 
     /**
+     * Rows for the approved-booking CSV: one per approved date, in one query.
+     *
+     * Both statuses are checked in SQL rather than filtered afterwards, so a
+     * request that is not approved, or whose dates were all cancelled, simply
+     * returns nothing and the caller refuses the download.
+     *
+     * @param int $id
+     *
+     * @return array
+     */
+    public static function getApprovedExportRows(int $id): array
+    {
+        if ($id <= 0) {
+            return [];
+        }
+
+        return static::createQuery()
+            ->select(
+                'R.id',
+                'R.topic',
+                'R.course_code',
+                'R.comment',
+                'R.attendees',
+                'R.created_at',
+                'R.department',
+                'U.name member_name',
+                'U.username member_email',
+                'Room.name room_name',
+                'RoomNumber.value room_number',
+                'Building.value room_building',
+                'UseMeta.value use_id',
+                'Accessories.value accessories',
+                'MemberDept.value member_department',
+                'O.begin',
+                'O.end',
+                'O.updated_at approved_at'
+            )
+            ->from('reservation R')
+            ->join('reservation_occurrence O', ['O.reservation_id', 'R.id'])
+            ->join('user U', ['U.id', 'R.member_id'], 'LEFT')
+            ->join('rooms Room', ['Room.id', 'R.room_id'], 'LEFT')
+            ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'Room.id'], ['RoomNumber.name', 'number']], 'LEFT')
+            ->join('rooms_meta Building', [['Building.room_id', 'Room.id'], ['Building.name', 'building']], 'LEFT')
+            ->join('reservation_data UseMeta', [['UseMeta.reservation_id', 'R.id'], ['UseMeta.name', 'use']], 'LEFT')
+            ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
+            ->join('user_meta MemberDept', [['MemberDept.member_id', 'R.member_id'], ['MemberDept.name', 'department']], 'LEFT')
+            ->where([
+                ['R.id', $id],
+                ['R.status', Helper::STATUS_APPROVED],
+                ['O.status', Helper::STATUS_APPROVED]
+            ])
+            ->orderBy('O.begin')
+            ->orderBy('RoomNumber.value')
+            ->fetchAll();
+    }
+
+    /**
      * Active/total occurrence counts for many reservations in one query.
      * Table listings call this once per page instead of once per row.
      *
