@@ -69,7 +69,7 @@ class ApiController extends \Kotchasan\KBase
                     // Try Controller pattern first (v1/auth/login -> V1\Auth\Controller::login)
                     $controllerClass = ucfirst($module).'\\'.ucfirst($method).'\\Controller';
 
-                    if (class_exists($controllerClass) && method_exists($controllerClass, $action)) {
+                    if (class_exists($controllerClass) && self::isDispatchableAction($controllerClass, $action)) {
                         // Instantiate controller and call method
                         $controller = new $controllerClass();
                         $result = $controller->$action($request);
@@ -253,6 +253,50 @@ class ApiController extends \Kotchasan\KBase
         }
 
         throw new ApiException('IP not allowed', 403);
+    }
+
+    /**
+     * Decide whether a route may call this method on this controller.
+     *
+     * method_exists() alone is not enough, and each gap it leaves was
+     * reachable without an account:
+     *
+     * - Every controller inherits this very index() from ApiController, so a
+     *   route with no action of its own (api/index/config) dispatched back
+     *   into the dispatcher, which read the same route again and recursed
+     *   until the 128 MB limit killed the worker. A clean 404 is what a
+     *   missing class already returned; a missing action now matches it.
+     * - method_exists() is true for protected and private methods, so
+     *   api/index/auth/validateCsrfToken reached an internal helper.
+     * - A public static helper such as isAdmin() could be called through an
+     *   instance too, answering for a route that was never an endpoint.
+     *
+     * An action therefore counts only when the controller (or a parent that
+     * is not this dispatcher) declares it as an ordinary public method.
+     *
+     * @param string $controllerClass
+     * @param string $action
+     *
+     * @return bool
+     */
+    private static function isDispatchableAction($controllerClass, $action)
+    {
+        if (!method_exists($controllerClass, $action)) {
+            return false;
+        }
+
+        try {
+            $method = new \ReflectionMethod($controllerClass, $action);
+        } catch (\ReflectionException $e) {
+            return false;
+        }
+
+        if (!$method->isPublic() || $method->isStatic() || $method->isAbstract()) {
+            return false;
+        }
+
+        // Anything declared here is plumbing, never a route.
+        return $method->getDeclaringClass()->getName() !== self::class;
     }
 
     /**
