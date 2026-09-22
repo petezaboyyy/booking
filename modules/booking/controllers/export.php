@@ -6,6 +6,7 @@
 namespace Booking\Export;
 
 use Booking\Booking\Model as BookingModel;
+use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
 use Kotchasan\Language;
@@ -80,8 +81,10 @@ class Controller extends ApiController
                 return $this->errorResponse('This booking has no approved dates to export', 404);
             }
 
-            // Who booked, when, and which room — plus the few things a room
-            // needs prepared for. Dropped as noise: department (nothing ever
+            // Who booked, when, which room, which course, and what the room
+            // has to have ready. Course code is its own column so a timetable
+            // can be sorted by it, and the free-text note goes last so a long
+            // one does not push the columns anyone scans apart. Dropped as noise: department (nothing ever
             // sets it), weekday (the date says it), purpose (duplicates the
             // topic), accessories and notes (usually empty, and notes are free
             // text that stretches the row), and the submitted/approved
@@ -100,8 +103,12 @@ class Controller extends ApiController
                     substr($begin, 0, 10),
                     substr($begin, 11, 5),
                     substr($end, 11, 5),
-                    trim((string) $row->course_code.' '.(string) $row->topic),
-                    $row->attendees
+                    $row->course_code,
+                    $row->topic,
+                    Helper::getUseLabel($row->use_id ?? ''),
+                    $row->attendees,
+                    Helper::formatAccessoryNames($row->accessories ?? ''),
+                    $row->comment
                 ]);
             }
 
@@ -114,8 +121,12 @@ class Controller extends ApiController
                 Language::get('Date'),
                 Language::get('Begin time'),
                 Language::get('End time'),
+                Language::get('Course code'),
                 Language::get('Topic'),
-                Language::get('Attendees number')
+                Language::get('Use for'),
+                Language::get('Attendees number'),
+                Language::get('Accessories'),
+                Language::get('Notes')
             ];
 
             \Index\Log\Model::add(

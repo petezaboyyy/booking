@@ -770,12 +770,15 @@ class Model extends \Kotchasan\Model
                 'R.id',
                 'R.topic',
                 'R.course_code',
+                'R.comment',
                 'R.attendees',
                 'U.name member_name',
                 'U.username member_email',
                 'Room.name room_name',
                 'RoomNumber.value room_number',
                 'Building.value room_building',
+                'UseMeta.value use_id',
+                'Accessories.value accessories',
                 'O.begin',
                 'O.end'
             )
@@ -785,6 +788,8 @@ class Model extends \Kotchasan\Model
             ->join('rooms Room', ['Room.id', 'R.room_id'], 'LEFT')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'Room.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Building', [['Building.room_id', 'Room.id'], ['Building.name', 'building']], 'LEFT')
+            ->join('reservation_data UseMeta', [['UseMeta.reservation_id', 'R.id'], ['UseMeta.name', 'use']], 'LEFT')
+            ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
             ->where([
                 ['R.id', $ids],
                 ['R.status', Helper::STATUS_APPROVED],
