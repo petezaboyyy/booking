@@ -426,7 +426,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260922-admin-booking-parity-1';
+const ROOMLY_ROLE_UI_VERSION = '20260922-course-code-fix-1';
 
 function roleTemplateGuard(routePath, memberTemplate, adminTemplate, memberTitle, adminTitle = memberTitle) {
     return (_params, _from, authManager) => {
@@ -1799,19 +1799,21 @@ function initBookingForm(element, data) {
         const roomMetaEl = element.querySelector('#admin-room-meta');
 
         // Each "Use for" category independently controls whether course code is
-        // required. The admin form keeps `use` (category id) as the visible
-        // field and `topic` (category name) as the hidden mirror, so the
-        // requirement is looked up by the same text `topic` carries.
+        // required. `data.options.topic` is the only options list that carries
+        // `requires_course_code`, but it's keyed by category text, which can
+        // drift from the visible `use` select's text (renames, whitespace).
+        // The admin form already has the category id in `useInput.value`, so
+        // key the lookup by `category_id` instead - it can't drift.
         const topicCourseCodeRequirementMap = new Map();
         if (data?.options?.topic && Array.isArray(data.options.topic)) {
             data.options.topic.forEach(opt => {
-                if (opt.value) topicCourseCodeRequirementMap.set(String(opt.value), Boolean(opt.requires_course_code));
+                if (opt.category_id) topicCourseCodeRequirementMap.set(String(opt.category_id), Boolean(opt.requires_course_code));
             });
         }
 
         const updateCourseCodeVisibility = () => {
-            if (!courseCodeField || !courseCodeInput || !topicInput) return;
-            const show = topicCourseCodeRequirementMap.get(String(topicInput.value || '')) === true;
+            if (!courseCodeField || !courseCodeInput || !useInput) return;
+            const show = topicCourseCodeRequirementMap.get(String(useInput.value || '')) === true;
             courseCodeField.style.display = show ? '' : 'none';
             courseCodeInput.toggleAttribute('required', show);
         };
@@ -2081,16 +2083,19 @@ function initBookingForm(element, data) {
     }
 
     // Each "Use for" category independently controls whether course code is required.
+    // Keyed by trimmed text (not category_id) because the visible <option> values
+    // here are the category's display text, not its id - trim so a stray space in
+    // the category name (set on the admin Categories page) can't break the match.
     const topicCourseCodeRequirementMap = new Map();
     if (data?.options?.topic && Array.isArray(data.options.topic)) {
         data.options.topic.forEach(opt => {
-            if (opt.value) topicCourseCodeRequirementMap.set(String(opt.value), Boolean(opt.requires_course_code));
+            if (opt.value) topicCourseCodeRequirementMap.set(String(opt.value).trim(), Boolean(opt.requires_course_code));
         });
     }
 
     const updateCourseCodeVisibility = () => {
         if (!courseCodeField || !courseCodeInput || !topicInput) return;
-        const show = topicCourseCodeRequirementMap.get(String(topicInput.value || '')) === true;
+        const show = topicCourseCodeRequirementMap.get(String(topicInput.value || '').trim()) === true;
         courseCodeField.style.display = show ? '' : 'none';
         courseCodeInput.toggleAttribute('required', show);
         if (!show) {
