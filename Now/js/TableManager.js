@@ -4909,7 +4909,7 @@ const TableManager = {
       case 'checkbox':
       case 'radio':
         // Checkbox/radio
-        config.checked = value === true || value === '1' || value === 'true';
+        config.checked = value === true || value === 1 || value === '1' || value === 'true';
         if (attributes.options) {
           config.options = attributes.options;
         }

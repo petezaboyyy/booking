@@ -12,7 +12,7 @@ Now.getManager('component').define('topbar', {
         </div>
         <div class="topbar-right">
           <!-- User profile dropdown -->
-          <button class="user-profile btn dropdown">
+          <button type="button" class="user-profile btn dropdown">
             <img data-attr="src:data.avatar" class="avatar">
             <span class="user-name" data-text="data.name"></span>
             <ul>
@@ -23,7 +23,7 @@ Now.getManager('component').define('topbar', {
           </button>
 
           <!-- Language toggle component (cycles configured locales) -->
-          <button class="lang-toggle btn dropdown" data-component="lang-toggle" data-locales="en,th" title="Switch language">
+          <button type="button" class="lang-toggle btn dropdown" data-component="lang-toggle" data-locales="en,th" title="Switch language">
             <span data-lang-label>EN</span>
             <ul>
               <li><a data-locale="th">TH</a></li>
@@ -32,10 +32,10 @@ Now.getManager('component').define('topbar', {
           </button>
 
           <!-- Theme toggle component (cycles configured themes) -->
-          <button data-component="config" class="nav-link" title="Toggle theme"></button>
+          <button type="button" data-component="config" class="nav-link" title="Toggle theme"></button>
 
           <!-- Menu toggle component (toggles side menu) -->
-          <button class="menu-toggle sidemenu-toggle">
+          <button type="button" class="menu-toggle sidemenu-toggle">
             <span class="toggle-icon">
               <span class="toggle-bar"></span>
               <span class="toggle-bar"></span>

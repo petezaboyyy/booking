@@ -467,8 +467,8 @@ class Controller extends \Gcms\Controller
      * Topic options based on the 'use' category.
      * Returns a sequential array of ['value' => $text, 'text' => $text, 'label' => $text,
      * 'category_id' => $id], always the category's current name as set on the
-     * Categories admin page. category_id lets the frontend key behaviour (e.g. the
-     * course-code field) off a specific category without depending on its name.
+     * Categories admin page. The course-code requirement is included per category
+     * so the booking form never depends on a fixed category ID.
      *
      * @param string|null $currentTopic
      * @return array
@@ -476,6 +476,7 @@ class Controller extends \Gcms\Controller
     public static function getTopicOptions(?string $currentTopic = null): array
     {
         $categories = BookingCategory::init(true, true, false)->toOptions('use', true);
+        $courseCodeRequirements = \Booking\Categories\Model::courseCodeRequirements();
         $options = [];
 
         foreach ($categories as $cat) {
@@ -484,7 +485,8 @@ class Controller extends \Gcms\Controller
                 'value' => $thText,
                 'text' => $thText,
                 'label' => $thText,
-                'category_id' => (string) $cat['value']
+                'category_id' => (string) $cat['value'],
+                'requires_course_code' => !empty($courseCodeRequirements[(string) $cat['value']])
             ];
         }
 
@@ -497,7 +499,7 @@ class Controller extends \Gcms\Controller
                 }
             }
             if (!$found) {
-                $options[] = ['value' => $currentTopic, 'text' => $currentTopic, 'label' => $currentTopic, 'category_id' => ''];
+                $options[] = ['value' => $currentTopic, 'text' => $currentTopic, 'label' => $currentTopic, 'category_id' => '', 'requires_course_code' => false];
             }
         }
         return $options;

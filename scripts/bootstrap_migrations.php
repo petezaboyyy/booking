@@ -30,7 +30,7 @@ class BootstrapMigrations
     {
         // The marker is versioned: adding a migration must not be skipped on a
         // container whose datas/ still carries an older run's marker.
-        $marker = $rootPath.$dataFolder.'migrations/schema-v3.done';
+        $marker = $rootPath.$dataFolder.'migrations/schema-v4.done';
         if (is_file($marker)) {
             return;
         }
@@ -46,6 +46,12 @@ class BootstrapMigrations
 
             require_once $rootPath.'scripts/migrations/schema_sync.php';
             $applied = booking_sync_missing_columns($pdo, (string) $cfg['prefix'], $rootPath.'install/database.sql');
+            foreach ($applied as $sql) {
+                if (strpos($sql, 'ADD COLUMN `requires_course_code`') !== false) {
+                    $table = $cfg['prefix'].'_category';
+                    $pdo->exec("UPDATE `$table` SET `requires_course_code` = 1 WHERE `type` = 'use' AND `category_id` = '1'");
+                }
+            }
             $summary .= '; added '.count($applied).' missing column(s)';
             foreach ($applied as $sql) {
                 $summary .= "\n  ".$sql;

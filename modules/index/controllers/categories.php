@@ -26,6 +26,9 @@ use Kotchasan\Text;
  */
 class Controller extends ApiController
 {
+    /** @var string Category model used by this module */
+    protected $modelClass = Model::class;
+
     /**
      * Supported category types and their labels
      *
@@ -72,7 +75,8 @@ class Controller extends ApiController
                 return $this->redirectResponse('/404', 'No data available', 404);
             }
 
-            $category = Model::get($type);
+            $modelClass = $this->modelClass;
+            $category = $modelClass::get($type);
             if (!$category) {
                 return $this->redirectResponse('/404', 'No data available', 404);
             }
@@ -82,7 +86,7 @@ class Controller extends ApiController
                     'type' => $type,
                     'title' => $this->categories[$type],
                     'options' => [
-                        'columns' => Model::getColumns($this->multiLanguage),
+                        'columns' => $modelClass::getColumns($this->multiLanguage, $type),
                         'data' => $category
                     ]
                 ]
@@ -145,12 +149,13 @@ class Controller extends ApiController
                         } else {
                             $topic = Text::topic($langValues[$lng][$key]);
                             if ($topic !== '') {
-                                $save[$category_id.$lng] = [
+                                $item = [
                                     'type' => $type,
                                     'category_id' => $category_id,
                                     'language' => $lng,
                                     'topic' => $topic
                                 ];
+                                $save[$category_id.$lng] = $this->prepareCategorySaveData($request, $item, $key, $type);
                                 $check[$category_id][$topic] = $lng;
                             }
                         }
@@ -177,7 +182,8 @@ class Controller extends ApiController
             }
 
             // Save
-            Model::save($type, $save, $this->multiLanguage);
+            $modelClass = $this->modelClass;
+            $modelClass::save($type, $save, $this->multiLanguage);
 
             // Log
             \Index\Log\Model::add(0, 'index', 'Save', 'Categories saved '.ucfirst($type).' ('.count($save).' rows)', $login->id);
@@ -187,5 +193,13 @@ class Controller extends ApiController
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }
+    }
+
+    /**
+     * Allow a module to persist fields that belong to its category rows.
+     */
+    protected function prepareCategorySaveData(Request $request, array $item, $key, string $type): array
+    {
+        return $item;
     }
 }

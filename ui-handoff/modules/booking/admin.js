@@ -1889,20 +1889,17 @@ function initBookingForm(element, data) {
         roomImageMap.set(String(data.room_id), data.room_image);
     }
 
-    // Topic -> category id, so the course-code field can key off a specific
-    // Categories entry (id 1) instead of matching its name, which admins can
-    // rename freely.
-    const topicCategoryMap = new Map();
+    // Each "Use for" category independently controls whether course code is required.
+    const topicCourseCodeRequirementMap = new Map();
     if (data?.options?.topic && Array.isArray(data.options.topic)) {
         data.options.topic.forEach(opt => {
-            if (opt.value) topicCategoryMap.set(String(opt.value), String(opt.category_id || ''));
+            if (opt.value) topicCourseCodeRequirementMap.set(String(opt.value), Boolean(opt.requires_course_code));
         });
     }
 
     const updateCourseCodeVisibility = () => {
         if (!courseCodeField || !courseCodeInput || !topicInput) return;
-        const categoryId = topicCategoryMap.get(String(topicInput.value || '')) || '';
-        const show = categoryId === '1';
+        const show = topicCourseCodeRequirementMap.get(String(topicInput.value || '')) === true;
         courseCodeField.style.display = show ? '' : 'none';
         courseCodeInput.toggleAttribute('required', show);
         if (!show) {
@@ -2242,8 +2239,7 @@ function initBookingForm(element, data) {
     function isFieldBlank(input) {
         if (!input) return false;
         if (input.id === 'course_code' && !input.hasAttribute('required')) {
-            // Only required when the selected topic is category id 1; the
-            // required attribute is toggled alongside the field's visibility.
+            // Only required when enabled for the selected "Use for" category.
             return false;
         }
         const val = input.value ? input.value.trim() : '';
