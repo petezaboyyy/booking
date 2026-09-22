@@ -2779,6 +2779,15 @@ div.modal {
   color: #d1dbe5;
 }
 
+.ec-modal-events,
+.modal-body:has(.ec-modal-event) {
+  container-type: inline-size;
+}
+
+.ec-modal-event {
+  border-left-width: 10cqi;
+}
+
 [data-theme='dark'] .ec-modal-event {
   background: rgba(255, 255, 255, 0.06) !important;
   color: #edf6ff !important;
