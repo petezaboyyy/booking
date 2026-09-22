@@ -54,7 +54,6 @@
   <main class='roomly-content roomly-profile-content'>
     <section class='roomly-page-heading'>
       <div class='roomly-page-heading-copy'>
-        <div class='roomly-page-heading-icon icon-profile' aria-hidden='true'></div>
         <div>
           <h1 id='profile-page-title' data-i18n>Edit profile</h1>
           <p class='roomly-page-description' data-i18n>Personal and contact information</p>
@@ -100,13 +99,13 @@
                     <span data-i18n>Full Name</span>
                     <span class='roomly-required-star' aria-hidden='true'>*</span>
                   </label>
-                  <span class='form-control icon-profile'>
+                  <span class='form-control'>
                     <input type='text' id='name' name='name' data-attr='value:name' required maxlength='150' autocomplete='off'>
                   </span>
                 </div>
                 <div class='width50'>
                   <label for='department' data-i18n>Department</label>
-                  <span class='form-control icon-group'>
+                  <span class='form-control'>
                     <select id='department' name='department' data-attr="value:metas['department'][0],disabled:!isSuperAdmin" data-options-key='department'>
                       <option value='' data-i18n>Not specified</option>
                     </select>
@@ -117,7 +116,7 @@
               <div class='form-group'>
                 <div class='width50'>
                   <label for='sex' data-i18n>Gender</label>
-                  <span class='form-control icon-sex'>
+                  <span class='form-control'>
                     <select id='sex' name='sex' data-options-key='sex' data-attr='value:sex'>
                       <option value='' data-i18n>Not specified</option>
                     </select>
@@ -125,7 +124,7 @@
                 </div>
                 <div class='width50'>
                   <label for='birthday' data-i18n>Birthday</label>
-                  <span class='form-control icon-calendar'>
+                  <span class='form-control'>
                     <input type='date' id='birthday' name='birthday' data-attr='value:birthday'>
                   </span>
                   <div class='dropdown-display roomly-birthday-display'></div>
@@ -150,13 +149,13 @@
               <div class='form-group'>
                 <div class='width50'>
                   <label for='phone' data-i18n>Phone</label>
-                  <span class='form-control icon-phone'>
+                  <span class='form-control'>
                     <input type='tel' id='phone' name='phone' data-attr='value:phone' maxlength='20' autocomplete='off'>
                   </span>
                 </div>
                 <div class='width50'>
                   <label for='backup_email' data-i18n>Backup Email</label>
-                  <span class='form-control icon-email'>
+                  <span class='form-control'>
                     <input type='email' id='backup_email' name='backup_email' data-attr='value:backup_email' maxlength='255' autocomplete='email'>
                   </span>
                 </div>
