@@ -645,17 +645,112 @@ function syncDeleteOnlyBulkAction(tableId) {
     actionButton.classList.add('btn-danger');
 }
 
+/**
+ * "Download CSV" beside the bulk Delete button on the approvals table.
+ *
+ * It is a plain link, not a table action: TableManager posts actions over
+ * AJAX, which cannot hand the browser a file. The ticked ids come from
+ * table:selectionChange, and the export endpoint re-checks that the caller is
+ * an admin and that each request is actually approved.
+ */
+// tableId -> id of the header container the button lives in.
+const csvExportTables = new Map([['bookingApprovals', 'approvals_header_actions']]);
+const csvExportSelection = new Map();
+// id -> status for the rows currently rendered, so the button can tell whether
+// everything ticked is exportable.
+const csvExportRowStatus = new Map();
+const CSV_EXPORTABLE_STATUS = 1;
+
+/**
+ * The ticked ids, but only when every one of them is approved.
+ * A selection with anything else in it exports nothing: mixing the two is
+ * almost always a mis-click, and silently dropping rows from the file is
+ * worse than refusing.
+ */
+function csvExportableIds(tableId) {
+    const statuses = csvExportRowStatus.get(tableId);
+    const selected = csvExportSelection.get(tableId) || [];
+    if (!statuses || selected.length === 0) return [];
+
+    const allApproved = selected.every(id => Number(statuses.get(String(id))) === CSV_EXPORTABLE_STATUS);
+
+    return allApproved ? selected : [];
+}
+
+function syncCsvExportButton(tableId) {
+    if (!csvExportTables.has(tableId)) return;
+
+    const container = document.getElementById(csvExportTables.get(tableId));
+    if (!container) return;
+
+    // Same gate as the checkboxes: no bulk action bar means no permission to
+    // select rows, so there is nothing to export.
+    if (!document.getElementById(`action_button_${tableId}`)) {
+        const stale = document.getElementById(`export_csv_${tableId}`);
+        if (stale) stale.remove();
+        return;
+    }
+
+    let button = document.getElementById(`export_csv_${tableId}`);
+    if (!button) {
+        // A button, not a link: the router claims anchor clicks and would treat
+        // export.php as an SPA route, landing on the 404 page instead of
+        // downloading. Nothing intercepts a button.
+        button = document.createElement('button');
+        button.id = `export_csv_${tableId}`;
+        button.type = 'button';
+        button.className = 'btn btn-success icon-download';
+        button.dataset.i18n = 'Download CSV';
+        button.textContent = Now.translate('Download CSV');
+        button.addEventListener('click', () => {
+            const exportable = csvExportableIds(tableId);
+            if (exportable.length === 0) return;
+            // Content-Disposition: attachment means the browser downloads and
+            // stays on the approvals page.
+            window.location.href = `export.php?module=booking&typ=csv&ids=${encodeURIComponent(exportable.join(','))}`;
+        });
+        container.appendChild(button);
+    }
+
+    // Every row keeps its checkbox so bulk Delete still reaches cancelled and
+    // rejected requests; the button just refuses anything but approved ones.
+    const selected = csvExportSelection.get(tableId) || [];
+    const exportable = csvExportableIds(tableId);
+    button.disabled = exportable.length === 0;
+    button.title = selected.length > 0 && exportable.length === 0
+        ? Now.translate('Only approved requests can be exported')
+        : '';
+}
+
 EventManager.on('table:selectionChange', event => {
-    syncDeleteOnlyBulkAction(event.data?.tableId);
+    const tableId = event.data?.tableId;
+    if (csvExportTables.has(tableId)) {
+        csvExportSelection.set(tableId, (event.data?.selectedRows || []).filter(Boolean));
+        syncCsvExportButton(tableId);
+    }
+    syncDeleteOnlyBulkAction(tableId);
 });
 
 EventManager.on('table:render', event => {
-    syncDeleteOnlyBulkAction(event.data?.tableId);
+    const tableId = event.data?.tableId;
+    if (csvExportTables.has(tableId)) {
+        // A re-render rebuilds the action bar, so the button has to be put back
+        // and the stale selection dropped along with the checkboxes.
+        csvExportSelection.set(tableId, []);
+        csvExportRowStatus.set(tableId, new Map(
+            (event.data?.data || [])
+                .filter(row => row && row.id !== undefined && row.id !== null)
+                .map(row => [String(row.id), row.status])
+        ));
+    }
+    syncDeleteOnlyBulkAction(tableId);
+    syncCsvExportButton(tableId);
 });
 
 const refreshDeleteOnlyBulkActions = () => {
     requestAnimationFrame(() => {
         deleteOnlyBulkActionTables.forEach(tableId => syncDeleteOnlyBulkAction(tableId));
+        csvExportTables.forEach(tableId => syncCsvExportButton(tableId));
     });
 };
 EventManager.on('route:changed', refreshDeleteOnlyBulkActions);

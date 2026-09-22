@@ -1,4 +1,9 @@
 <?php
+/** CLI only. Never reachable over HTTP. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 /** Regression check: topbar controls must not submit forms they are rendered inside. */
 
 $topbar = file_get_contents(dirname(__DIR__).'/js/components/topbar.js');

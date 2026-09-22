@@ -1839,5 +1839,12 @@ return array(
   'HH:MM' => 'ชช:นน',
   'Select or search topic...' => 'พิมพ์ค้นหา หรือเลือกหัวข้อ...',
   'No topics found' => 'ไม่พบหัวข้อที่ตรงกับการค้นหา',
-  'Select repeat option...' => 'เลือกรูปแบบการเกิดซ้ำ...'
+  'Select repeat option...' => 'เลือกรูปแบบการเกิดซ้ำ...',
+  'Download CSV' => 'ดาวน์โหลด CSV',
+  'Request ID' => 'รหัสคำขอ',
+  'Day' => 'วันในสัปดาห์',
+  'Approved at' => 'วันที่อนุมัติ',
+  'This booking has no approved dates to export' => 'คำขอนี้ไม่มีวันจองที่อนุมัติแล้วให้ดาวน์โหลด',
+  'Select fewer requests to export at once' => 'เลือกคำขอน้อยลงเพื่อดาวน์โหลดในครั้งเดียว',
+  'Only approved requests can be exported' => 'ดาวน์โหลดได้เฉพาะคำขอที่อนุมัติแล้ว'
 );

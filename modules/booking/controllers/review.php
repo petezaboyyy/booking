@@ -58,6 +58,10 @@ class Controller extends ApiController
                 ];
             }, BookingModel::getOccurrences((int) $row->id));
 
+            $approvedOccurrences = count(array_filter($occurrences, static function ($occurrence) {
+                return $occurrence['status'] === Helper::STATUS_APPROVED;
+            }));
+
             return $this->successResponse([
                 'id' => (int) $row->id,
                 'member_name' => (string) $row->member_name,
@@ -79,6 +83,7 @@ class Controller extends ApiController
                 'canCancelAction' => Helper::canCancelBookingByOfficer($row),
                 'version' => (int) ($row->version ?? 1),
                 'occurrence_count' => count($occurrences),
+                'approved_occurrence_count' => $approvedOccurrences,
                 'occurrences' => $occurrences
             ], 'Review data retrieved');
         } catch (\Exception $e) {

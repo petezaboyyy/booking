@@ -746,6 +746,54 @@ class Model extends \Kotchasan\Model
     }
 
     /**
+     * Rows for the approved-booking CSV: one per approved date, in one query.
+     *
+     * Both statuses are checked in SQL rather than filtered afterwards, so a
+     * request that is not approved, or whose dates were all cancelled, simply
+     * returns nothing and the caller refuses the download.
+     *
+     * @param array|int $ids One reservation id, or several to export together
+     *
+     * @return array
+     */
+    public static function getApprovedExportRows($ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', is_array($ids) ? $ids : [$ids]))));
+        if (empty($ids)) {
+            return [];
+        }
+
+        return static::createQuery()
+            ->select(
+                'R.id',
+                'R.topic',
+                'R.course_code',
+                'R.attendees',
+                'U.name member_name',
+                'U.username member_email',
+                'Room.name room_name',
+                'RoomNumber.value room_number',
+                'Building.value room_building',
+                'O.begin',
+                'O.end'
+            )
+            ->from('reservation R')
+            ->join('reservation_occurrence O', ['O.reservation_id', 'R.id'])
+            ->join('user U', ['U.id', 'R.member_id'], 'LEFT')
+            ->join('rooms Room', ['Room.id', 'R.room_id'], 'LEFT')
+            ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'Room.id'], ['RoomNumber.name', 'number']], 'LEFT')
+            ->join('rooms_meta Building', [['Building.room_id', 'Room.id'], ['Building.name', 'building']], 'LEFT')
+            ->where([
+                ['R.id', $ids],
+                ['R.status', Helper::STATUS_APPROVED],
+                ['O.status', Helper::STATUS_APPROVED]
+            ])
+            ->orderBy('O.begin')
+            ->orderBy('RoomNumber.value')
+            ->fetchAll();
+    }
+
+    /**
      * Active/total occurrence counts for many reservations in one query.
      * Table listings call this once per page instead of once per row.
      *

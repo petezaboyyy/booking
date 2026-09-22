@@ -1,4 +1,9 @@
 <?php
+/** CLI only. Never reachable over HTTP. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 /** CLI regression check for the per-category course-code setting. */
 
 $root = dirname(__DIR__);
