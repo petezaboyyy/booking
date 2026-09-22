@@ -174,6 +174,22 @@ try {
     check(ApiController::isAdmin(null) === false, 'an anonymous caller is refused');
 
     // =====================================================================
+    echo "\n[4b] Only approved rows can be ticked\n";
+    // =====================================================================
+    $options = (new \ReflectionMethod(\Booking\Approvals\Controller::class, 'getOptions'));
+    $options->setAccessible(true);
+    $table = $options->invoke(
+        (new \ReflectionClass(\Booking\Approvals\Controller::class))->newInstanceWithoutConstructor(),
+        [],
+        (object) ['id' => 1, 'status' => 1, 'permission' => ['super_admin']]
+    )['_table'];
+    check(
+        ($table['checkboxCondition'] ?? '') === '${status == '.Helper::STATUS_APPROVED.'}',
+        'the table only offers a checkbox on approved rows'
+    );
+    check(!empty($table['showCheckbox']), 'an admin still gets checkboxes at all');
+
+    // =====================================================================
     echo "\n[5] Cells are safe for a spreadsheet\n";
     // =====================================================================
     check(cell('=cmd|calc') === "'=cmd|calc", 'a leading = is neutralised');

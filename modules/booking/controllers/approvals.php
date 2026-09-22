@@ -124,6 +124,10 @@ class Controller extends \Gcms\Table
         return [
             '_table' => [
                 'showCheckbox' => $isSuperAdmin,
+                // Only an approved request has anything to export, so only those
+                // rows get a checkbox. Note this is the same checkbox the bulk
+                // Delete uses, so delete now reaches approved requests only.
+                'checkboxCondition' => '${status == '.Helper::STATUS_APPROVED.'}',
                 'actions' => $isSuperAdmin ? [
                     'delete' => 'Delete'
                 ] : [],
