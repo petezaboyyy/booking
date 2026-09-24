@@ -200,3 +200,53 @@ if (!(switcherIndex >= 0 && categoryIndex > switcherIndex)) {
 }
 
 console.log('ok   view switcher and category filter are grouped together, filter to the right of the switcher');
+
+// Custom dropdown: the period-picker's year <select> and the category filter
+// should open a .roomly-combobox-dropdown panel (same markup/classes as the
+// room-search combobox on the booking form) instead of relying on the
+// browser's native <select> listbox, so every dropdown in the app looks the
+// same when opened.
+const dropdownHost = dom.window.document.createElement('div');
+calendar.create(dropdownHost, {
+  events: categoryEvents,
+  defaultView: 'month',
+  showPeriodPicker: true,
+  showCategoryFilter: true,
+  showViewSwitcher: true
+});
+
+const yearSelect = dropdownHost.querySelector('.ec-period-year');
+if (!yearSelect) {
+  throw new Error('Period picker did not render a .ec-period-year select');
+}
+
+yearSelect.dispatchEvent(new dom.window.MouseEvent('mousedown', {bubbles: true, cancelable: true}));
+const openPanel = dom.window.document.querySelector('.roomly-combobox-dropdown.is-open');
+if (!openPanel) {
+  throw new Error('Clicking the year select did not open a .roomly-combobox-dropdown panel');
+}
+
+const items = openPanel.querySelectorAll('.roomly-combobox-item');
+if (items.length < 2) {
+  throw new Error(`Expected multiple year options in the custom dropdown, got ${items.length}`);
+}
+
+const targetValue = items[1].dataset.value;
+items[1].dispatchEvent(new dom.window.MouseEvent('pointerdown', {bubbles: true, cancelable: true}));
+if (yearSelect.value !== targetValue) {
+  throw new Error(`Selecting a custom dropdown item did not update the underlying select: expected ${targetValue}, got ${yearSelect.value}`);
+}
+if (dom.window.document.querySelector('.roomly-combobox-dropdown.is-open')) {
+  throw new Error('Custom dropdown panel did not close after selecting an item');
+}
+
+console.log('ok   period-picker year select opens a room-booking-style custom dropdown and selection updates the underlying select');
+
+const beforeDestroyPanelCount = dom.window.document.querySelectorAll('.roomly-combobox-dropdown').length;
+calendar.destroy(dropdownHost);
+const afterDestroyPanelCount = dom.window.document.querySelectorAll('.roomly-combobox-dropdown').length;
+if (!(afterDestroyPanelCount < beforeDestroyPanelCount)) {
+  throw new Error('Destroying the calendar did not remove its custom dropdown panels from the document');
+}
+
+console.log('ok   destroying the calendar removes its custom dropdown panels');

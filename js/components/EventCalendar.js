@@ -965,6 +965,184 @@ const EventCalendar = {
   },
 
   /**
+   * Give a plain <select> (period-picker month/year, category filter) a
+   * custom-rendered options list instead of the browser's native listbox -
+   * reuses the same .roomly-combobox-dropdown/.roomly-combobox-item classes
+   * as the room-search combobox on the booking form (templates/booking/
+   * style.css, loaded globally), so every dropdown in the app opens looking
+   * the same. The <select> keeps holding the real value and firing 'change'
+   * as normal; this only replaces what appears when it's clicked open.
+   */
+  enhanceSelectWithCustomDropdown(instance, selectEl) {
+    if (!selectEl || selectEl._ecCustomDropdown) return;
+    selectEl._ecCustomDropdown = true;
+
+    const panel = document.createElement('div');
+    panel.className = 'roomly-combobox-dropdown';
+    panel.setAttribute('role', 'listbox');
+    document.body.appendChild(panel);
+
+    instance.customDropdownPanels = instance.customDropdownPanels || [];
+    instance.customDropdownPanels.push(panel);
+
+    let isOpen = false;
+    let highlightedIndex = -1;
+
+    const getItems = () => Array.from(panel.querySelectorAll('.roomly-combobox-item'));
+
+    const closePanel = () => {
+      if (!isOpen) return;
+      isOpen = false;
+      panel.classList.remove('is-open');
+      highlightedIndex = -1;
+    };
+
+    const positionPanel = () => {
+      if (!isOpen) return;
+      const rect = selectEl.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      panel.style.position = 'fixed';
+      panel.style.boxSizing = 'border-box';
+      const width = Math.max(Math.round(rect.width), 160);
+      panel.style.width = `${width}px`;
+      panel.style.maxWidth = `${viewportWidth - 16}px`;
+
+      let left = Math.round(rect.left);
+      if (left + width > viewportWidth - 8) left = Math.max(8, viewportWidth - width - 8);
+      if (left < 8) left = 8;
+      panel.style.left = `${left}px`;
+
+      const panelHeight = Math.min(320, panel.offsetHeight || panel.scrollHeight || 240);
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      if (spaceBelow < panelHeight + 10 && spaceAbove > spaceBelow) {
+        panel.style.top = `${Math.round(Math.max(8, rect.top - panelHeight - 6))}px`;
+        panel.style.bottom = 'auto';
+      } else {
+        panel.style.top = `${Math.round(rect.bottom + 6)}px`;
+        panel.style.bottom = 'auto';
+      }
+    };
+
+    const selectValue = (value) => {
+      if (selectEl.value !== value) {
+        selectEl.value = value;
+        selectEl.dispatchEvent(new Event('change', {bubbles: true}));
+      }
+      closePanel();
+      selectEl.focus();
+    };
+
+    const renderItems = () => {
+      panel.innerHTML = '';
+      const options = Array.from(selectEl.options || []);
+
+      if (!options.length) {
+        const empty = document.createElement('div');
+        empty.className = 'roomly-combobox-empty';
+        empty.textContent = '...';
+        panel.appendChild(empty);
+        return;
+      }
+
+      options.forEach(opt => {
+        const isSelected = opt.value === selectEl.value;
+        const item = document.createElement('div');
+        item.className = 'roomly-combobox-item' + (isSelected ? ' is-selected' : '');
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        item.dataset.value = opt.value;
+
+        const text = document.createElement('span');
+        text.className = 'roomly-combobox-item-text';
+        text.textContent = opt.textContent;
+        item.appendChild(text);
+
+        if (isSelected) {
+          const check = document.createElement('span');
+          check.className = 'roomly-combobox-check';
+          check.setAttribute('aria-hidden', 'true');
+          item.appendChild(check);
+        }
+
+        const handleSelect = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          selectValue(opt.value);
+        };
+        item.addEventListener('pointerdown', handleSelect);
+        panel.appendChild(item);
+      });
+    };
+
+    const openPanel = () => {
+      if (isOpen) return;
+      isOpen = true;
+      renderItems();
+      panel.classList.add('is-open');
+      positionPanel();
+      const items = getItems();
+      highlightedIndex = items.findIndex(item => item.classList.contains('is-selected'));
+      if (highlightedIndex >= 0) {
+        items[highlightedIndex].classList.add('is-highlighted');
+        items[highlightedIndex].scrollIntoView({block: 'nearest'});
+      }
+    };
+
+    const moveHighlight = (delta) => {
+      const items = getItems();
+      if (!items.length) return;
+      items.forEach(item => item.classList.remove('is-highlighted'));
+      highlightedIndex = (highlightedIndex + delta + items.length) % items.length;
+      items[highlightedIndex].classList.add('is-highlighted');
+      items[highlightedIndex].scrollIntoView({block: 'nearest'});
+    };
+
+    this.addTrackedListener(instance, selectEl, 'mousedown', (e) => {
+      e.preventDefault();
+      selectEl.focus();
+      if (isOpen) closePanel(); else openPanel();
+    });
+
+    this.addTrackedListener(instance, selectEl, 'keydown', (e) => {
+      if (['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(e.key) && !isOpen) {
+        e.preventDefault();
+        openPanel();
+        return;
+      }
+      if (!isOpen) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        moveHighlight(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveHighlight(-1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const items = getItems();
+        if (highlightedIndex >= 0 && items[highlightedIndex]) {
+          selectValue(items[highlightedIndex].dataset.value);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closePanel();
+      }
+    });
+
+    this.addTrackedListener(instance, document, 'pointerdown', (e) => {
+      if (!isOpen) return;
+      if (panel.contains(e.target) || selectEl.contains(e.target)) return;
+      closePanel();
+    });
+
+    this.addTrackedListener(instance, window, 'resize', positionPanel);
+    this.addTrackedListener(instance, window, 'scroll', positionPanel, true);
+  },
+
+  /**
    * Create period picker controls for month view.
    */
   createPeriodPicker(instance) {
@@ -979,11 +1157,13 @@ const EventCalendar = {
     monthSelect.className = 'ec-period-select ec-period-month';
     monthSelect.setAttribute('aria-label', strings.selectMonth || strings.month);
     this.addTrackedListener(instance, monthSelect, 'change', () => this.handlePeriodPickerChange(instance));
+    this.enhanceSelectWithCustomDropdown(instance, monthSelect);
 
     const yearSelect = document.createElement('select');
     yearSelect.className = 'ec-period-select ec-period-year';
     yearSelect.setAttribute('aria-label', strings.selectYear || strings.year);
     this.addTrackedListener(instance, yearSelect, 'change', () => this.handleYearPickerChange(instance));
+    this.enhanceSelectWithCustomDropdown(instance, yearSelect);
 
     picker.appendChild(monthSelect);
     picker.appendChild(yearSelect);
@@ -1110,6 +1290,7 @@ const EventCalendar = {
     this.addTrackedListener(instance, select, 'change', () => {
       this.setCategoryFilter(instance, select.value);
     });
+    this.enhanceSelectWithCustomDropdown(instance, select);
 
     instance.categoryFilterElement = select;
     this.updateCategoryFilterOptions(instance);
@@ -4138,6 +4319,12 @@ const EventCalendar = {
     // Clear intervals/timeouts if any
     if (instance.updateTimer) {
       clearInterval(instance.updateTimer);
+    }
+
+    // Remove custom dropdown panels (appended to document.body, outside element)
+    if (instance.customDropdownPanels && instance.customDropdownPanels.length > 0) {
+      instance.customDropdownPanels.forEach(panel => panel.remove());
+      instance.customDropdownPanels = [];
     }
 
     // Clear DOM
