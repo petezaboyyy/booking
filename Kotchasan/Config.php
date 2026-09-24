@@ -211,12 +211,15 @@ class Config
      */
     public static function save($config, $file)
     {
+        $config = (array) $config;
+        // Read the env-backed entries before fopen() truncates the file.
+        $envEntries = self::envBackedEntries($file);
         $f = @fopen($file, 'wb');
         if ($f !== false) {
             if (!preg_match('/^.*\/([^\/]+)\.php?/', $file, $match)) {
                 $match[1] = 'config';
             }
-            fwrite($f, '<'."?php\n/* $match[1].php */\nreturn ".var_export((array) $config, true).';');
+            fwrite($f, '<'."?php\n/* $match[1].php */\nreturn ".self::exportKeepingEnv($config, $envEntries).';');
             fclose($f);
             if (function_exists('opcache_invalidate')) {
                 // Reset file cache
@@ -230,6 +233,74 @@ class Config
         } else {
             return false;
         }
+    }
+
+    /**
+     * Top-level entries of a config file that read their value from the
+     * environment, as key => [source expression, value it resolves to now].
+     *
+     * load() includes the file, so by the time a settings page hands the
+     * config back to save(), getenv('PUSHER_SECRET') has already become the
+     * secret itself. Exporting that as-is wrote every such secret into
+     * settings/config.php, which is tracked by git, and froze it there so a
+     * later change to the environment no longer took effect. Knowing which
+     * entries were expressions lets save() write the expression back.
+     *
+     * @param string $file
+     *
+     * @return array
+     */
+    protected static function envBackedEntries($file)
+    {
+        if (!is_file($file)) {
+            return [];
+        }
+        $source = @file_get_contents($file);
+        // Only single-line entries at the top level, which is how var_export()
+        // and hand edits both lay them out; anything else is left as it was.
+        if ($source === false || !preg_match_all("/^  '([A-Za-z0-9_]+)' => (.*\\bgetenv\\s*\\(.*?),[ \\t]*$/m", $source, $matches, PREG_SET_ORDER)) {
+            return [];
+        }
+        $current = include $file;
+        if (!is_array($current)) {
+            return [];
+        }
+        $entries = [];
+        foreach ($matches as $m) {
+            if (array_key_exists($m[1], $current)) {
+                $entries[$m[1]] = [trim($m[2]), $current[$m[1]]];
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
+     * var_export() the config, keeping each env-backed entry as its
+     * expression unless this save really changed its value.
+     *
+     * An admin who types a new value on a settings page still gets it saved:
+     * only a value that is exactly what the environment already supplies is
+     * treated as untouched.
+     *
+     * @param array $config
+     * @param array $envEntries from envBackedEntries()
+     *
+     * @return string
+     */
+    protected static function exportKeepingEnv(array $config, array $envEntries)
+    {
+        $placeholders = [];
+        foreach ($envEntries as $key => $entry) {
+            list($expression, $resolved) = $entry;
+            if (array_key_exists($key, $config) && $config[$key] === $resolved) {
+                $placeholder = '__kotchasan_env_'.bin2hex(random_bytes(8)).'__';
+                $placeholders[var_export($placeholder, true)] = $expression;
+                $config[$key] = $placeholder;
+            }
+        }
+
+        return strtr(var_export($config, true), $placeholders);
     }
 
     /**
