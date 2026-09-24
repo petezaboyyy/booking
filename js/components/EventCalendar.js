@@ -32,6 +32,10 @@ const EventCalendar = {
     filterPlaceholder: null,
     filterQuery: '',
     filterTarget: null,
+    // Off by default: most calendar instances on this site (e.g. the "check
+    // this room's schedule" modal on the booking form) don't need it, only
+    // the main reservation calendar does.
+    showCategoryFilter: false,
     views: ['month', 'week', 'day'],
     api: null,
     apiMethod: 'GET',
@@ -93,7 +97,8 @@ const EventCalendar = {
       dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
       dayNamesShort: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'],
       filterPlaceholder: 'ค้นหาห้อง หรือเลขห้อง...',
-      filterClear: 'ล้างการค้นหา'
+      filterClear: 'ล้างการค้นหา',
+      categoryFilterAll: 'ทุกหมวดหมู่'
     },
     en: {
       today: 'Today',
@@ -124,7 +129,8 @@ const EventCalendar = {
       dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
       dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       filterPlaceholder: 'Filter room or number...',
-      filterClear: 'Clear filter'
+      filterClear: 'Clear filter',
+      categoryFilterAll: 'All categories'
     }
   },
 
@@ -638,6 +644,7 @@ const EventCalendar = {
     if (dataset.filterPlaceholder) options.filterPlaceholder = dataset.filterPlaceholder;
     if (dataset.filterQuery) options.filterQuery = dataset.filterQuery;
     if (dataset.filterTarget) options.filterTarget = dataset.filterTarget;
+    if (dataset.showCategoryFilter !== undefined) options.showCategoryFilter = dataset.showCategoryFilter !== 'false';
     if (dataset.views) options.views = dataset.views.split(',').map(v => v.trim());
 
     // Parse inline events
@@ -859,6 +866,12 @@ const EventCalendar = {
       header.appendChild(filter);
     }
 
+    // Category filter (booking "Topic", carried on event.description)
+    if (config.showCategoryFilter) {
+      const categoryFilter = this.createCategoryFilter(instance);
+      header.appendChild(categoryFilter);
+    }
+
     // View switcher
     if (config.showViewSwitcher && config.views.length > 1) {
       const switcher = this.createViewSwitcher(instance);
@@ -1070,6 +1083,90 @@ const EventCalendar = {
     instance.filterClearButtonElement = clearBtn;
 
     return filterContainer;
+  },
+
+  /**
+   * Create a dropdown that isolates events by category (the booking
+   * "Topic", carried on event.description). Opt-in via showCategoryFilter -
+   * see createFilter() above for the equivalent room/text search.
+   */
+  createCategoryFilter(instance) {
+    const {config} = instance;
+    const strings = this.getLocaleStrings(config.locale);
+
+    const select = document.createElement('select');
+    select.className = 'ec-category-filter';
+    select.setAttribute('aria-label', strings.categoryFilterAll || 'All categories');
+
+    this.addTrackedListener(instance, select, 'change', () => {
+      this.setCategoryFilter(instance, select.value);
+    });
+
+    instance.categoryFilterElement = select;
+    this.updateCategoryFilterOptions(instance);
+
+    return select;
+  },
+
+  /**
+   * Rebuild the category dropdown's options from whatever events are
+   * currently loaded, keeping the active selection if it still has a match.
+   * Called from render() so navigating months or a fresh API load refreshes
+   * the list to the categories actually present right now. Skips DOM work
+   * when the category list hasn't actually changed.
+   */
+  updateCategoryFilterOptions(instance) {
+    const select = instance.categoryFilterElement;
+    if (!select) return;
+
+    const strings = this.getLocaleStrings(instance.config.locale);
+    const categories = Array.from(new Set(
+      (instance.events || [])
+        .map(event => String(event?.description || '').trim())
+        .filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b));
+
+    const signature = categories.join('\u0001');
+    if (select._categorySignature === signature) {
+      return;
+    }
+    select._categorySignature = signature;
+
+    const previousValue = instance.categoryFilter || '';
+
+    select.innerHTML = '';
+    const allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = strings.categoryFilterAll || 'All categories';
+    select.appendChild(allOption);
+
+    categories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      select.appendChild(option);
+    });
+
+    const stillValid = Boolean(previousValue) && categories.includes(previousValue);
+    select.value = stillValid ? previousValue : '';
+    if (!stillValid && previousValue) {
+      instance.categoryFilter = '';
+    }
+  },
+
+  /**
+   * Set which category (booking topic) the calendar shows, or '' for all.
+   */
+  setCategoryFilter(instance, category) {
+    const normalized = category || '';
+    if ((instance.categoryFilter || '') === normalized) return;
+
+    instance.categoryFilter = normalized;
+    instance.segmentCache.clear();
+    if (instance.categoryFilterElement && instance.categoryFilterElement.value !== normalized) {
+      instance.categoryFilterElement.value = normalized;
+    }
+    this.render(instance);
   },
 
   /**
@@ -1397,6 +1494,9 @@ const EventCalendar = {
     this.updateCurrentPeriod(instance);
     this.updateNavigationState(instance);
     this.updateViewSwitcher(instance);
+    if (instance.categoryFilterElement) {
+      this.updateCategoryFilterOptions(instance);
+    }
 
     switch (instance.currentView) {
       case 'month':
@@ -3888,11 +3988,15 @@ const EventCalendar = {
     if (!instance) return [];
 
     const query = (instance.filterQuery || '').trim().toLowerCase();
-    if (!query) {
-      return instance.events;
+    let events = query
+      ? instance.events.filter(event => this.eventMatchesFilter(event, query))
+      : instance.events;
+
+    if (instance.categoryFilter) {
+      events = events.filter(event => String(event?.description || '').trim() === instance.categoryFilter);
     }
 
-    return instance.events.filter(event => this.eventMatchesFilter(event, query));
+    return events;
   },
 
   /**

@@ -95,3 +95,49 @@ if (mixedOrder.join('|') !== mixedExpected.join('|')) {
 }
 
 console.log('ok   month cell groups events by room first, then by time within the room');
+
+// Category filter (booking Topic): opt-in dropdown that isolates events by
+// event.description. Off by default so the small "check this room's
+// schedule" modal on the booking form doesn't grow a control it has no use
+// for; the main reservation calendar opts in via data-show-category-filter.
+const categoryEvents = [
+  {id: '1', title: 'R-0001, 08:00-12:00', description: 'การเรียน', start: '2026-09-05 08:00:00', end: '2026-09-05 12:00:00', room_number: '0001'},
+  {id: '2', title: 'R-0002, 08:00-12:00', description: 'ประชุม', start: '2026-09-05 08:00:00', end: '2026-09-05 12:00:00', room_number: '0002'},
+  {id: '3', title: 'R-0004, 09:00-10:00', description: 'การเรียน', start: '2026-09-06 09:00:00', end: '2026-09-06 10:00:00', room_number: '0004'}
+];
+
+const opted = dom.window.document.createElement('div');
+const optedInstance = calendar.create(opted, {
+  events: categoryEvents,
+  defaultView: 'month',
+  currentDate: new Date(2026, 8, 1),
+  showCategoryFilter: true
+});
+const select = opted.querySelector('.ec-category-filter');
+if (!select) {
+  throw new Error('showCategoryFilter:true did not render a .ec-category-filter dropdown');
+}
+const optionValues = Array.from(select.options).map(o => o.value);
+if (optionValues.join('|') !== ['', 'การเรียน', 'ประชุม'].join('|')) {
+  throw new Error(`Category dropdown options did not match the loaded events: got [${optionValues.join(', ')}]`);
+}
+
+calendar.setCategoryFilter(optedInstance, 'การเรียน');
+const onlyStudyClass = calendar.getFilteredEvents(optedInstance).map(e => e.id);
+if (onlyStudyClass.join(',') !== '1,3') {
+  throw new Error(`Selecting a category did not filter events correctly: got [${onlyStudyClass.join(', ')}]`);
+}
+
+calendar.setCategoryFilter(optedInstance, '');
+if (calendar.getFilteredEvents(optedInstance).length !== 3) {
+  throw new Error('Clearing the category filter did not restore all events');
+}
+
+const notOpted = dom.window.document.createElement('div');
+calendar.create(notOpted, {events: categoryEvents, defaultView: 'month'});
+if (notOpted.querySelector('.ec-category-filter')) {
+  throw new Error('Calendar without showCategoryFilter rendered the category dropdown anyway');
+}
+
+console.log('ok   category filter dropdown is populated from loaded events and isolates matching bookings');
+console.log('ok   category filter is opt-in and absent from calendars that do not request it');

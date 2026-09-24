@@ -457,7 +457,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260922-profile-icons-1';
+const ROOMLY_ROLE_UI_VERSION = '20260924-category-filter-1';
 
 /**
  * Has this visitor signed in at all?
