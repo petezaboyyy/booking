@@ -120,14 +120,15 @@ class Controller extends \Gcms\Table
     protected function getOptions(array $params, $login)
     {
         $isSuperAdmin = ApiController::isSuperAdmin($login);
+        $canManageBookings = $isSuperAdmin || ApiController::hasPermission($login, 'can_manage_booking', false);
 
         return [
             '_table' => [
-                'showCheckbox' => $isSuperAdmin,
-                'actions' => $isSuperAdmin ? [
+                'showCheckbox' => $canManageBookings,
+                'actions' => $canManageBookings ? [
                     'delete' => 'Delete'
                 ] : [],
-                'actionButton' => $isSuperAdmin ? 'Process|btn-success' : null
+                'actionButton' => $canManageBookings ? 'Process|btn-success' : null
             ]
         ];
     }
@@ -165,7 +166,10 @@ class Controller extends \Gcms\Table
      */
     protected function handleDeleteAction(Request $request, $login)
     {
-        if (!ApiController::isSuperAdmin($login)) {
+        if (
+            !ApiController::isSuperAdmin($login)
+            && !ApiController::hasPermission($login, 'can_manage_booking', false)
+        ) {
             return $this->errorResponse('Permission required', 403);
         }
 

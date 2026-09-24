@@ -46,9 +46,12 @@ class Controller extends ApiController
             if (!$login) {
                 return $this->errorResponse('Unauthorized', 401);
             }
-            // Approvers are not enough — the export carries the requester's
-            // email and the whole term's schedule.
-            if (!ApiController::isAdmin($login)) {
+            // Approval-step access alone is not enough: export includes requester
+            // emails and the full schedule.
+            if (
+                !ApiController::isAdmin($login)
+                && !ApiController::hasPermission($login, 'can_manage_booking', false)
+            ) {
                 return $this->errorResponse('Permission required', 403);
             }
 
