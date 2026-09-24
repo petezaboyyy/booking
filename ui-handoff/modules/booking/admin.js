@@ -457,7 +457,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260924-category-filter-1';
+const ROOMLY_ROLE_UI_VERSION = '20260924-i18n-1';
 
 /**
  * Has this visitor signed in at all?
@@ -619,7 +619,7 @@ function initBookingTime24Inputs(root = document) {
         input.maxLength = 5;
         input.placeholder = 'HH:MM';
         input.pattern = '(?:[01][0-9]|2[0-3]):[0-5][0-9]';
-        input.title = 'Use 24-hour time format (HH:MM)';
+        input.title = Now.translate('Use 24-hour time format (HH:MM)');
 
         // Preserve the native time value (already serialized as HH:MM) when
         // converting a cached template from type="time" to type="text".
@@ -1348,7 +1348,7 @@ function createRoomlyCombobox(selectEl, config = {}) {
         const clearBtn = document.createElement('button');
         clearBtn.type = 'button';
         clearBtn.className = 'roomly-combobox-clear';
-        clearBtn.setAttribute('aria-label', 'Clear selection');
+        clearBtn.setAttribute('aria-label', Now.translate('Clear selection'));
         clearBtn.innerHTML = '&times;';
         clearBtn.style.display = 'none';
 
@@ -3521,6 +3521,121 @@ function initOccurrencePicker(element, data) {
     };
 }
 
+/**
+ * Popup that cancels one approved date of a booking, with its own reason.
+ *
+ * Posts the same request the button used to send through requestApi, via
+ * httpAction so the CSRF header and the redirect/notification actions in the
+ * response are handled the same way.
+ */
+function openOccurrenceCancelDialog(button, booking, occurrence, isLastApprovedDate) {
+    if (!window.DialogManager || !window.httpAction) return;
+
+    const body = document.createElement('div');
+    body.className = 'booking-occurrence-cancel-dialog';
+
+    const when = document.createElement('p');
+    when.className = 'booking-occurrence-cancel-when';
+    const date = document.createElement('strong');
+    date.textContent = occurrence.date;
+    when.append(date, ` · ${occurrence.begin_time}-${occurrence.end_time}`);
+
+    const scope = document.createElement('p');
+    scope.className = isLastApprovedDate
+        ? 'booking-occurrence-cancel-scope is-last'
+        : 'booking-occurrence-cancel-scope';
+    scope.textContent = Now.translate(isLastApprovedDate
+        ? 'This is the last approved date, so the whole booking will be cancelled'
+        : 'Only this date is cancelled. The other dates in this booking stay approved');
+
+    const fieldId = `occurrence_cancel_reason_${occurrence.id}`;
+    const label = document.createElement('label');
+    label.htmlFor = fieldId;
+    label.textContent = Now.translate('Cancellation reason');
+    const field = document.createElement('span');
+    field.className = 'form-control icon-comments';
+    const reason = document.createElement('textarea');
+    reason.id = fieldId;
+    reason.rows = 3;
+    // Same ceiling the server enforces (MAX_CANCELLATION_REASON_LENGTH).
+    reason.maxLength = 255;
+    field.appendChild(reason);
+
+    const error = document.createElement('div');
+    error.className = 'comment error';
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+
+    body.append(when, scope, label, field, error);
+
+    const dialog = DialogManager.custom({
+        template: 'confirm',
+        title: Now.translate('Cancel booking date'),
+        message: body,
+        buttons: {
+            close: {
+                text: Now.translate('Close'),
+                class: 'text',
+                callback: () => {}
+            },
+            // No callback: DialogManager closes on every callback, and an
+            // empty reason has to keep the popup open.
+            confirm: {
+                text: Now.translate('Confirm cancellation'),
+                class: 'btn-danger',
+                attrs: {'data-role': 'confirm'}
+            }
+        }
+    });
+
+    reason.addEventListener('input', () => {
+        error.hidden = true;
+    });
+    setTimeout(() => reason.focus(), DialogManager.config?.duration || 0);
+
+    const confirmButton = dialog.querySelector('[data-role="confirm"]');
+    confirmButton?.addEventListener('click', async event => {
+        event.preventDefault();
+        const text = reason.value.trim();
+        if (text === '') {
+            error.textContent = Now.translate('Please fill in');
+            error.hidden = false;
+            reason.focus();
+            return;
+        }
+
+        DialogManager.close(dialog);
+        const defaultText = button.textContent;
+        button.disabled = true;
+        button.classList.add('loading');
+        button.textContent = Now.translate('Cancelling');
+
+        try {
+            const response = await window.httpAction.post('api/booking/review/canceloccurrence', {
+                id: booking.id,
+                occurrence_id: occurrence.id,
+                version: booking.version,
+                approval_reason: text
+            }, {}, {trigger: button, element: button, target: button});
+
+            const payload = response?.data && typeof response.data === 'object' ? response.data : null;
+            const success = payload?.success ?? response?.success ?? false;
+            // Error responses carry no notification action, so say it here;
+            // a success already comes back with its own notification.
+            if (!success && window.NotificationManager) {
+                NotificationManager.error(payload?.message || response?.message || 'Request failed.');
+            }
+        } catch (err) {
+            console.error('[booking-review] cancel date failed:', err);
+            window.NotificationManager?.error(err?.message || 'Request failed.');
+        } finally {
+            button.disabled = false;
+            button.classList.remove('loading');
+            button.textContent = defaultText;
+        }
+    });
+}
+
 function initBookingReview(element, data) {
     const container = element.querySelector('#booking_review_occurrences');
     if (!container) return () => {};
@@ -3534,6 +3649,10 @@ function initBookingReview(element, data) {
         container.appendChild(empty);
         return () => {};
     }
+
+    // Cancelling the last approved date cancels the whole booking on the
+    // server, so the popup has to say so before it happens.
+    const approvedCount = occurrences.filter(occurrence => Number(occurrence.status) === 1).length;
 
     occurrences.forEach(occurrence => {
         const item = document.createElement('div');
@@ -3562,18 +3681,14 @@ function initBookingReview(element, data) {
             button.className = 'btn btn-danger icon-delete booking-occurrence-cancel';
             button.title = Now.translate('Cancel this date');
             button.textContent = Now.translate('Cancel this date');
-            button.dataset.action = 'click.prevent:requestApi';
-            button.dataset.apiUrl = 'api/booking/review/canceloccurrence';
-            button.dataset.apiMethod = 'post';
-            button.dataset.paramId = String(data.id);
-            button.dataset.paramOccurrenceId = String(occurrence.id);
-            button.dataset.paramVersion = String(data.version);
-            button.dataset.paramApprovalReason = '{approval_reason}';
-            button.dataset.requiredFields = 'approval_reason';
-            button.dataset.requiredMessage = 'Decision note is required';
-            button.dataset.confirm = 'Confirm cancellation of this date';
-            button.dataset.loadingText = 'Cancelling';
-            button.dataset.notifySuccess = 'true';
+            // The reason is asked for in a popup of its own. It used to come
+            // from the decision note below, which "Cancel by officer" reads
+            // too, so a note typed for one date sat one click away from
+            // cancelling every date.
+            button.addEventListener('click', event => {
+                event.preventDefault();
+                openOccurrenceCancelDialog(button, data, occurrence, approvedCount === 1);
+            });
             item.appendChild(button);
         }
         container.appendChild(item);

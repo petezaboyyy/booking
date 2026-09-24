@@ -8,7 +8,7 @@
         <small data-i18n>มหาวิทยาลัยเชียงใหม่</small>
       </span>
     </a>
-    <nav class='roomly-nav' aria-label='Main navigation'>
+    <nav class='roomly-nav' aria-label='{LNG_Main navigation}'>
       <a href='/'>
         <span class='roomly-menu-icon icon-dashboard' aria-hidden='true'></span>
         <span data-i18n>Dashboard</span>
@@ -27,13 +27,13 @@
       </a>
     </nav>
     <div class='roomly-user-actions'>
-      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='Switch language' aria-label='Switch language'>
+      <button class='roomly-language-toggle' type='button' data-roomly-language-toggle title='{LNG_Switch language}' aria-label='{LNG_Switch language}'>
         <span class='roomly-language-icon icon-language' aria-hidden='true'></span>
         <span class='roomly-language-option roomly-language-th'>TH</span>
         <span class='roomly-language-divider' aria-hidden='true'>/</span>
         <span class='roomly-language-option roomly-language-en'>EN</span>
       </button>
-      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='Toggle theme' aria-label='Toggle theme'>
+      <button class='roomly-icon-button roomly-theme-toggle' type='button' data-roomly-theme-toggle title='{LNG_Toggle theme}' aria-label='{LNG_Toggle theme}'>
         <span class='roomly-theme-glyph roomly-theme-moon icon-night' aria-hidden='true'></span>
         <span class='roomly-theme-glyph roomly-theme-sun icon-day' aria-hidden='true'></span>
       </button>
@@ -107,7 +107,7 @@
                     <div class="form-group roomly-form-grid-2">
                       <div class="roomly-field-wrap roomly-room-field-wrap">
                         <label for="room_id">
-                          <span data-i18n>Room</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>Room</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control roomly-select-btn">
                           <select id="room_id" name="room_id" data-options-key="room_id" data-attr="value:room_id" required>
@@ -118,10 +118,10 @@
                       </div>
                       <div class="roomly-field-wrap">
                         <label for="attendees">
-                          <span data-i18n>Attendees number</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>Attendees number</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
-                          <input type="number" id="attendees" name="attendees" value="" data-attr="value:attendees" min="1" max="999" placeholder="ระบุจำนวนผู้เข้าร่วม (เช่น 5)" required>
+                          <input type="number" id="attendees" name="attendees" value="" data-attr="value:attendees" min="1" max="999" placeholder="{LNG_Enter the number of attendees (e.g. 5)}" required>
                         </span>
                       </div>
                     </div>
@@ -129,7 +129,7 @@
                     <div class="form-group">
                       <div class="roomly-field-wrap">
                         <label for="topic">
-                          <span data-i18n>Topic</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>Topic</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control roomly-select-btn">
                           <select id="topic" name="topic" data-options-key="topic" data-attr="value:topic" required>
@@ -142,7 +142,7 @@
                     </div>
                     <div class="roomly-field-wrap" id="course-code-field" style="display: none;">
                       <label for="course_code">
-                        <span data-i18n>Course code</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                        <span data-i18n>Course code</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                       </label>
                       <span class="form-control icon-bookmark">
                         <input type="text" id="course_code" name="course_code" data-attr="value:course_code" maxlength="50" placeholder="{LNG_e.g. 261101}" data-i18n-placeholder="e.g. 261101">
@@ -166,7 +166,7 @@
                     <div class="form-group roomly-form-grid-2">
                       <div class="roomly-field-wrap">
                         <label for="begin_date">
-                          <span data-i18n>Start date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>Start date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
                           <input type="date" id="begin_date" name="begin_date" data-attr="value:begin_date" placeholder="{LNG_วว/ดด/ปปปป}" data-i18n-placeholder="วว/ดด/ปปปป" required>
@@ -174,12 +174,12 @@
                       </div>
                       <div class="roomly-field-wrap">
                         <label for="begin_time">
-                          <span data-i18n>Start time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>Start time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
                           <input type="text" id="begin_time" name="begin_time" data-attr="value:begin_time"
                                  inputmode="numeric" maxlength="5" placeholder="{LNG_ชช:นน (เช่น 08:30)}" data-i18n-placeholder="ชช:นน (เช่น 08:30)"
-                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="Use 24-hour time format (HH:MM)" required>
+                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="{LNG_Use 24-hour time format (HH:MM)}" required>
                         </span>
                       </div>
                     </div>
@@ -187,7 +187,7 @@
                     <div class="form-group roomly-form-grid-2">
                       <div class="roomly-field-wrap">
                         <label for="end_date">
-                          <span data-i18n>End date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>End date</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
                           <input type="date" id="end_date" name="end_date" data-attr="value:end_date" placeholder="{LNG_วว/ดด/ปปปป}" data-i18n-placeholder="วว/ดด/ปปปป" required>
@@ -195,12 +195,12 @@
                       </div>
                       <div class="roomly-field-wrap">
                         <label for="end_time">
-                          <span data-i18n>End time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge">จำเป็น</span>
+                          <span data-i18n>End time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
                           <input type="text" id="end_time" name="end_time" data-attr="value:end_time"
                                  inputmode="numeric" maxlength="5" placeholder="{LNG_ชช:นน (เช่น 12:00)}" data-i18n-placeholder="ชช:นน (เช่น 12:00)"
-                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="Use 24-hour time format (HH:MM)" required>
+                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="{LNG_Use 24-hour time format (HH:MM)}" required>
                         </span>
                       </div>
                     </div>
@@ -292,7 +292,7 @@
                         <span data-i18n>Notes</span>
                       </label>
                       <span class="form-control">
-                        <textarea id="comment" name="comment" rows="3" data-text="comment" placeholder="ระบุหมายเหตุหรือข้อความเพิ่มเติม (ถ้ามี)..."></textarea>
+                        <textarea id="comment" name="comment" rows="3" data-text="comment" placeholder="{LNG_Add a note or any other request (optional)...}"></textarea>
                       </span>
                     </div>
                   </div>
@@ -321,7 +321,7 @@
             </div>
 
             <!-- Side Live Summary & Room Preview Card -->
-            <aside class='roomly-booking-context' aria-label='Booking Summary'>
+            <aside class='roomly-booking-context' aria-label='{LNG_Booking Summary}'>
               <!-- Summary Top -->
               <div class='roomly-summary-header'>
                 <div class='roomly-summary-title-wrap'>
@@ -444,14 +444,14 @@
                 <p class='roomly-modal-subtitle' data-i18n>Check room schedule to avoid overlap</p>
               </div>
             </div>
-            <button type='button' class='roomly-modal-close-btn' id='btn-close-calendar-modal' aria-label='Close'>&times;</button>
+            <button type='button' class='roomly-modal-close-btn' id='btn-close-calendar-modal' aria-label='{LNG_Close}'>&times;</button>
           </header>
           <div class='roomly-modal-body'>
             <div class='roomly-calendar-filter-bar'>
               <div class='roomly-calendar-filter-wrap'>
                 <span class='roomly-calendar-filter-icon icon-search' aria-hidden='true'></span>
-                <input type='text' id='modal_calendar_room_filter' data-calendar-filter class='roomly-calendar-filter-input' placeholder='ค้นหาห้อง หรือเลขห้อง...' data-i18n='Filter by room number or name...' autocomplete='off'>
-                <button type='button' class='roomly-calendar-filter-clear' data-calendar-filter-clear aria-label='Clear filter' style='display:none;'>&times;</button>
+                <input type='text' id='modal_calendar_room_filter' data-calendar-filter class='roomly-calendar-filter-input' placeholder='{LNG_Search room or room number...}' data-i18n='Filter by room number or name...' autocomplete='off'>
+                <button type='button' class='roomly-calendar-filter-clear' data-calendar-filter-clear aria-label='{LNG_Clear filter}' style='display:none;'>&times;</button>
               </div>
             </div>
             <div id='modal-roomly-calendar'

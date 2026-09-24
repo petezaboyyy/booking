@@ -84,7 +84,7 @@ class Controller extends ApiController
             'microsoft_tenant' => self::$cfg->microsoft_tenant,
             'microsoft_allowed_domains' => self::$cfg->microsoft_allowed_domains,
             'microsoft_redirect_uri' => self::$cfg->microsoft_redirect_uri,
-            'microsoft_secret_status' => empty(self::$cfg->microsoft_client_secret) ? 'Not configured' : 'Configured',
+            'microsoft_secret_status' => empty(self::$cfg->microsoft_client_secret) ? '{LNG_Not configured}' : '{LNG_Configured}',
             'demo_mode' => self::$cfg->demo_mode,
             'cache_expire' => self::$cfg->cache_expire,
             'default_department' => self::$cfg->default_department,
@@ -906,7 +906,7 @@ class Controller extends ApiController
             // Log
             \Index\Log\Model::add(0, 'index', 'Other', 'Test email sent to '.$toEmail, $login->id);
 
-            return $this->successResponse([], 'Test email sent to '.$toEmail);
+            return $this->successResponse([], \Kotchasan\Language::replace('Test email sent to :email', [':email' => $toEmail]));
         } catch (\Kotchasan\ApiException $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 400, $e);
         } catch (\Exception $e) {

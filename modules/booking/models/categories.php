@@ -40,13 +40,16 @@ class Model extends \Index\Categories\Model
     public static function getColumns($multiLanguage, $type = null)
     {
         $columns = parent::getColumns($multiLanguage, $type);
-        if ($type === 'use') {
+        // Equipment is shown to bookers too, so it gets an English name as well.
+        if (in_array($type, ['use', 'accessories'], true)) {
             $columns[] = [
                 'field' => 'topic_en',
                 'label' => 'English name',
                 'cellElement' => 'text',
                 'size' => 20
             ];
+        }
+        if ($type === 'use') {
             $columns[] = [
                 'field' => 'requires_course_code',
                 'label' => 'Require course code',
@@ -91,13 +94,13 @@ class Model extends \Index\Categories\Model
      *
      * @return array<string, string>
      */
-    public static function englishNames(): array
+    public static function englishNames(string $type = 'use'): array
     {
         $names = [];
         $rows = static::createQuery()
             ->select('category_id', 'topic_en')
             ->from('category')
-            ->where(['type', 'use'])
+            ->where(['type', $type])
             ->fetchAll();
         foreach ($rows as $row) {
             $en = trim((string) $row->topic_en);

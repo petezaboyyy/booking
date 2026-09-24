@@ -28,7 +28,8 @@ class Controller extends \Index\Categories\Controller
         if ($type === 'use') {
             $values = $request->post('requires_course_code', [])->toInt();
             $item['requires_course_code'] = empty($values[$key]) ? 0 : 1;
-
+        }
+        if ($type === 'use' || $type === 'accessories') {
             // Optional English name shown when the site language is English.
             // Left blank, the Thai `topic` is used everywhere - see
             // Helper::localizeCategoryOptionText() and Model::englishNames().

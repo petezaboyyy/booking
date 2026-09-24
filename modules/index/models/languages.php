@@ -286,7 +286,7 @@ class Model extends \Kotchasan\Model
 
         $message = sprintf('Imported %d new, Updated %d existing', $insertCount, $updateCount);
         if (!empty($columnsAdded)) {
-            $message .= ' (Added columns: '.implode(', ', $columnsAdded).')';
+            $message .= ' ('.\Kotchasan\Language::get('Added columns').': '.implode(', ', $columnsAdded).')';
         }
 
         return [

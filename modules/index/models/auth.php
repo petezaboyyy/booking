@@ -717,9 +717,9 @@ class Model extends \Kotchasan\Model
 
         $retryAfter = \Gcms\LoginAttempt::getRemainingLockTime($username, $ip);
         if ($retryAfter >= 60) {
-            $message = 'Too many login attempts. Please try again in '.ceil($retryAfter / 60).' minutes.';
+            $message = \Kotchasan\Language::replace('Too many login attempts. Please try again in :minutes minutes.', [':minutes' => (int) ceil($retryAfter / 60)]);
         } elseif ($retryAfter > 0) {
-            $message = 'Too many login attempts. Please try again in '.$retryAfter.' seconds.';
+            $message = \Kotchasan\Language::replace('Too many login attempts. Please try again in :seconds seconds.', [':seconds' => (int) $retryAfter]);
         } else {
             $message = 'Too many login attempts. Please try again later.';
         }

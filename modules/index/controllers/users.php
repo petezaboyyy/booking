@@ -170,7 +170,7 @@ class Controller extends \Gcms\Table
 
         \Index\Log\Model::add(0, 'index', 'Delete', 'Delete User ID(s) : '.implode(', ', $ids), $login->id);
 
-        return $this->redirectResponse('reload', 'Deleted '.$removeCount.' user(s) successfully', 200, 0, 'table');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Deleted :count user(s) successfully', [':count' => $removeCount]), 200, 0, 'table');
     }
 
     /**
@@ -232,14 +232,14 @@ class Controller extends \Gcms\Table
         }
 
         if ($sentCount > 0) {
-            $message = 'Sent password reset link to '.$sentCount.' user(s)';
+            $message = \Kotchasan\Language::replace('Sent password reset link to :count user(s)', [':count' => $sentCount]);
             if (!empty($errors)) {
-                $message .= '. Errors: '.implode(', ', $errors);
+                $message .= '. '.\Kotchasan\Language::get('Errors').': '.implode(', ', $errors);
             }
             return $this->redirectResponse('reload', $message, 200, 0, 'table');
         }
 
-        return $this->errorResponse('Failed to send password reset links: '.implode(', ', $errors), 400);
+        return $this->errorResponse(\Kotchasan\Language::replace('Failed to send password reset links: :errors', [':errors' => implode(', ', $errors)]), 400);
     }
 
     /**
@@ -288,7 +288,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add(0, 'index', 'Auth', 'Send activation link to: '.implode(',', $ids), $login->id);
 
         // Redirect to the same page with a success message
-        return $this->redirectResponse('reload', 'Send activation link to '.$editCount.' user(s)', 200, 0, 'table');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Sent activation link to :count user(s)', [':count' => $editCount]), 200, 0, 'table');
     }
 
     /**
@@ -322,7 +322,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add(0, 'index', 'Auth', 'Accept verification: '.implode(',', $ids), $login->id);
 
         // Redirect to the same page with a success message
-        return $this->redirectResponse('reload', 'Accept verification '.$editCount.' user(s)', 200, 0, 'table');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Verified :count user(s)', [':count' => $editCount]), 200, 0, 'table');
     }
 
     /**
@@ -357,7 +357,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add(0, 'index', 'Auth', 'Activate user: '.implode(',', $ids), $login->id);
 
         // Redirect to the same page with a success message
-        return $this->redirectResponse('reload', 'Approved and notified '.$editCount.' user(s)', 200, 0, 'table');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Approved and notified :count user(s)', [':count' => $editCount]), 200, 0, 'table');
     }
 
     /**
@@ -425,7 +425,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add(0, 'index', 'Auth', 'Deactivate user: '.implode(',', $ids), $login->id);
 
         // Redirect to the same page with a success message
-        return $this->redirectResponse('reload', 'Deactivated '.$editCount.' user(s)', 200, 0, 'table');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Deactivated :count user(s)', [':count' => $editCount]), 200, 0, 'table');
     }
 
     /**

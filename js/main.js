@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             requireAuth: false
           },
           '/login': {
-            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260921-email-form-1',
+            template: window.location.origin + '/ui-handoff/templates/login.html?v=20260924-i18n-1',
             title: '{LNG_Login}',
             requireGuest: true,
             requireAuth: false
@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           },
           '/line-settings': {
             template: 'settings/line.html',
-            title: '{LNG_Line Settings}',
+            title: '{LNG_LINE Settings}',
             requireAuth: true
           },
           '/telegram-settings': {

@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="ui-handoff/css/dashboard.css?v=20260922-guest-rooms-daylist-1">
   <!-- Staff screens still render from templates/, which owns these styles. Kept last so
        the occurrence rules are not overridden by the member UI sheets above. -->
-  <link rel="stylesheet" href="templates/booking/style.css?v=20260922-modal-color-bar-tenth-1">
+  <link rel="stylesheet" href="templates/booking/style.css?v=20260924-occurrence-cancel-popup-1">
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -35,14 +35,14 @@
   <!-- Real-time WebSockets -->
   <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
   <!-- App Scripts -->
-  <script src="js/main.js?v=20260921-microsoft-only-1"></script>
+  <script src="js/main.js?v=20260924-i18n-1"></script>
   <script src="js/components/GallerySlideshow.js"></script>
   <script src="modules/download/script.js"></script>
   <script src="js/booking-ui-role.js?v=20260915-user-ui-1"></script>
   <!-- The one booking script. It owns both UI sets: the occurrence code that used to live
        in modules/booking/admin.js was ported in here, because two booking scripts cannot
        coexist (duplicate top-level consts throw SyntaxError in the shared global scope). -->
-  <script src="ui-handoff/modules/booking/admin.js?v=20260924-category-filter-1"></script>
+  <script src="ui-handoff/modules/booking/admin.js?v=20260924-i18n-1"></script>
 </body>
 
 </html>

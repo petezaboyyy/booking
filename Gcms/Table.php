@@ -139,7 +139,7 @@ class Table extends \Kotchasan\ApiController
                 return $this->$methodName($request, $login);
             }
 
-            return $this->errorResponse('Invalid action: '.$action, 400);
+            return $this->errorResponse(\Kotchasan\Language::replace('Invalid action: :action', [':action' => $action]), 400);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }
@@ -206,7 +206,7 @@ class Table extends \Kotchasan\ApiController
                 return $this->$methodName($request, $login);
             }
 
-            return $this->errorResponse('Invalid export type: '.$type, 400);
+            return $this->errorResponse(\Kotchasan\Language::replace('Invalid export type: :type', [':type' => $type]), 400);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }

@@ -59,7 +59,17 @@ class Controller extends \Gcms\Api
                 header('Content-Type: text/html; charset=UTF-8');
                 $hint = htmlspecialchars((string) ($claims['email'] ?? $claims['preferred_username'] ?? ''), ENT_QUOTES, 'UTF-8');
                 $oid = htmlspecialchars($claims['oid'], ENT_QUOTES, 'UTF-8');
-                echo '<!doctype html><html lang="th"><meta charset="utf-8"><title>Booking account setup</title><body><h1>ยืนยันบัญชี Microsoft สำเร็จ</h1><p>บัญชี: '.$hint.'</p><p>รหัสบัญชีสำหรับตั้งค่าแอดมิน:</p><code>'.$oid.'</code><p>ยังไม่ได้ให้สิทธิ์เข้า Booking กรุณาให้ผู้ติดตั้งยืนยันและผูกรหัสบัญชีนี้ก่อน</p><a href="../login">กลับหน้า Login</a></body></html>';
+                // Shown in the language the page was using (the my_lang cookie).
+                $t = static function ($key) {
+                    return htmlspecialchars(\Kotchasan\Language::get($key), ENT_QUOTES, 'UTF-8');
+                };
+                $lang = htmlspecialchars(\Kotchasan\Language::name() ?: 'th', ENT_QUOTES, 'UTF-8');
+                echo '<!doctype html><html lang="'.$lang.'"><meta charset="utf-8"><title>'.$t('Booking account setup').'</title><body>'
+                    .'<h1>'.$t('Microsoft account verified').'</h1>'
+                    .'<p>'.$t('Account').': '.$hint.'</p>'
+                    .'<p>'.$t('Account ID for admin setup').':</p><code>'.$oid.'</code>'
+                    .'<p>'.$t('This account has not been granted access to Booking yet. Ask the installer to verify and bind this account ID first.').'</p>'
+                    .'<a href="../login">'.$t('Back to login').'</a></body></html>';
                 return;
             }
             if (empty($tokens['access_token']) || !is_string($tokens['access_token'])) {

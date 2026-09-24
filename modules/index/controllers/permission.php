@@ -147,7 +147,7 @@ class Controller extends \Gcms\Table
         \Index\Log\Model::add(0, 'index', 'Save', 'Update permission: '.$user, $login->id);
 
         // Return success message
-        return $this->notificationResponse('Updated permission: '.$user);
+        return $this->notificationResponse(\Kotchasan\Language::replace('Updated permission: :user', [':user' => $user]));
     }
 
     /**

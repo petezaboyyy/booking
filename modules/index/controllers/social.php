@@ -57,7 +57,7 @@ class Controller extends ApiController
             } elseif ($provider === 'telegram') {
                 return $this->telegram($request);
             }
-            return $this->errorResponse('Invalid social provider '.$provider, 400);
+            return $this->errorResponse(\Kotchasan\Language::replace('Invalid social provider :provider', [':provider' => $provider]), 400);
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to initiate social login: '.$e->getMessage(), 500);
         }

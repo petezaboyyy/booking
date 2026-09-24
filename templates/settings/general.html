@@ -14,13 +14,13 @@
           <!-- Settings Form -->
           <form data-form="settings" action="api/index/settings/save" method="POST" data-ajax-submit="true" data-load-api="api/index/settings/general" data-confirm="Confirm save">
             <fieldset>
-              <legend>Microsoft SSO</legend>
-              <div><label for="microsoft_client_id">Application (client) ID</label><span class="form-control"><input id="microsoft_client_id" name="microsoft_client_id" data-attr="value:microsoft_client_id" type="text"></span></div>
-              <div><label for="microsoft_tenant">Directory (tenant) ID</label><span class="form-control"><input id="microsoft_tenant" name="microsoft_tenant" data-attr="value:microsoft_tenant" type="text"></span></div>
-              <div><label for="microsoft_allowed_domains">Allowed university email domains</label><span class="form-control"><input id="microsoft_allowed_domains" name="microsoft_allowed_domains" data-attr="value:microsoft_allowed_domains" placeholder="university.ac.th, staff.university.ac.th" type="text"></span><p class="comment">Exact domains only, separated by commas. All fields must be configured to enable sign-in.</p></div>
-              <div><label for="microsoft_redirect_uri">Redirect URI (Web)</label><span class="form-control"><input id="microsoft_redirect_uri" name="microsoft_redirect_uri" data-attr="value:microsoft_redirect_uri" placeholder="https://booking.example.ac.th/microsoft/callback.php" type="url"></span></div>
-              <div><label for="microsoft_client_secret">Client secret value</label><span class="form-control"><input id="microsoft_client_secret" name="microsoft_client_secret" type="password" autocomplete="new-password"></span><p class="comment">Leave blank to keep the stored secret. Status: <span data-text="microsoft_secret_status"></span></p></div>
-              <p class="comment">Single tenant only. Enable Assignment required in Microsoft Entra and assign eligible staff. Guest accounts are rejected. Clear the client ID to disable Microsoft sign-in.</p>
+              <legend data-i18n>Microsoft SSO</legend>
+              <div><label for="microsoft_client_id" data-i18n>Application (client) ID</label><span class="form-control"><input id="microsoft_client_id" name="microsoft_client_id" data-attr="value:microsoft_client_id" type="text"></span></div>
+              <div><label for="microsoft_tenant" data-i18n>Directory (tenant) ID</label><span class="form-control"><input id="microsoft_tenant" name="microsoft_tenant" data-attr="value:microsoft_tenant" type="text"></span></div>
+              <div><label for="microsoft_allowed_domains" data-i18n>Allowed university email domains</label><span class="form-control"><input id="microsoft_allowed_domains" name="microsoft_allowed_domains" data-attr="value:microsoft_allowed_domains" placeholder="university.ac.th, staff.university.ac.th" type="text"></span><p class="comment" data-i18n>Exact domains only, separated by commas. All fields must be configured to enable sign-in.</p></div>
+              <div><label for="microsoft_redirect_uri" data-i18n>Redirect URI (Web)</label><span class="form-control"><input id="microsoft_redirect_uri" name="microsoft_redirect_uri" data-attr="value:microsoft_redirect_uri" placeholder="https://booking.example.ac.th/microsoft/callback.php" type="url"></span></div>
+              <div><label for="microsoft_client_secret" data-i18n>Client secret value</label><span class="form-control"><input id="microsoft_client_secret" name="microsoft_client_secret" type="password" autocomplete="new-password"></span><p class="comment"><span data-i18n>Leave blank to keep the stored secret</span>. <span data-i18n>Status</span>: <span data-text="microsoft_secret_status"></span></p></div>
+              <p class="comment" data-i18n>Single tenant only. Enable Assignment required in Microsoft Entra and assign eligible staff. Guest accounts are rejected. Clear the client ID to disable Microsoft sign-in.</p>
             </fieldset>
             <!-- General Settings -->
             <fieldset>

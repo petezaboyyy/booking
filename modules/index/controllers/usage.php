@@ -123,6 +123,6 @@ class Controller extends \Gcms\Table
 
         \Index\Log\Model::add(0, 'index', 'Delete', 'Delete Log ID(s) : '.implode(', ', $ids), $login->id);
 
-        return $this->redirectResponse('reload', 'Deleted '.$removeCount.' log(s) successfully');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Deleted :count log(s) successfully', [':count' => $removeCount]));
     }
 }

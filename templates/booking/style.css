@@ -145,6 +145,33 @@
   padding: 0 0.65rem;
   font-size: 0.8rem;
 }
+
+/* Popup that asks for the reason before one date is cancelled. */
+.booking-occurrence-cancel-dialog {
+  display: grid;
+  gap: 0.5rem;
+  min-width: min(26rem, 80vw);
+  text-align: left;
+}
+.booking-occurrence-cancel-dialog p {
+  margin: 0;
+}
+.booking-occurrence-cancel-when strong {
+  font-size: 1.05rem;
+}
+.booking-occurrence-cancel-scope {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+/* Cancelling the last date cancels the booking, so this one must be seen. */
+.booking-occurrence-cancel-scope.is-last {
+  color: var(--color-error, #dc2626);
+  font-weight: 600;
+}
+.booking-occurrence-cancel-dialog textarea {
+  width: 100%;
+  resize: vertical;
+}
 .booking-table-thumb {
   width: 3.25rem;
   height: 3.25rem;

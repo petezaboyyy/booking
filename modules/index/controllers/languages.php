@@ -156,7 +156,7 @@ class Controller extends \Gcms\Table
 
         \Index\Log\Model::add(0, 'index', 'Delete', 'Delete Language ID(s) : '.implode(', ', $ids), $login->id);
 
-        return $this->redirectResponse('reload', 'Deleted '.$removeCount.' language(s) successfully');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Deleted :count language(s) successfully', [':count' => $removeCount]));
     }
 
     /**

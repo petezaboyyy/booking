@@ -145,7 +145,7 @@ class Controller extends \Gcms\Table
             'message' => 'Room deleted'
         ]);
 
-        return $this->redirectResponse('reload', 'Deleted '.$removeCount.' room(s) successfully');
+        return $this->redirectResponse('reload', \Kotchasan\Language::replace('Deleted :count room(s) successfully', [':count' => $removeCount]));
     }
 
     /**
