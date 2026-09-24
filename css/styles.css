@@ -586,6 +586,28 @@ a:hover {
   .topbar-right .menu-toggle {
     order: -1;
   }
+  /* Tap anywhere beside the open menu to dismiss it. MenuManager already
+     creates .menu-backdrop and binds the close on it, but nothing ever made
+     it visible - and visibility:hidden takes no taps, so the only way out of
+     the menu was to hit the small toggle again.
+     On mobile .sidemenu-close means the panel is showing (see menu.css).
+     MenuManager builds the backdrop *inside* the panel, which is its own
+     stacking context, so at its own z-index it would cover the menu links.
+     A negative one drops it below the panel's content while it still covers
+     the rest of the viewport. */
+  .sidemenu-close .menu-backdrop {
+    opacity: 1;
+    visibility: visible;
+    z-index: -1;
+  }
+  /* A negative z-index child still paints above its parent's background, so
+     the dim would wash the panel's own colour out. The in-flow wrapper inside
+     the panel paints after it, so let that carry the colour instead: the panel
+     stays branded and only the page beside it dims. */
+  .sidemenu-close .sidebar > div {
+    background: inherit;
+    min-height: 100%;
+  }
   /* Two ~150px columns are unusable on a phone. Admin forms only - the member
      (roomly) theme stacks its own grids already. */
   .main-content .form-group {
