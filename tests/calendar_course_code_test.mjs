@@ -177,8 +177,10 @@ if (authoritativeValues.includes('วิชาที่ 3')) {
 
 console.log('ok   category dropdown uses the authoritative "use" category list, not stray booking topic text');
 
-// Positioning: the dropdown should sit rightmost, after the view switcher,
-// grouped with the view controls rather than sandwiched next to the search box.
+// Positioning: the view switcher and category filter should be grouped together
+// inside a single .ec-view-controls wrapper (so the toolbar reads as two flex
+// groups - nav vs. right-side controls - instead of three evenly spaced ones),
+// with the filter sitting after the switcher inside that wrapper.
 const positioned = dom.window.document.createElement('div');
 calendar.create(positioned, {
   events: categoryEvents,
@@ -187,10 +189,14 @@ calendar.create(positioned, {
   showViewSwitcher: true
 });
 const header = positioned.querySelector('.ec-header');
-const switcherIndex = Array.from(header.children).findIndex(el => el.classList.contains('ec-view-switcher'));
-const categoryIndex = Array.from(header.children).findIndex(el => el.classList.contains('ec-category-filter'));
+const controls = header.querySelector('.ec-view-controls');
+if (!controls) {
+  throw new Error('View switcher and category filter are not grouped inside a .ec-view-controls wrapper');
+}
+const switcherIndex = Array.from(controls.children).findIndex(el => el.classList.contains('ec-view-switcher'));
+const categoryIndex = Array.from(controls.children).findIndex(el => el.classList.contains('ec-category-filter'));
 if (!(switcherIndex >= 0 && categoryIndex > switcherIndex)) {
   throw new Error(`Category filter is not positioned after the view switcher: switcherIndex=${switcherIndex}, categoryIndex=${categoryIndex}`);
 }
 
-console.log('ok   category filter sits to the right of the view switcher');
+console.log('ok   view switcher and category filter are grouped together, filter to the right of the switcher');

@@ -936,6 +936,124 @@ html[data-theme='dark'] .roomly-theme-sun {
   color: #0f172a !important;
 }
 
+/* View Switcher (Month/Week/Day) - same pill treatment as the nav controls
+   above, so the right side of the toolbar reads as one design instead of
+   switching to the plain default EventCalendar look partway through. */
+.roomly-calendar .ec-view-switcher {
+  height: 38px;
+  border: 1px solid var(--roomly-outline, #cbd5e1);
+  border-radius: 10px;
+  background-color: var(--roomly-surface-low, #f8fafc);
+  overflow: hidden;
+}
+
+.roomly-calendar .ec-view-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  color: var(--roomly-text, #1e293b);
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.roomly-calendar .ec-view-btn:not(:last-child) {
+  border-right: 1px solid var(--roomly-outline, #cbd5e1);
+}
+
+.roomly-calendar .ec-view-btn:hover {
+  background: var(--roomly-surface-container, #f1f5f9);
+}
+
+.roomly-calendar .ec-view-btn.active {
+  background: var(--roomly-primary, #006591);
+  color: #ffffff;
+}
+
+[data-theme='dark'] .roomly-calendar .ec-view-switcher {
+  border-color: var(--roomly-outline, rgba(255, 255, 255, 0.12));
+  background-color: var(--roomly-surface-container, rgba(255, 255, 255, 0.08));
+}
+
+[data-theme='dark'] .roomly-calendar .ec-view-btn {
+  color: #f8fafc;
+}
+
+[data-theme='dark'] .roomly-calendar .ec-view-btn:not(:last-child) {
+  border-right-color: var(--roomly-outline, rgba(255, 255, 255, 0.12));
+}
+
+[data-theme='dark'] .roomly-calendar .ec-view-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme='dark'] .roomly-calendar .ec-view-btn.active {
+  background: var(--roomly-primary, #8ab4f8);
+  color: #0f172a;
+}
+
+/* Category Filter dropdown - identical recipe to .ec-period-select above,
+   so the month/year pickers on the left and the category filter on the
+   right read as the same control. */
+.roomly-calendar .ec-category-filter {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 38px;
+  line-height: 38px;
+  padding: 0 32px 0 14px;
+  border: 1px solid var(--roomly-outline, #cbd5e1);
+  border-radius: 10px;
+  background-color: var(--roomly-surface-low, #f8fafc);
+  color: var(--roomly-text, #1e293b);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.roomly-calendar .ec-category-filter:hover {
+  background-color: var(--roomly-surface-container, #f1f5f9);
+  border-color: var(--roomly-primary, #006591);
+}
+
+.roomly-calendar .ec-category-filter:focus {
+  border-color: var(--roomly-primary, #006591);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--roomly-primary, #006591) 20%, transparent);
+}
+
+.roomly-calendar .ec-category-filter option {
+  background: var(--roomly-surface, #ffffff);
+  color: var(--roomly-text, #1e293b);
+}
+
+[data-theme='dark'] .roomly-calendar .ec-category-filter {
+  border-color: var(--roomly-outline, rgba(255, 255, 255, 0.12));
+  background-color: var(--roomly-surface-container, rgba(255, 255, 255, 0.06));
+  color: var(--roomly-text, #e8eaed);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+[data-theme='dark'] .roomly-calendar .ec-category-filter:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--roomly-primary, #8ab4f8);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23f1f5f9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+[data-theme='dark'] .roomly-calendar .ec-category-filter option {
+  background: #1e293b;
+  color: #e8eaed;
+}
+
 
 .roomly-bookings-page {
   font-family: 'Noto Sans Thai', 'Kanit', Tahoma, sans-serif;

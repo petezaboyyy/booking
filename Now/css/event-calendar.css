@@ -158,6 +158,14 @@
 .ec-today-btn:disabled:hover {
   background: transparent;
 }
+/* Groups the view switcher and category filter so they stay adjacent under
+   the header's space-between layout - see setupCalendar() in EventCalendar.js. */
+.ec-view-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 /* View Switcher */
 .ec-view-switcher {
   display: flex;
