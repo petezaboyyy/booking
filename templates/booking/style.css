@@ -2979,7 +2979,7 @@ div.modal {
   max-height: 320px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  z-index: 100000 !important;
+  z-index: calc(var(--z-index-modal) + 1) !important;
   padding: 6px !important;
   box-sizing: border-box !important;
   animation: roomlyDropdownPop .18s cubic-bezier(0.16, 1, 0.3, 1) !important;

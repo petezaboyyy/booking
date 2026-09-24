@@ -224,10 +224,38 @@ document.addEventListener('page:loaded', () => setTimeout(initCalendarRoomFilter
 document.addEventListener('DOMContentLoaded', () => setTimeout(initCalendarRoomFilter, 100));
 window.addEventListener('pageshow', () => setTimeout(initCalendarRoomFilter, 100));
 
-// The profile page's "Rooms for booking management" field: same searchable,
-// type-to-filter combobox used for picking a room on the booking form, but
-// allowing several rooms instead of one. createRoomlyCombobox() is defined
-// above, generic to both single- and multi-select use.
+function initRoomEquipmentField(modalEvent) {
+    const select = document.getElementById('room_accessories');
+    if (!select || select._roomlyComboboxInitialized) return;
+
+    const modal = modalEvent?.data;
+    if (modal?.options?.accessories) {
+        TemplateManager.processDataDirectives(select, {
+            state: modal.data || {},
+            options: modal.options,
+            computed: {}
+        });
+    }
+
+    const combobox = createRoomlyCombobox(select, {
+        searchable: true,
+        multiple: true,
+        placeholder: () => Now.translate('Select or search equipment...'),
+        getEmptyText: () => Now.translate('No equipment found'),
+        renderItemIcon: iconWrap => {
+            iconWrap.innerHTML = '<span class="icon-tags" aria-hidden="true"></span>';
+        }
+    });
+    if (combobox) {
+        setTimeout(() => combobox.sync(), 150);
+        setTimeout(() => combobox.sync(), 500);
+    }
+}
+
+EventManager.on('modal:shown', event => setTimeout(() => initRoomEquipmentField(event), 50));
+
+// The profile page's "Rooms for booking management" field uses the same
+// searchable, multi-select combobox as room equipment.
 function initBookingRoomsField() {
     const select = document.getElementById('booking_rooms');
     if (!select || select._roomlyComboboxInitialized) return;
@@ -457,7 +485,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260924-i18n-1';
+const ROOMLY_ROLE_UI_VERSION = '20260924-pull-merge-1';
 
 /**
  * Has this visitor signed in at all?

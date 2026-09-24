@@ -25,6 +25,7 @@ class Model extends \Kotchasan\Model
             'building' => '',
             'number' => '',
             'seats' => '',
+            'accessories' => [],
             'booking' => []
         ];
 
@@ -39,7 +40,9 @@ class Model extends \Kotchasan\Model
                 return null;
             }
 
-            $record = (object) array_merge((array) $record, (array) $room, self::getMetaValues($id));
+            $meta = self::getMetaValues($id);
+            $record = (object) array_merge((array) $record, (array) $room, $meta);
+            $record->accessories = \Booking\Booking\Model::csvToArray((string) ($meta['accessories'] ?? ''));
             if (isset($record->seats)) {
                 $rawSeats = (string) $record->seats;
                 $record->seats = preg_match('/^\s*(\d+)/', $rawSeats, $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', $rawSeats));
