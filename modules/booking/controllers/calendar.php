@@ -103,7 +103,13 @@ class Controller extends ApiController
             }
 
             return $this->successResponse([
-                'data' => $events
+                'data' => $events,
+                // The category filter dropdown needs the real "use" category
+                // list (e.g. การเรียน/ประชุม/สัมมนา/จัดเลี้ยง), not whatever
+                // one-off text has ended up as a booking's topic - the same
+                // options the booking form's Topic field uses, so the value
+                // stored in `description` above always matches an option here.
+                'categories' => Helper::getTopicOptions()
             ], 'Calendar data retrieved')
             ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         } catch (\Exception $e) {

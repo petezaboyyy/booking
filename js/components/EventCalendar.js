@@ -866,16 +866,17 @@ const EventCalendar = {
       header.appendChild(filter);
     }
 
-    // Category filter (booking "Topic", carried on event.description)
-    if (config.showCategoryFilter) {
-      const categoryFilter = this.createCategoryFilter(instance);
-      header.appendChild(categoryFilter);
-    }
-
     // View switcher
     if (config.showViewSwitcher && config.views.length > 1) {
       const switcher = this.createViewSwitcher(instance);
       header.appendChild(switcher);
+    }
+
+    // Category filter (booking "Topic", carried on event.description) -
+    // rightmost, grouped with the view controls rather than the text search.
+    if (config.showCategoryFilter) {
+      const categoryFilter = this.createCategoryFilter(instance);
+      header.appendChild(categoryFilter);
     }
 
     element.appendChild(header);
@@ -1109,24 +1110,44 @@ const EventCalendar = {
   },
 
   /**
-   * Rebuild the category dropdown's options from whatever events are
-   * currently loaded, keeping the active selection if it still has a match.
-   * Called from render() so navigating months or a fresh API load refreshes
-   * the list to the categories actually present right now. Skips DOM work
-   * when the category list hasn't actually changed.
+   * Rebuild the category dropdown's options, keeping the active selection if
+   * it still has a match. Called from render() so navigating months or a
+   * fresh API load refreshes the list. Skips DOM work when nothing changed.
+   *
+   * Prefers the authoritative category list the API sends alongside events
+   * (instance.categoryOptions, populated in loadEvents() from
+   * Booking\Helper\Controller::getTopicOptions() - the real "use" categories
+   * such as "การเรียน"/"ประชุม", not whatever one-off text a booking's topic
+   * happens to hold). Falls back to deriving distinct values straight from
+   * the loaded events' descriptions for any other consumer of this component
+   * that doesn't provide a category list (or when events are supplied
+   * directly via config.events instead of an API).
    */
   updateCategoryFilterOptions(instance) {
     const select = instance.categoryFilterElement;
     if (!select) return;
 
     const strings = this.getLocaleStrings(instance.config.locale);
-    const categories = Array.from(new Set(
-      (instance.events || [])
-        .map(event => String(event?.description || '').trim())
-        .filter(Boolean)
-    )).sort((a, b) => a.localeCompare(b));
 
-    const signature = categories.join('\u0001');
+    let categories;
+    if (Array.isArray(instance.categoryOptions)) {
+      categories = instance.categoryOptions
+        .map(opt => ({
+          value: String(opt?.value ?? '').trim(),
+          label: String(opt?.text ?? opt?.label ?? opt?.value ?? '').trim()
+        }))
+        .filter(opt => opt.value);
+    } else {
+      categories = Array.from(new Set(
+        (instance.events || [])
+          .map(event => String(event?.description || '').trim())
+          .filter(Boolean)
+      ))
+        .sort((a, b) => a.localeCompare(b))
+        .map(value => ({value, label: value}));
+    }
+
+    const signature = categories.map(c => `${c.value}\u0002${c.label}`).join('\u0001');
     if (select._categorySignature === signature) {
       return;
     }
@@ -1140,14 +1161,14 @@ const EventCalendar = {
     allOption.textContent = strings.categoryFilterAll || 'All categories';
     select.appendChild(allOption);
 
-    categories.forEach(category => {
+    categories.forEach(({value, label}) => {
       const option = document.createElement('option');
-      option.value = category;
-      option.textContent = category;
+      option.value = value;
+      option.textContent = label;
       select.appendChild(option);
     });
 
-    const stillValid = Boolean(previousValue) && categories.includes(previousValue);
+    const stillValid = Boolean(previousValue) && categories.some(c => c.value === previousValue);
     select.value = stillValid ? previousValue : '';
     if (!stillValid && previousValue) {
       instance.categoryFilter = '';
@@ -1327,6 +1348,7 @@ const EventCalendar = {
 
       const events = this.extractEventsFromResponse(response, config.eventDataPath);
       instance.events = this.normalizeEvents(events, config);
+      instance.categoryOptions = this.extractCategoryOptionsFromResponse(response);
       instance.segmentCache.clear();
       instance.error = null;
 
@@ -3427,6 +3449,24 @@ const EventCalendar = {
     }
 
     return [];
+  },
+
+  /**
+   * Extract the optional category list an API can send alongside events
+   * (e.g. Booking\Calendar\Controller's 'categories' key, itself
+   * Helper::getTopicOptions()) for updateCategoryFilterOptions() to use
+   * instead of guessing categories from whatever text is in event.description.
+   * Returns null - not [] - when absent, so the caller can tell "no list
+   * provided, derive one" apart from "list provided and it's empty".
+   */
+  extractCategoryOptionsFromResponse(response) {
+    const roots = [response, response?.data, response?.data?.data, response?.data?.data?.data];
+    for (const root of roots) {
+      if (root && Array.isArray(root.categories)) {
+        return root.categories;
+      }
+    }
+    return null;
   },
 
   /**

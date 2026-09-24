@@ -141,3 +141,56 @@ if (notOpted.querySelector('.ec-category-filter')) {
 
 console.log('ok   category filter dropdown is populated from loaded events and isolates matching bookings');
 console.log('ok   category filter is opt-in and absent from calendars that do not request it');
+
+// The dropdown must show the real "use" categories (Helper::getTopicOptions(),
+// sent by the calendar API as a 'categories' key alongside events), not every
+// distinct string that has ever ended up in a booking's free-text topic -
+// e.g. course names like "วิชาที่ 3" that aren't categories at all.
+const noisyEvents = [
+  {id: '1', title: 'R-0001, 08:00-12:00', description: 'วิชาที่ 3', start: '2026-09-05 08:00:00', end: '2026-09-05 12:00:00', room_number: '0001'},
+  {id: '2', title: 'R-0002, 08:00-12:00', description: 'การเรียน', start: '2026-09-05 08:00:00', end: '2026-09-05 12:00:00', room_number: '0002'}
+];
+const authoritative = dom.window.document.createElement('div');
+const authoritativeInstance = calendar.create(authoritative, {
+  events: noisyEvents,
+  defaultView: 'month',
+  currentDate: new Date(2026, 8, 1),
+  showCategoryFilter: true
+});
+// Simulate what loadEvents() stores after reading the API's 'categories' key.
+authoritativeInstance.categoryOptions = [
+  {value: 'การเรียน', text: 'การเรียน', category_id: '1', requires_course_code: true},
+  {value: 'ประชุม', text: 'ประชุม', category_id: '2', requires_course_code: false},
+  {value: 'สัมมนา', text: 'สัมมนา', category_id: '3', requires_course_code: false},
+  {value: 'จัดเลี้ยง', text: 'จัดเลี้ยง', category_id: '4', requires_course_code: false}
+];
+calendar.updateCategoryFilterOptions(authoritativeInstance);
+const authoritativeSelect = authoritative.querySelector('.ec-category-filter');
+const authoritativeValues = Array.from(authoritativeSelect.options).map(o => o.value);
+const expectedCategories = ['', 'การเรียน', 'ประชุม', 'สัมมนา', 'จัดเลี้ยง'];
+if (authoritativeValues.join('|') !== expectedCategories.join('|')) {
+  throw new Error(`Category dropdown ignored the authoritative category list: got [${authoritativeValues.join(', ')}], expected [${expectedCategories.join(', ')}]`);
+}
+if (authoritativeValues.includes('วิชาที่ 3')) {
+  throw new Error('Category dropdown included a booking\'s free-text topic instead of sticking to the real categories');
+}
+
+console.log('ok   category dropdown uses the authoritative "use" category list, not stray booking topic text');
+
+// Positioning: the dropdown should sit rightmost, after the view switcher,
+// grouped with the view controls rather than sandwiched next to the search box.
+const positioned = dom.window.document.createElement('div');
+calendar.create(positioned, {
+  events: categoryEvents,
+  defaultView: 'month',
+  showCategoryFilter: true,
+  showViewSwitcher: true
+});
+const header = positioned.querySelector('.ec-header');
+const switcherIndex = Array.from(header.children).findIndex(el => el.classList.contains('ec-view-switcher'));
+const categoryIndex = Array.from(header.children).findIndex(el => el.classList.contains('ec-category-filter'));
+if (!(switcherIndex >= 0 && categoryIndex > switcherIndex)) {
+  throw new Error(`Category filter is not positioned after the view switcher: switcherIndex=${switcherIndex}, categoryIndex=${categoryIndex}`);
+}
+
+console.log('ok   category filter sits to the right of the view switcher');
