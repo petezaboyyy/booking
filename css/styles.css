@@ -559,6 +559,42 @@ a:hover {
   .topbar > div {
     padding: 0 1rem;
   }
+  /* The hamburger is the only way to reach the side menu on a phone, and the
+     topbar is fixed, so anything pushed past the right edge is unreachable -
+     it cannot be scrolled to. A flex item defaults to min-width:auto, so the
+     title and the user name refused to shrink and shoved the controls off
+     screen entirely (a full Thai name is easily wide enough on its own).
+     Let the text side shrink, and keep the controls at their natural size. */
+  .topbar-left {
+    min-width: 0;
+  }
+  .topbar-right {
+    flex-shrink: 0;
+    gap: 0.5rem;
+  }
+  /* The avatar already identifies the signed-in user; the name is what made
+     the control group overflow, and it is still in the profile menu. */
+  .topbar-right .user-name {
+    display: none;
+  }
+  .topbar .avatar {
+    width: 36px;
+    height: 36px;
+  }
+  /* Put the menu button first in the group: it is the one control a phone
+     user cannot do without, so it should be the last thing to ever clip. */
+  .topbar-right .menu-toggle {
+    order: -1;
+  }
+  /* Two ~150px columns are unusable on a phone. Admin forms only - the member
+     (roomly) theme stacks its own grids already. */
+  .main-content .form-group {
+    flex-direction: column;
+    gap: 0;
+  }
+  .main-content .form-group > [class*="width"] {
+    width: 100% !important;
+  }
   .content {
     padding: 2rem 1rem
   }
