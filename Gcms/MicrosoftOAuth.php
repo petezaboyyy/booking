@@ -182,9 +182,27 @@ class MicrosoftOAuth
         return $claims;
     }
 
+    /**
+     * Graph leaves userType null on some older / directory-synced member accounts,
+     * so a blank type is not proof of a guest. Invited (B2B) guests always carry
+     * an #EXT# user principal name, so a blank type counts as a member unless it has one.
+     */
+    public static function isGuest(array $user)
+    {
+        $type = trim((string) ($user['userType'] ?? ''));
+        if ($type !== '') {
+            return strcasecmp($type, 'Member') !== 0;
+        }
+        return stripos((string) ($user['userPrincipalName'] ?? ''), '#EXT#') !== false;
+    }
+
     public static function profile(array $user, array $claims, $allowedDomains)
     {
-        if (($user['id'] ?? '') !== ($claims['oid'] ?? null) || ($user['userType'] ?? '') !== 'Member') {
+        if (($user['id'] ?? '') !== ($claims['oid'] ?? null) || self::isGuest($user)) {
+            $account = strtolower((string) ($user['mail'] ?? '') ?: (string) ($user['userPrincipalName'] ?? ''));
+            error_log('Microsoft SSO: not a member: userType='.json_encode($user['userType'] ?? null)
+                .' id_matches='.(($user['id'] ?? '') === ($claims['oid'] ?? null) ? 'yes' : 'no')
+                .' domain='.(substr(strrchr($account, '@') ?: '', 1) ?: '-'));
             throw new \RuntimeException('This Microsoft account is not an eligible university member.');
         }
         $email = strtolower(trim($user['mail'] ?? ''));

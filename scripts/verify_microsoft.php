@@ -97,6 +97,14 @@ foreach (['userType'=>'Guest','id'=>$client,'mail'=>'user@eviluniversity.ac.th']
     $modified=$profile; $modified[$field]=$bad;
     rejects('profile '.$field.' mismatch rejected', function () use ($modified,$claims) { OAuth::profile($modified,$claims,'university.ac.th'); });
 }
+$blankType=$profile; $blankType['userType']=null; $blankType['userPrincipalName']='staff@university.ac.th';
+check('null userType on a university member accepted', OAuth::profile($blankType,$claims,'university.ac.th')['username'] === 'staff@university.ac.th');
+$missingType=$profile; unset($missingType['userType']);
+check('missing userType on a university member accepted', OAuth::profile($missingType,$claims,'university.ac.th')['username'] === 'staff@university.ac.th');
+$blankGuest=$blankType; $blankGuest['userPrincipalName']='staff_university.ac.th#EXT#@tenant.onmicrosoft.com';
+rejects('null userType with guest UPN rejected', function () use ($blankGuest,$claims) { OAuth::profile($blankGuest,$claims,'university.ac.th'); });
+$lowerMember=$profile; $lowerMember['userType']='member';
+check('userType compared case-insensitively', OAuth::profile($lowerMember,$claims,'university.ac.th')['username'] === 'staff@university.ac.th');
 if (in_array('--database', $argv, true)) {
     require dirname(__DIR__).'/load.php';
     Kotchasan::createWebApplication('Gcms\\Config');
