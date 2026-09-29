@@ -98,6 +98,13 @@ const TableManager = {
         this.state.tables.forEach((table, tableId) => {
           this.retranslateFilter(table);
           this.renderTable(tableId);
+          // Re-render alone only relabels static i18n text - fields the
+          // server already localized (e.g. a booking's topic/category name,
+          // per Booking\Helper\Controller::getTopicOptions()) stay in
+          // whatever language they were fetched in unless we also re-fetch.
+          if (table?.element?.dataset?.source) {
+            this.loadTableData(tableId, {force: true});
+          }
         });
       });
     } catch (e) {
