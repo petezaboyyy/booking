@@ -1087,6 +1087,13 @@ const EventCalendar = {
       });
     };
 
+    selectEl._ecRefreshDropdown = () => {
+      if (isOpen) {
+        renderItems();
+        positionPanel();
+      }
+    };
+
     const openPanel = () => {
       if (isOpen) return;
       isOpen = true;
@@ -1374,6 +1381,7 @@ const EventCalendar = {
     if (!stillValid && previousValue) {
       instance.categoryFilter = '';
     }
+    select._ecRefreshDropdown?.();
   },
 
   /**
@@ -1523,6 +1531,8 @@ const EventCalendar = {
 
     if (!config.api) return;
 
+    const loadId = (instance._loadId || 0) + 1;
+    instance._loadId = loadId;
     instance.isLoading = true;
     this.renderLoading(instance);
 
@@ -1540,13 +1550,14 @@ const EventCalendar = {
       let response;
 
       if (window.ApiService && typeof ApiService.get === 'function') {
-        response = await ApiService.get(url);
+        response = await ApiService.get(url, {}, {cache: {enabled: false}, deduplicate: false});
       } else {
-        const requestOptions = Now.applyRequestLanguage({method: config.apiMethod});
+        const requestOptions = Now.applyRequestLanguage({method: config.apiMethod, cache: 'no-store'});
         const res = await fetch(url, requestOptions);
         response = await res.json();
       }
 
+      if (loadId !== instance._loadId) return;
       const events = this.extractEventsFromResponse(response, config.eventDataPath);
       instance.events = this.normalizeEvents(events, config);
       instance.categoryOptions = this.extractCategoryOptionsFromResponse(response);
@@ -1554,12 +1565,15 @@ const EventCalendar = {
       instance.error = null;
 
     } catch (error) {
+      if (loadId !== instance._loadId) return;
       console.error('[EventCalendar] Failed to load events:', error);
       instance.error = error.message;
       instance.events = [];
     } finally {
-      instance.isLoading = false;
-      this.render(instance);
+      if (loadId === instance._loadId) {
+        instance.isLoading = false;
+        this.render(instance);
+      }
     }
   },
 
