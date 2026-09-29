@@ -3535,7 +3535,7 @@ const TableManager = {
       const buttons = [
         {
           action: 'copy',
-          title: Now.translate('Copy'),
+          title: Now.translate(table.element.dataset.addBlankRow === 'true' ? 'Add' : 'Copy'),
           text: '+',
           className: 'plus',
           handler: async () => this.handleCopyRow(table, tableId, item)
@@ -3665,22 +3665,35 @@ const TableManager = {
         }
       }
 
-      const newItem = structuredClone ? structuredClone(updatedItem) : JSON.parse(JSON.stringify(updatedItem));
-      delete newItem.__rowKey;
+      let newItem;
+      if (table.element.dataset.addBlankRow === 'true') {
+        newItem = this.createEmptyRow(table);
+        const ids = (table.data || []).map(row => row.id);
+        table.element.querySelectorAll('tbody td[data-field="id"] input').forEach(input => ids.push(input.value));
+        const highestId = ids.reduce((max, id) => {
+          const value = String(id ?? '');
+          const number = Number(value);
+          return /^\d+$/.test(value) && Number.isSafeInteger(number) ? Math.max(max, number) : max;
+        }, 0);
+        newItem.id = String(highestId + 1);
+      } else {
+        newItem = structuredClone ? structuredClone(updatedItem) : JSON.parse(JSON.stringify(updatedItem));
+        delete newItem.__rowKey;
 
-      if (updatedItem && updatedItem._copyResetData && typeof updatedItem._copyResetData === 'object') {
-        Object.entries(updatedItem._copyResetData).forEach(([key, value]) => {
-          newItem[key] = value;
-        });
-      }
+        if (updatedItem && updatedItem._copyResetData && typeof updatedItem._copyResetData === 'object') {
+          Object.entries(updatedItem._copyResetData).forEach(([key, value]) => {
+            newItem[key] = value;
+          });
+        }
 
-      // Use counter for predictable IDs instead of random timestamp
-      if (!table._newRowCounter) {
-        table._newRowCounter = 0;
+        // Use counter for predictable IDs instead of random timestamp
+        if (!table._newRowCounter) {
+          table._newRowCounter = 0;
+        }
+        table._newRowCounter++;
+        newItem.id = `new_${table._newRowCounter}`;
+        this.ensureEditableRowKey(table, newItem);
       }
-      table._newRowCounter++;
-      newItem.id = `new_${table._newRowCounter}`;
-      this.ensureEditableRowKey(table, newItem);
 
       const actionUrl = table.element.dataset.actionUrl || table.config.actionUrl;
       const isServerSide = this.isServerSideTable(table);
