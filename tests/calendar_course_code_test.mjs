@@ -250,3 +250,60 @@ if (!(afterDestroyPanelCount < beforeDestroyPanelCount)) {
 }
 
 console.log('ok   destroying the calendar removes its custom dropdown panels');
+
+// Locale reactivity: switching language must update the category filter's
+// "All categories" placeholder immediately (it used to be excluded from the
+// options-signature check, so a locale switch with no other category change
+// silently kept showing the old language), and must re-fetch from the API
+// when one is configured so the categories themselves (localized server-side
+// via Booking\Helper\Controller::getTopicOptions()) pick up the new language
+// too - a plain re-render alone can't relabel data it already fetched.
+const localeHost = dom.window.document.createElement('div');
+calendar.create(localeHost, {
+  events: [],
+  defaultView: 'month',
+  showCategoryFilter: true
+});
+const localeInstance = calendar.getInstance(localeHost);
+localeInstance.categoryOptions = [{value: 'การเรียน', text: 'การเรียน'}];
+calendar.updateCategoryFilterOptions(localeInstance);
+
+const allOptionBefore = localeHost.querySelector('.ec-category-filter option[value=""]');
+if (!allOptionBefore || allOptionBefore.textContent !== 'ทุกหมวดหมู่') {
+  throw new Error(`Expected Thai "All categories" label before locale switch, got "${allOptionBefore?.textContent}"`);
+}
+
+localeInstance.config.locale = 'en';
+localeInstance.config.localePreference = 'en';
+dom.window.document.dispatchEvent(new dom.window.Event('locale:changed'));
+
+const allOptionAfter = localeHost.querySelector('.ec-category-filter option[value=""]');
+if (!allOptionAfter || allOptionAfter.textContent !== 'All categories') {
+  throw new Error(`"All categories" label did not update after locale:changed, got "${allOptionAfter?.textContent}"`);
+}
+
+console.log('ok   category filter "All categories" label updates immediately on locale:changed');
+
+const apiHost = dom.window.document.createElement('div');
+calendar.create(apiHost, {
+  api: '/fake-events-api',
+  defaultView: 'month',
+  showCategoryFilter: true
+});
+const apiInstance = calendar.getInstance(apiHost);
+let loadEventsCallCount = 0;
+const originalLoadEvents = calendar.loadEvents;
+calendar.loadEvents = function (instance) {
+  if (instance === apiInstance) loadEventsCallCount++;
+  return Promise.resolve();
+};
+try {
+  dom.window.document.dispatchEvent(new dom.window.Event('locale:changed'));
+} finally {
+  calendar.loadEvents = originalLoadEvents;
+}
+if (loadEventsCallCount !== 1) {
+  throw new Error(`Expected loadEvents to re-fetch once on locale change for an API-backed calendar, got ${loadEventsCallCount} calls`);
+}
+
+console.log('ok   locale:changed re-fetches events/categories from the API instead of only re-rendering cached data');
