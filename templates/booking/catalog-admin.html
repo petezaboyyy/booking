@@ -3,7 +3,7 @@
   <div>
     <header data-component='topbar'></header>
     <main class='content'>
-      <div class='card-groups booking-catalog-page' data-component='api' data-endpoint='api/booking/catalog/lists' data-cache='true' data-cache-time='60000'>
+      <div class='card-groups booking-catalog-page' data-component='api' data-endpoint='api/booking/catalog/lists'>
         <header>
           <div>
             <h1 class='icon-office' data-i18n>All rooms</h1>
@@ -110,6 +110,10 @@
                           <span data-text='item.building'></span>
                           <span data-text="item.seats ? item.seats + ' {LNG_Seats}' : ''"></span>
                         </div>
+                      </div>
+                      <div class='booking-catalog-equipment' data-if='item.accessories_text'>
+                        <strong data-i18n>Room equipment</strong>
+                        <span data-text='item.accessories_text'></span>
                       </div>
                     </div>
                   </a>
