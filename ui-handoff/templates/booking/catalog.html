@@ -162,9 +162,9 @@
                                                     <span data-text="item.seats ? item.seats + ' {LNG_Seats}' : ''"></span>
                                                 </div>
                                             </div>
-                                            <div class="booking-catalog-equipment" data-if="item.accessories_text">
+                                            <div class="booking-catalog-equipment">
                                                 <strong data-i18n>Room equipment</strong>
-                                                <span data-text="item.accessories_text"></span>
+                                                <span data-text="item.accessories_text || '{LNG_No equipment available}'"></span>
                                             </div>
                                         </div>
                                     </a>

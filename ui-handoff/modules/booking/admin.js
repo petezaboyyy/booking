@@ -485,7 +485,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260929-catalog-locale-refresh-1';
+const ROOMLY_ROLE_UI_VERSION = '20260929-catalog-no-equipment-1';
 
 /**
  * Has this visitor signed in at all?

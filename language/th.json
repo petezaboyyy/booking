@@ -1841,6 +1841,7 @@
     "Select or search room...": "พิมพ์ค้นหา หรือเลือกห้อง...",
     "Select or search equipment...": "พิมพ์ค้นหา หรือเลือกอุปกรณ์...",
     "Room equipment": "อุปกรณ์ในห้อง",
+    "No equipment available": "ไม่มีอุปกรณ์เสริมให้เลือก",
     "Select required equipment and provide any additional requests": "เลือกอุปกรณ์ที่ต้องการ และระบุความต้องการเพิ่มเติม",
     "Specify reservation date, time and repetition": "ระบุวัน เวลา และการทำซ้ำของการใช้งานห้อง",
     "View all rooms": "ดูห้องทั้งหมด",
