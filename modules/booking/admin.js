@@ -201,6 +201,62 @@ document.addEventListener('page:loaded', () => setTimeout(initCalendarRoomFilter
 document.addEventListener('DOMContentLoaded', () => setTimeout(initCalendarRoomFilter, 100));
 window.addEventListener('pageshow', () => setTimeout(initCalendarRoomFilter, 100));
 
+// Rooms page search: hides rendered room cards whose name / room number do not
+// contain every typed word. Purely client-side over the already-loaded list.
+function applyRoomCatalogSearch(input) {
+    const root = input.closest('.booking-catalog-page');
+    if (!root) return;
+
+    const terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let total = 0;
+    let shown = 0;
+    root.querySelectorAll('.booking-catalog-card:not(.is-skeleton)').forEach(card => {
+        total++;
+        const text = [card.querySelector('h2'), card.querySelector('.booking-catalog-card-subtitle')]
+            .map(el => el?.textContent || '')
+            .join(' ')
+            .toLowerCase();
+        const match = terms.every(term => text.includes(term));
+        card.style.display = match ? '' : 'none';
+        if (match) shown++;
+    });
+
+    const empty = root.querySelector('[data-room-search-empty]');
+    if (empty) empty.style.display = terms.length && total && !shown ? '' : 'none';
+    const clear = root.querySelector('[data-room-search-clear]');
+    if (clear) clear.style.display = input.value ? 'inline-flex' : 'none';
+}
+
+document.addEventListener('input', event => {
+    if (event.target.matches?.('[data-room-search]')) applyRoomCatalogSearch(event.target);
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && event.target.matches?.('[data-room-search]') && event.target.value) {
+        event.target.value = '';
+        applyRoomCatalogSearch(event.target);
+    }
+});
+
+document.addEventListener('click', event => {
+    const clear = event.target.closest?.('[data-room-search-clear]');
+    const input = clear?.closest('.roomly-calendar-filter-wrap')?.querySelector('[data-room-search]');
+    if (!input) return;
+    event.preventDefault();
+    input.value = '';
+    applyRoomCatalogSearch(input);
+    input.focus();
+});
+
+// The list re-renders its cards after each load (e.g. the refetch on a
+// language switch); re-apply a query that is still typed in the box.
+document.addEventListener('api:content-rendered', event => {
+    const input = event.target?.querySelector?.('[data-room-search]');
+    if (!input?.value) return;
+    applyRoomCatalogSearch(input);
+    requestAnimationFrame(() => applyRoomCatalogSearch(input));
+});
+
 function initRoomEquipmentField(modalEvent) {
     const select = document.getElementById('room_accessories');
     if (!select || select._roomlyComboboxInitialized) return;

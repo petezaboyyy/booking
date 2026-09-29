@@ -66,6 +66,14 @@
                     </div>
                 </header>
                 <div class="content-body roomly-rooms-panel">
+                    <div class="roomly-calendar-filter-bar booking-catalog-search">
+                        <div class="roomly-calendar-filter-wrap">
+                            <span class="roomly-calendar-filter-icon icon-search" aria-hidden="true"></span>
+                            <input type="text" class="roomly-calendar-filter-input" data-room-search autocomplete="off"
+                                   placeholder="Search room or room number..." data-i18n-placeholder="Search room or room number...">
+                            <button type="button" class="roomly-calendar-filter-clear" data-room-search-clear aria-label="{LNG_Clear filter}">&times;</button>
+                        </div>
+                    </div>
                     <div class="booking-catalog-layout">
                         <!-- Skeleton Loading Grid -->
                         <section class="booking-catalog-grid booking-catalog-skeleton-grid" aria-hidden="true">
@@ -179,6 +187,10 @@
                         <div class="booking-catalog-grid-empty" data-if="!items || items.length === 0">
                             <span class="icon-office"></span>
                             <p data-i18n>No rooms are available for booking right now</p>
+                        </div>
+                        <div class="booking-catalog-grid-empty" data-room-search-empty style="display:none">
+                            <span class="icon-search"></span>
+                            <p data-i18n>No rooms found</p>
                         </div>
                     </div>
                 </div>
