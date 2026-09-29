@@ -35,7 +35,7 @@ $validate = new \ReflectionMethod(\Booking\Booking\Controller::class, 'validateA
 $validate->setAccessible(true);
 
 /** Run the controller validation for one begin/end date pair. */
-function validateRange(string $beginDate, string $endDate): array
+function validateRange(string $beginDate, string $endDate, int $roomId = 1, array $accessories = []): array
 {
     global $controller, $validate;
     $save = [
@@ -47,11 +47,11 @@ function validateRange(string $beginDate, string $endDate): array
         'recurrence_days' => [],
         'excluded_dates' => [],
         'version' => 0,
-        'accessories' => [],
+        'accessories' => $accessories,
         'comment' => '',
         'topic' => 'range test',
         'attendees' => 1,
-        'room_id' => 1,
+        'room_id' => $roomId,
         'use' => ''
     ];
     $booking = (object) ['id' => 0, 'member_id' => 1, 'status' => Helper::STATUS_PENDING_REVIEW, 'closed' => 1, 'approve' => 1];
@@ -104,6 +104,21 @@ check(
     'the approve/reject path checks it too'
 );
 check(mb_strlen(str_repeat('ก', 255)) === 255, 'the check counts characters, not bytes (Thai text is 3 bytes each)');
+
+echo "\n[6] A booking accepts only equipment assigned to its room\n";
+$rooms = Helper::getRoomOptions(true);
+$room = $rooms[0] ?? null;
+if ($room) {
+    $errors = validateRange('2036-01-01', '2036-01-01', (int) $room['value'], [PHP_INT_MAX]);
+    check(isset($errors['accessories']), 'equipment outside the room is rejected');
+}
+foreach ($rooms as $room) {
+    if (!empty($room['accessories'])) {
+        $errors = validateRange('2036-01-01', '2036-01-01', (int) $room['value'], [$room['accessories'][0]]);
+        check(!isset($errors['accessories']), 'equipment assigned to the room is accepted');
+        break;
+    }
+}
 
 echo $fail === 0 ? "\nALL PASS\n" : "\n$fail FAILURES\n";
 exit($fail === 0 ? 0 : 1);

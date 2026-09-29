@@ -406,11 +406,16 @@ class Controller extends \Gcms\Controller
     public static function getRoomOptions(bool $activeOnly = true, ?int $includeId = null, ?array $roomIds = null, bool $showRoomNumber = false): array
     {
         $query = \Kotchasan\Model::createQuery()
-            ->select('R.id', 'R.name', 'R.is_active', 'R.detail', 'R.color', 'RoomNumber.value room_number', 'Building.value building', 'Seats.value seats')
+            ->select(
+                'R.id', 'R.name', 'R.is_active', 'R.detail', 'R.color',
+                'RoomNumber.value room_number', 'Building.value building',
+                'Seats.value seats', 'Accessories.value accessories'
+            )
             ->from('rooms R')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Building', [['Building.room_id', 'R.id'], ['Building.name', 'building']], 'LEFT')
-            ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT');
+            ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT')
+            ->join('rooms_meta Accessories', [['Accessories.room_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT');
 
         $query->orderBy($showRoomNumber ? 'RoomNumber.value' : 'R.name');
 
@@ -443,7 +448,8 @@ class Controller extends \Gcms\Controller
                 'room_number' => $roomNumber,
                 'building' => (string) ($item->building ?? ''),
                 'seats' => (string) ($item->seats ?? ''),
-                'detail' => (string) ($item->detail ?? '')
+                'detail' => (string) ($item->detail ?? ''),
+                'accessories' => \Booking\Booking\Model::csvToArray($item->accessories ?? '')
             ];
         }
 

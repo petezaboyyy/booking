@@ -1746,7 +1746,41 @@ function createRoomlyCombobox(selectEl, config = {}) {
         };
 }
 
+function initBookingAccessoryFilter(element, data) {
+    const roomSelect = element.querySelector('#room_id');
+    const accessoriesSelect = element.querySelector('#accessories');
+    const rooms = data?.options?.room_id;
+    const accessories = data?.options?.accessories;
+    if (!roomSelect || !accessoriesSelect || !Array.isArray(rooms) || !Array.isArray(accessories)) return () => {};
+
+    const byRoom = new Map(rooms.map(room => [String(room.value), new Set((room.accessories || []).map(String))]));
+    const update = () => {
+        const allowed = byRoom.get(String(roomSelect.value || '')) || new Set();
+        const available = accessories.filter(option => allowed.has(String(option.value)));
+        MultiSelectElementFactory.updateOptions(accessoriesSelect, available);
+        accessoriesSelect.disabled = available.length === 0;
+
+        const instance = window.Now?.getManager?.('element')?.getInstanceByElement?.(accessoriesSelect);
+        if (instance?.trigger) {
+            instance.trigger.disabled = accessoriesSelect.disabled;
+            instance.trigger.classList.toggle('disabled', accessoriesSelect.disabled);
+        }
+        if (instance) {
+            MultiSelectElementFactory.updateDisplay(instance);
+        }
+    };
+
+    roomSelect.addEventListener('change', update);
+    roomSelect.addEventListener('optionschanged', update);
+    update();
+    return () => {
+        roomSelect.removeEventListener('change', update);
+        roomSelect.removeEventListener('optionschanged', update);
+    };
+}
+
 function initBookingForm(element, data) {
+    const cleanupAccessoryFilter = initBookingAccessoryFilter(element, data);
     const isRoomly = element.classList.contains('roomly-booking-form')
         || Boolean(element.querySelector('.roomly-reservation-surface'))
         || Boolean(element.closest('.roomly-booking-page'));
@@ -1790,6 +1824,7 @@ function initBookingForm(element, data) {
         const conflictCheckerInstance = initConflictChecker(element, data, false);
 
         return () => {
+            cleanupAccessoryFilter();
             if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
             if (useInput) useInput.removeEventListener('change', syncTopicFromUse);
             if (typeof occurrencePickerCleanup === 'function') occurrencePickerCleanup();
@@ -2699,6 +2734,7 @@ function initBookingForm(element, data) {
     }
 
     return () => {
+        cleanupAccessoryFilter();
         clearTimeout(timer1);
         clearTimeout(timer2);
         clearTimeout(timer3);

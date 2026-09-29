@@ -189,6 +189,12 @@ class Controller extends ApiController
         $errors = [];
         if ($save['room_id'] <= 0) {
             $errors['room_id'] = 'Please select';
+        } elseif (!empty($save['accessories'])) {
+            $roomMeta = \Booking\Room\Model::getMetaValues((int) $save['room_id']);
+            $allowedAccessories = Model::csvToArray($roomMeta['accessories'] ?? '');
+            if (array_diff(array_map('strval', (array) $save['accessories']), $allowedAccessories)) {
+                $errors['accessories'] = 'Invalid data';
+            }
         }
         if ($save['attendees'] <= 0) {
             $errors['attendees'] = 'Please fill in';
