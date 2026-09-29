@@ -1871,6 +1871,11 @@ function initBookingAccessoryFilter(element, data) {
     const accessories = data?.options?.accessories;
     if (!roomSelect || !accessoriesSelect || !Array.isArray(rooms) || !Array.isArray(accessories)) return () => {};
 
+    // The hint under the field is a data-i18n element; swapping its key (not
+    // just its text) keeps a later language switch re-translating the right one.
+    const hint = element.querySelector('#result_accessories');
+    const defaultHintKey = hint ? (hint.dataset.i18n || hint.textContent.trim()) : '';
+
     const byRoom = new Map(rooms.map(room => [String(room.value), new Set((room.accessories || []).map(String))]));
     const update = () => {
         const allowed = byRoom.get(String(roomSelect.value || '')) || new Set();
@@ -1885,6 +1890,15 @@ function initBookingAccessoryFilter(element, data) {
         }
         if (instance) {
             MultiSelectElementFactory.updateDisplay(instance);
+        }
+
+        if (hint && defaultHintKey) {
+            // No room picked yet is not "this room has nothing" - keep the normal hint.
+            const noneForRoom = Boolean(roomSelect.value) && available.length === 0;
+            const key = noneForRoom ? 'No equipment available' : defaultHintKey;
+            hint.classList.toggle('is-warning', noneForRoom);
+            hint.dataset.i18n = key;
+            hint.textContent = window.Now?.translate ? Now.translate(key) : key;
         }
     };
 
