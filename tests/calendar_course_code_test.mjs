@@ -307,3 +307,26 @@ if (loadEventsCallCount !== 1) {
 }
 
 console.log('ok   locale:changed re-fetches events/categories from the API instead of only re-rendering cached data');
+
+// Startup race: the calendar self-initializes synchronously as soon as this
+// script parses, before js/main.js's `await Now.init()` has registered or
+// initialized I18nManager - so resolveLocale('auto') used to fall through to
+// navigator.language (the OS/browser locale) during that window, while the
+// actual API request always used Now.getRequestLocale()'s own fallback
+// ('en'). Those two disagreeing meant the category filter's "All categories"
+// placeholder could render in a different language than the categories the
+// API had already localized. resolveLocale() must defer to Now.getLocale()
+// when available so both agree.
+const originalNow = dom.window.Now;
+dom.window.Now = {...originalNow, getLocale: () => 'en'};
+Object.defineProperty(dom.window.navigator, 'language', {value: 'th-TH', configurable: true});
+try {
+  const resolved = calendar.resolveLocale('auto');
+  if (resolved !== 'en') {
+    throw new Error(`Expected resolveLocale('auto') to defer to Now.getLocale() ("en"), got "${resolved}"`);
+  }
+} finally {
+  dom.window.Now = originalNow;
+}
+
+console.log('ok   resolveLocale("auto") defers to Now.getLocale() instead of navigator.language, keeping UI strings and API requests in the same language');

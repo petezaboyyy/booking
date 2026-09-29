@@ -3825,10 +3825,27 @@ const EventCalendar = {
 
   /**
    * Resolve the effective locale for an instance.
+   *
+   * Prefers Now.getLocale() - the same resolver Now.applyRequestLanguage()
+   * uses for the Accept-Language header on every API call - over rolling our
+   * own chain. The calendar self-initializes synchronously as soon as this
+   * script parses, before js/main.js's `await Now.init()` has registered or
+   * initialized I18nManager, so during that window I18nManager.getCurrentLocale()
+   * is null. Falling through to navigator.language (the OS/browser locale)
+   * as this used to do can disagree with what Now.getLocale() resolves to
+   * (it falls back to a hardcoded 'en' instead) for that same request,
+   * making the calendar's own UI strings (e.g. the category filter's "All
+   * categories" placeholder) render in a different language than the data
+   * the API just sent back already localized to. Using the same resolver
+   * everywhere keeps them in sync even during that startup race.
    */
   resolveLocale(locale = 'auto') {
     if (locale && locale !== 'auto') {
       return locale;
+    }
+
+    if (window.Now?.getLocale) {
+      return window.Now.getLocale();
     }
 
     return this.getI18nManager()?.getCurrentLocale?.()
