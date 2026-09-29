@@ -71,7 +71,7 @@ try {
     check(!empty($items), 'there is at least one active room to inspect');
     $fields = array_keys(get_object_vars($items[0]));
     sort($fields);
-    $expected = ['booking_url', 'building', 'color', 'detail', 'first_image_url', 'gallery', 'gallery_count', 'id', 'is_active', 'name', 'room_number', 'seats'];
+    $expected = ['accessories_text', 'booking_url', 'building', 'color', 'detail', 'first_image_url', 'gallery', 'gallery_count', 'id', 'is_active', 'name', 'room_number', 'seats'];
     sort($expected);
     check(
         $fields === $expected,
