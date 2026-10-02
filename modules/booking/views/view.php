@@ -161,6 +161,11 @@ class View extends \Kotchasan\KBase
             \Booking\Helper\Controller::STATUS_RETURNED_FOR_EDIT => ' is-pending'
         ][(int) ($index['status'] ?? -1)] ?? '';
         $add('Status', '<span class="roomly-detail-status'.$statusClass.'">'.$escape($index['status_text']).'</span>');
+        // Absent for guests (stripped like the requester's name) and for bookings
+        // approved automatically, which have no approving staff member.
+        if (!empty($index['approver_name'])) {
+            $add('Approver', $escape($index['approver_name']));
+        }
         if (!empty($index['reason'])) {
             $add('Reason', $multiline($index['reason']));
         }

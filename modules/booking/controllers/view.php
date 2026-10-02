@@ -37,7 +37,7 @@ class Controller extends ApiController
                 if (!empty($visible) && !in_array((int) ($data['status'] ?? -1), $visible, true)) {
                     return $this->errorResponse('No data available', 404);
                 }
-                foreach (['member_id', 'member_name', 'member_email', 'member_line_uid', 'member_telegram_id', 'reason', 'comment', 'created_at', 'approve', 'closed'] as $field) {
+                foreach (['member_id', 'member_name', 'member_email', 'member_line_uid', 'member_telegram_id', 'approver_name', 'reason', 'comment', 'created_at', 'approve', 'closed'] as $field) {
                     unset($data[$field]);
                 }
             }
