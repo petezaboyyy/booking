@@ -4138,3 +4138,94 @@ html[data-ui-role='guest'] [data-member-only] {
     font-size: 12px;
   }
 }
+
+/* Phone scale: the desktop sizes (34-44px titles, 156px stat cards, 16:10 room
+   photos, ~30px card padding) made pages several screens long on a phone.
+   Same layout, tighter scale. Kept last so it wins over the 700/900px blocks. */
+@media (max-width: 600px) {
+  .roomly-hero {
+    min-height: 0;
+    margin-bottom: 20px;
+  }
+
+  .roomly-hero h1 {
+    font-size: 24px;
+  }
+
+  .roomly-hero p,
+  .roomly-page-description,
+  .roomly-rooms-heading > div:first-child > p,
+  .roomly-booking-heading > div:first-child > p {
+    font-size: 14px;
+  }
+
+  .roomly-page-heading h1,
+  .roomly-booking-heading h1 {
+    gap: 12px;
+    font-size: 22px;
+  }
+
+  .roomly-booking-heading h1::before {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 20px;
+  }
+
+  /* Stat cards: three across instead of three full-width blocks. */
+  .roomly-stat-grid,
+  .roomly-stat-grid > [data-component='api'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .roomly-stat-grid {
+    margin-bottom: 20px;
+  }
+
+  .roomly-stat-card {
+    min-height: 0;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .roomly-stat-card::after {
+    top: -30px;
+    right: -30px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .roomly-stat-card p {
+    margin-bottom: 6px;
+    font-size: 10.5px;
+    letter-spacing: .03em;
+  }
+
+  .roomly-stat-card strong {
+    font-size: 26px;
+  }
+
+  .roomly-stat-icon {
+    display: none;
+  }
+
+  /* Rooms: shorter photo, and header buttons that fit side by side. */
+  .roomly-rooms-page .booking-catalog-card-media,
+  .roomly-rooms-page .booking-catalog-card.is-skeleton .booking-catalog-card-media {
+    aspect-ratio: 16 / 8;
+  }
+
+  .roomly-rooms-header-actions .btn {
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 12px;
+    gap: 6px;
+    font-size: 13.5px;
+  }
+
+  .roomly-booking-page .roomly-reservation-card {
+    padding: 18px 14px 14px;
+  }
+}
