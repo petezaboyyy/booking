@@ -186,6 +186,47 @@ class Model extends \Kotchasan\Model
     }
 
     /**
+     * Name of the staff member whose decision approved each reservation, keyed by
+     * reservation id. Review\Controller::processDecision() logs every decision with
+     * the resulting status, so this is the latest 'Status' log whose status is
+     * approved. Bookings approved automatically (no approval step configured) have
+     * no such entry and are simply absent.
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, string>
+     */
+    public static function getApproverNames(array $reservationIds): array
+    {
+        $reservationIds = array_values(array_unique(array_map('intval', $reservationIds)));
+        if (empty($reservationIds)) {
+            return [];
+        }
+        $rows = static::createQuery()
+            ->select('L.src_id', 'L.datas', 'U.name')
+            ->from('logs L')
+            ->join('user U', ['U.id', 'L.member_id'], 'LEFT')
+            ->where([
+                ['L.module', 'booking'],
+                ['L.action', 'Status'],
+                ['L.src_id', $reservationIds]
+            ])
+            ->orderBy('L.id')
+            ->fetchAll();
+
+        $names = [];
+        foreach ($rows as $row) {
+            $data = json_decode((string) $row->datas, true);
+            $name = trim((string) ($row->name ?? ''));
+            if ($name !== '' && is_array($data) && (int) ($data['status'] ?? -1) === Helper::STATUS_APPROVED) {
+                $names[(int) $row->src_id] = $name;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Get normalized booking detail data.
      *
      * @param int $id
@@ -249,6 +290,7 @@ class Model extends \Kotchasan\Model
             'use_text' => Helper::getUseLabel($row->use_id ?? ''),
             'status' => Helper::getStatusValue($row),
             'status_text' => Helper::getStatusText($row),
+            'approver_name' => self::getApproverNames([(int) $row->id])[(int) $row->id] ?? '',
             'approve' => (int) ($row->approve ?? 1),
             'closed' => (int) ($row->closed ?? 1),
             'created_at' => (string) ($row->created_at ?? ''),

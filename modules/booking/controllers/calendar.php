@@ -76,9 +76,18 @@ class Controller extends ApiController
             }
 
             $query->orderBy('O.begin');
+            $rows = $query->fetchAll();
+
+            // Staff identity only for signed-in users: this endpoint also serves
+            // the public calendar (see Booking\View\Controller for the same rule).
+            $approvers = $this->authenticateRequest($request)
+                ? \Booking\Booking\Model::getApproverNames(array_map(static function ($row) {
+                    return (int) $row->id;
+                }, $rows))
+                : [];
 
             $events = [];
-            foreach ($query->fetchAll() as $item) {
+            foreach ($rows as $item) {
                 $label = !empty($item->room_number) ? $item->room_number : $item->room_name;
                 $events[] = [
                     // The calendar looks events up by id, so it must be unique
@@ -90,6 +99,7 @@ class Controller extends ApiController
                     'room_number' => (string) ($item->room_number ?? ''),
                     'room_name' => (string) ($item->room_name ?? ''),
                     'member_name' => (string) ($item->member_name ?? ''),
+                    'approver_name' => $approvers[(int) $item->id] ?? '',
                     'course_code' => trim((string) ($item->course_code ?? '')),
                     'title' => $label.', '.substr((string) $item->begin, 11, 5).'-'.substr((string) $item->end, 11, 5),
                     'description' => (string) $item->topic,
