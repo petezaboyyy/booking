@@ -84,14 +84,9 @@ class Controller extends ApiController
                 return $this->errorResponse('This booking has no approved dates to export', 404);
             }
 
-            // Who booked, when, which room, which course, and what the room
-            // has to have ready. Course code is its own column so a timetable
-            // can be sorted by it, and the free-text note goes last so a long
-            // one does not push the columns anyone scans apart. Dropped as noise: department (nothing ever
-            // sets it), weekday (the date says it), purpose (duplicates the
-            // topic), accessories and notes (usually empty, and notes are free
-            // text that stretches the row), and the submitted/approved
-            // timestamps, which are workflow history rather than a schedule.
+            // Course code is its own column so a timetable can be sorted by it.
+            // Keep the free-text note last so it does not stretch the columns
+            // people scan first.
             $datas = [];
             foreach ($rows as $row) {
                 $begin = (string) $row->begin;
@@ -110,7 +105,6 @@ class Controller extends ApiController
                     $row->topic,
                     Helper::getUseLabel($row->use_id ?? ''),
                     $row->attendees,
-                    Helper::formatAccessoryNames($row->accessories ?? ''),
                     $row->comment
                 ]);
             }
@@ -128,7 +122,6 @@ class Controller extends ApiController
                 Language::get('Topic'),
                 Language::get('Use for'),
                 Language::get('Attendees number'),
-                Language::get('Accessories'),
                 Language::get('Notes')
             ];
 

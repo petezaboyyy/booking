@@ -101,7 +101,7 @@ route สำคัญของระบบจองห้อง
 - `/booking-review` หน้าตรวจสอบและตัดสินคำขอ
 - `/room-management` จัดการข้อมูลห้อง
 - `/booking-settings` ตั้งค่ากติกาของระบบจองห้อง
-- `/booking-categories` จัดการหมวดหมู่การใช้งานและอุปกรณ์
+- `/booking-categories` จัดการหมวดหมู่การใช้งาน
 
 ## Workflow การทำงาน
 
@@ -158,7 +158,7 @@ route สำคัญของระบบจองห้อง
 
 ### อัปเกรดจากระบบเดิม
 
-สำหรับ deployment เดิม ควรรัน `install/upgrade2.php` เพื่อเพิ่มฟิลด์ `schedule_type` และแยกข้อมูลเก่าออกจากรายการแบบ daily slot ให้ถูกต้อง
+สำหรับ deployment เดิม ควรรัน `install/upgrade2.php` เพื่อเพิ่มฟิลด์ `schedule_type` แยกข้อมูลเก่าออกจากรายการแบบ daily slot และลบข้อมูลอุปกรณ์เสริมเดิม
 
 ## Build และ Runtime
 

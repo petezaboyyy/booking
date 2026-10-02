@@ -58,8 +58,6 @@ class Model extends \Kotchasan\Model
         $meta = BookingModel::getMetaValues($id);
         $row->use = (string) ($meta['use'] ?? '');
         $row->use_text = Helper::getUseLabel($meta['use'] ?? '');
-        $row->accessories = BookingModel::csvToArray($meta['accessories'] ?? '');
-        $row->accessories_text = Helper::formatAccessoryNames($meta['accessories'] ?? '');
         $row->recurrence_days = Helper::normalizeRecurrenceDays($meta['recurrence_days'] ?? '');
         $row->excluded_dates = BookingModel::normalizeExcludedDates($meta['excluded_dates'] ?? '');
 

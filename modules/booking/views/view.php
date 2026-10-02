@@ -79,9 +79,6 @@ class View extends \Kotchasan\KBase
             $content[] = '<tr><td class="item"><span class="icon-ban">{LNG_Cancelled dates}</span></td><td class="item"> : </td><td class="item">'.$escape($index['cancelled_dates_text']).'</td></tr>';
         }
         $content[] = '<tr><td class="item"><span class="icon-group">{LNG_Attendees number}</span></td><td class="item"> : </td><td class="item">'.$escape($index['attendees']).'</td></tr>';
-        if (!empty($index['accessories_text'])) {
-            $content[] = '<tr><td class="item"><span class="icon-list">{LNG_Accessories}</span></td><td class="item"> : </td><td class="item">'.$escape($index['accessories_text']).'</td></tr>';
-        }
         $content[] = '<tr><td class="item"><span class="icon-star0">{LNG_Status}</span></td><td class="item"> : </td><td class="item">'.$escape($index['status_text']).'</td></tr>';
         if (!empty($index['reason'])) {
             $content[] = '<tr><td class="item"><span class="icon-file">{LNG_Reason}</span></td><td class="item"> : </td><td class="item">'.$escapeMultiline($index['reason']).'</td></tr>';
@@ -155,9 +152,6 @@ class View extends \Kotchasan\KBase
             $add('Cancelled dates', $escape($index['cancelled_dates_text']));
         }
         $add('Attendees number', $escape($index['attendees']));
-        if (!empty($index['accessories_text'])) {
-            $add('Accessories', $escape($index['accessories_text']));
-        }
         $statusClass = [
             \Booking\Helper\Controller::STATUS_PENDING_REVIEW => ' is-pending',
             \Booking\Helper\Controller::STATUS_APPROVED => ' is-approved',

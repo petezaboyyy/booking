@@ -222,7 +222,7 @@ try {
     foreach (['password', 'salt', 'token', 'line_uid', 'telegram_id', 'permission', 'activatecode'] as $secret) {
         check(!property_exists($row, $secret), 'the query never selects '.$secret);
     }
-    foreach (['member_name', 'member_email', 'room_name', 'room_number', 'room_building', 'begin', 'end', 'course_code', 'topic', 'use_id', 'attendees', 'accessories', 'comment'] as $needed) {
+    foreach (['member_name', 'member_email', 'room_name', 'room_number', 'room_building', 'begin', 'end', 'course_code', 'topic', 'use_id', 'attendees', 'comment'] as $needed) {
         check(property_exists($row, $needed), 'the sheet can show '.$needed);
     }
     // Columns dropped as noise are no longer fetched either.

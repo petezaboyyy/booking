@@ -19,8 +19,7 @@ class Controller extends \Index\Categories\Controller
      * @var array
      */
     protected $categories = [
-        'use' => '{LNG_Use for}',
-        'accessories' => '{LNG_Accessories}'
+        'use' => '{LNG_Use for}'
     ];
 
     protected function prepareCategorySaveData(Request $request, array $item, $key, string $type): array
@@ -29,7 +28,7 @@ class Controller extends \Index\Categories\Controller
             $values = $request->post('requires_course_code', [])->toInt();
             $item['requires_course_code'] = empty($values[$key]) ? 0 : 1;
         }
-        if ($type === 'use' || $type === 'accessories') {
+        if ($type === 'use') {
             // Optional English name shown when the site language is English.
             // Left blank, the Thai `topic` is used everywhere - see
             // Helper::localizeCategoryOptionText() and Model::englishNames().

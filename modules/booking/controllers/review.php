@@ -76,7 +76,6 @@ class Controller extends ApiController
                 'end_text' => Date::format($row->end, 'd M Y H:i'),
                 'status_text' => Helper::getStatusText($row),
                 'use_text' => (string) $row->use_text,
-                'accessories_text' => (string) $row->accessories_text,
                 'approval_reason' => (string) $row->reason,
                 'canProcess' => $canProcess,
                 'canApproveAction' => $canApproveAction,

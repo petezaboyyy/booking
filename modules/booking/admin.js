@@ -257,38 +257,8 @@ document.addEventListener('api:content-rendered', event => {
     requestAnimationFrame(() => applyRoomCatalogSearch(input));
 });
 
-function initRoomEquipmentField(modalEvent) {
-    const select = document.getElementById('room_accessories');
-    if (!select || select._roomlyComboboxInitialized) return;
-
-    const modal = modalEvent?.data;
-    if (modal?.options?.accessories) {
-        TemplateManager.processDataDirectives(select, {
-            state: modal.data || {},
-            options: modal.options,
-            computed: {}
-        });
-    }
-
-    const combobox = createRoomlyCombobox(select, {
-        searchable: true,
-        multiple: true,
-        placeholder: () => Now.translate('Select or search equipment...'),
-        getEmptyText: () => Now.translate('No equipment found'),
-        renderItemIcon: iconWrap => {
-            iconWrap.innerHTML = '<span class="icon-tags" aria-hidden="true"></span>';
-        }
-    });
-    if (combobox) {
-        setTimeout(() => combobox.sync(), 150);
-        setTimeout(() => combobox.sync(), 500);
-    }
-}
-
-EventManager.on('modal:shown', event => setTimeout(() => initRoomEquipmentField(event), 50));
-
-// The profile page's "Rooms for booking management" field uses the same
-// searchable, multi-select combobox as room equipment.
+// The profile page's "Rooms for booking management" field uses a
+// searchable, multi-select combobox.
 function initBookingRoomsField() {
     const select = document.getElementById('booking_rooms');
     if (!select || select._roomlyComboboxInitialized) return;
@@ -518,7 +488,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20260924-room-equipment-2';
+const ROOMLY_ROLE_UI_VERSION = '20261002-booking-ui-1';
 
 /**
  * Has this visitor signed in at all?
@@ -1802,53 +1772,6 @@ function createRoomlyCombobox(selectEl, config = {}) {
         };
 }
 
-function initBookingAccessoryFilter(element, data) {
-    const roomSelect = element.querySelector('#room_id');
-    const accessoriesSelect = element.querySelector('#accessories');
-    const rooms = data?.options?.room_id;
-    const accessories = data?.options?.accessories;
-    if (!roomSelect || !accessoriesSelect || !Array.isArray(rooms) || !Array.isArray(accessories)) return () => {};
-
-    // The hint under the field is a data-i18n element; swapping its key (not
-    // just its text) keeps a later language switch re-translating the right one.
-    const hint = element.querySelector('#result_accessories');
-    const defaultHintKey = hint ? (hint.dataset.i18n || hint.textContent.trim()) : '';
-
-    const byRoom = new Map(rooms.map(room => [String(room.value), new Set((room.accessories || []).map(String))]));
-    const update = () => {
-        const allowed = byRoom.get(String(roomSelect.value || '')) || new Set();
-        const available = accessories.filter(option => allowed.has(String(option.value)));
-        MultiSelectElementFactory.updateOptions(accessoriesSelect, available);
-        accessoriesSelect.disabled = available.length === 0;
-
-        const instance = window.Now?.getManager?.('element')?.getInstanceByElement?.(accessoriesSelect);
-        if (instance?.trigger) {
-            instance.trigger.disabled = accessoriesSelect.disabled;
-            instance.trigger.classList.toggle('disabled', accessoriesSelect.disabled);
-        }
-        if (instance) {
-            MultiSelectElementFactory.updateDisplay(instance);
-        }
-
-        if (hint && defaultHintKey) {
-            // No room picked yet is not "this room has nothing" - keep the normal hint.
-            const noneForRoom = Boolean(roomSelect.value) && available.length === 0;
-            const key = noneForRoom ? 'No equipment available' : defaultHintKey;
-            hint.classList.toggle('is-warning', noneForRoom);
-            hint.dataset.i18n = key;
-            hint.textContent = window.Now?.translate ? Now.translate(key) : key;
-        }
-    };
-
-    roomSelect.addEventListener('change', update);
-    roomSelect.addEventListener('optionschanged', update);
-    update();
-    return () => {
-        roomSelect.removeEventListener('change', update);
-        roomSelect.removeEventListener('optionschanged', update);
-    };
-}
-
 // Repeat field: a booking that starts and ends on the same date happens once, so
 // the daily option reads "Single day" there and "Selected weekdays" is unavailable;
 // once the range spans more days it reads "Every day" again. The value stays
@@ -1888,7 +1811,6 @@ function initSingleDayRepeat(element, afterSync) {
 }
 
 function initBookingForm(element, data) {
-    const cleanupAccessoryFilter = initBookingAccessoryFilter(element, data);
     const isRoomly = element.classList.contains('roomly-booking-form')
         || Boolean(element.querySelector('.roomly-reservation-surface'))
         || Boolean(element.closest('.roomly-booking-page'));
@@ -1933,7 +1855,6 @@ function initBookingForm(element, data) {
         const conflictCheckerInstance = initConflictChecker(element, data, false);
 
         return () => {
-            cleanupAccessoryFilter();
             cleanupSingleDayRepeat();
             if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
             if (useInput) useInput.removeEventListener('change', syncTopicFromUse);
@@ -2098,21 +2019,6 @@ function initBookingForm(element, data) {
                 if (topicInput.options && topicInput.options.length > 0) {
                     topicInput.selectedIndex = 0;
                 }
-            }
-        }
-        const accessoriesInput = element.querySelector('#accessories');
-        if (accessoriesInput) {
-            if (accessoriesInput.options) {
-                Array.from(accessoriesInput.options).forEach(opt => {
-                    if (opt.value === '' && opt.disabled) {
-                        opt.textContent = '';
-                    }
-                });
-            }
-            const elementManager = window.Now?.getManager?.('element');
-            const inst = elementManager?.getInstanceByElement?.(accessoriesInput);
-            if (inst && window.MultiSelectElementFactory) {
-                window.MultiSelectElementFactory.updateDisplay(inst);
             }
         }
     };
@@ -2701,22 +2607,6 @@ function initBookingForm(element, data) {
     if (useSelect) {
         useSelect.addEventListener('optionschanged', onOptionsChanged);
     }
-    const accessoriesSelect = element.querySelector('#accessories');
-    const onAccessoriesChange = () => {
-        const elementManager = window.Now?.getManager?.('element');
-        const inst = elementManager?.getInstanceByElement?.(accessoriesSelect);
-        if (inst && window.MultiSelectElementFactory) {
-            window.MultiSelectElementFactory.updateDisplay(inst);
-        }
-    };
-    if (accessoriesSelect) {
-        accessoriesSelect.addEventListener('optionschanged', () => {
-            onOptionsChanged();
-            setTimeout(onAccessoriesChange, 50);
-        });
-        accessoriesSelect.addEventListener('change', onAccessoriesChange);
-    }
-
     // Initial update and delayed updates to guarantee clean initial load
     ensureSelectPlaceholders();
     clearInitialErrors();
@@ -2851,7 +2741,6 @@ function initBookingForm(element, data) {
     }
 
     return () => {
-        cleanupAccessoryFilter();
         clearTimeout(timer1);
         clearTimeout(timer2);
         clearTimeout(timer3);
@@ -2889,10 +2778,6 @@ function initBookingForm(element, data) {
         }
         if (useSelect) {
             useSelect.removeEventListener('optionschanged', onOptionsChanged);
-        }
-        if (accessoriesSelect) {
-            accessoriesSelect.removeEventListener('optionschanged', onOptionsChanged);
-            accessoriesSelect.removeEventListener('change', onAccessoriesChange);
         }
         validationCleanups.forEach(cleanup => cleanup());
         pickerBadges.forEach(badge => badge.removeEventListener('click', onAnyBadgeClick));

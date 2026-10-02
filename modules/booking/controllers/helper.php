@@ -409,13 +409,12 @@ class Controller extends \Gcms\Controller
             ->select(
                 'R.id', 'R.name', 'R.is_active', 'R.detail', 'R.color',
                 'RoomNumber.value room_number', 'Building.value building',
-                'Seats.value seats', 'Accessories.value accessories'
+                'Seats.value seats'
             )
             ->from('rooms R')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Building', [['Building.room_id', 'R.id'], ['Building.name', 'building']], 'LEFT')
-            ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT')
-            ->join('rooms_meta Accessories', [['Accessories.room_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT');
+            ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT');
 
         $query->orderBy($showRoomNumber ? 'RoomNumber.value' : 'R.name');
 
@@ -448,8 +447,7 @@ class Controller extends \Gcms\Controller
                 'room_number' => $roomNumber,
                 'building' => (string) ($item->building ?? ''),
                 'seats' => (string) ($item->seats ?? ''),
-                'detail' => (string) ($item->detail ?? ''),
-                'accessories' => \Booking\Booking\Model::csvToArray($item->accessories ?? '')
+                'detail' => (string) ($item->detail ?? '')
             ];
         }
 
@@ -547,60 +545,6 @@ class Controller extends \Gcms\Controller
             }
         }
         return $options;
-    }
-
-    /**
-     * Accessory options
-     *
-     * @return array
-     */
-    public static function getAccessoryOptions(): array
-    {
-        $categories = BookingCategory::init()->toOptions('accessories', true);
-        $englishNames = Language::name() === 'en' ? self::accessoryEnglishNames($categories) : [];
-        $options = [];
-        foreach ($categories as $cat) {
-            $catId = (string) $cat['value'];
-            $text = $englishNames[$catId] ?? $cat['text'];
-            $options[] = [
-                'value' => $catId,
-                'text' => $text,
-                'label' => $text
-            ];
-        }
-        return $options;
-    }
-
-    /**
-     * English names of the equipment, keyed by category_id.
-     *
-     * The English name an admin typed on the categories page wins. The four
-     * items the system shipped with used to be hard-coded here in both
-     * languages, which ignored a renamed item and left any added one with no
-     * English at all; their built-in English is kept only while the Thai name
-     * is still the one they shipped with, so existing sites need no data entry.
-     *
-     * @param array $categories toOptions('accessories') rows
-     *
-     * @return array<string, string>
-     */
-    private static function accessoryEnglishNames(array $categories): array
-    {
-        $builtIn = [
-            '1' => ['th' => 'เครื่องคอมพิวเตอร์', 'en' => 'Computer'],
-            '2' => ['th' => 'จอโปรเจ็คเตอร์', 'en' => 'Projector'],
-            '3' => ['th' => 'เครื่องฉายแผ่นใส', 'en' => 'Visualizer'],
-            '4' => ['th' => 'ของว่าง', 'en' => 'Snacks & Refreshments']
-        ];
-        $names = [];
-        foreach ($categories as $cat) {
-            $catId = (string) $cat['value'];
-            if (isset($builtIn[$catId]) && $builtIn[$catId]['th'] === (string) $cat['text']) {
-                $names[$catId] = $builtIn[$catId]['en'];
-            }
-        }
-
-        return \Booking\Categories\Model::englishNames('accessories') + $names;
     }
 
     /**
@@ -894,39 +838,6 @@ class Controller extends \Gcms\Controller
         default:
             return self::isBeforeBoundary($row, 'end');
         }
-    }
-
-    /**
-     * Format accessory CSV into labels.
-     *
-     * @param string|null $csv
-     *
-     * @return string
-     */
-    public static function formatAccessoryNames(?string $csv): string
-    {
-        if ($csv === null || trim($csv) === '') {
-            return '';
-        }
-
-        $category = BookingCategory::init();
-        $ids = array_values(array_filter(array_map('trim', explode(',', $csv)), static function ($value) {
-            return $value !== '';
-        }));
-        // Same names the booking form offers, so a booking reads the same on
-        // the review page and in the export as it did when it was made.
-        $englishNames = Language::name() === 'en'
-            ? self::accessoryEnglishNames($category->toOptions('accessories', true))
-            : [];
-        $labels = [];
-        foreach ($ids as $id) {
-            $label = $englishNames[(string) $id] ?? $category->get('accessories', $id);
-            if ($label !== '') {
-                $labels[] = $label;
-            }
-        }
-
-        return implode(', ', $labels);
     }
 
     /**

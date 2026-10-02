@@ -40,8 +40,7 @@ class Model extends \Index\Categories\Model
     public static function getColumns($multiLanguage, $type = null)
     {
         $columns = parent::getColumns($multiLanguage, $type);
-        // Equipment is shown to bookers too, so it gets an English name as well.
-        if (in_array($type, ['use', 'accessories'], true)) {
+        if ($type === 'use') {
             $columns[] = [
                 'field' => 'topic_en',
                 'label' => 'English name',

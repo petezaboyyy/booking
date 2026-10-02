@@ -70,7 +70,7 @@
                         <div class="roomly-calendar-filter-wrap">
                             <span class="roomly-calendar-filter-icon icon-search" aria-hidden="true"></span>
                             <input type="text" class="roomly-calendar-filter-input" data-room-search autocomplete="off"
-                                   placeholder="Search room or room number..." data-i18n-placeholder="Search room or room number...">
+                                   placeholder="{LNG_Search room or room number...}" data-i18n-placeholder="Search room or room number...">
                             <button type="button" class="roomly-calendar-filter-clear" data-room-search-clear aria-label="{LNG_Clear filter}">&times;</button>
                         </div>
                     </div>
@@ -169,10 +169,6 @@
                                                     <span data-text="item.building"></span>
                                                     <span data-text="item.seats ? item.seats + ' {LNG_Seats}' : ''"></span>
                                                 </div>
-                                            </div>
-                                            <div class="booking-catalog-equipment">
-                                                <strong data-i18n>Room equipment</strong>
-                                                <span data-text="item.accessories_text || '{LNG_No equipment available}'"></span>
                                             </div>
                                         </div>
                                     </a>
