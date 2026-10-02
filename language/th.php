@@ -2066,5 +2066,6 @@ return array(
   '* or a specific domain' => '* หรือระบุโดเมน',
   'Enter exact model ID' => 'กรอกรหัสโมเดลให้ตรงทุกตัวอักษร',
   'Unavailable' => 'ไม่พร้อมให้จอง',
-  'Your email has been verified successfully!' => 'ยืนยันอีเมลเรียบร้อยแล้ว'
+  'Your email has been verified successfully!' => 'ยืนยันอีเมลเรียบร้อยแล้ว',
+  'Search room, room number, course code or usage type...' => 'ค้นหาห้อง เลขห้อง รหัสวิชา หรือลักษณะการใช้งาน...'
 );
