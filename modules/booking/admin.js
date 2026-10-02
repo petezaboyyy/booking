@@ -1849,6 +1849,44 @@ function initBookingAccessoryFilter(element, data) {
     };
 }
 
+// Repeat field: a booking that starts and ends on the same date happens once, so
+// the daily option reads "Single day" there and "Selected weekdays" is unavailable;
+// once the range spans more days it reads "Every day" again. The value stays
+// daily-slot either way - one day of daily-slot is exactly one occurrence.
+function initSingleDayRepeat(element, afterSync) {
+    const scheduleType = element.querySelector('#schedule_type');
+    const beginDate = element.querySelector('#begin_date');
+    const endDate = element.querySelector('#end_date');
+    const daily = scheduleType?.querySelector('option[value="daily-slot"]');
+    if (!scheduleType || !beginDate || !endDate || !daily) return () => {};
+    const weekly = scheduleType.querySelector('option[value="weekly-slot"]');
+
+    const sync = () => {
+        const single = beginDate.value !== '' && beginDate.value === endDate.value;
+        const key = single ? 'Single day' : 'Every day';
+        daily.dataset.i18n = key;
+        daily.textContent = window.Now?.translate ? Now.translate(key) : key;
+        if (weekly) weekly.disabled = single;
+        if (single && scheduleType.value === 'weekly-slot') {
+            scheduleType.value = 'daily-slot';
+            scheduleType.dispatchEvent(new Event('change', {bubbles: true}));
+        }
+        if (typeof afterSync === 'function') afterSync();
+    };
+
+    ['change', 'input'].forEach(evt => {
+        beginDate.addEventListener(evt, sync);
+        endDate.addEventListener(evt, sync);
+    });
+    sync();
+    return () => {
+        ['change', 'input'].forEach(evt => {
+            beginDate.removeEventListener(evt, sync);
+            endDate.removeEventListener(evt, sync);
+        });
+    };
+}
+
 function initBookingForm(element, data) {
     const cleanupAccessoryFilter = initBookingAccessoryFilter(element, data);
     const isRoomly = element.classList.contains('roomly-booking-form')
@@ -1885,6 +1923,7 @@ function initBookingForm(element, data) {
             scheduleType.addEventListener('change', scheduleChange);
             scheduleChange();
         }
+        const cleanupSingleDayRepeat = initSingleDayRepeat(element);
         if (useInput) {
             useInput.addEventListener('change', syncTopicFromUse);
             syncTopicFromUse();
@@ -1895,6 +1934,7 @@ function initBookingForm(element, data) {
 
         return () => {
             cleanupAccessoryFilter();
+            cleanupSingleDayRepeat();
             if (scheduleType) scheduleType.removeEventListener('change', scheduleChange);
             if (useInput) useInput.removeEventListener('change', syncTopicFromUse);
             if (typeof occurrencePickerCleanup === 'function') occurrencePickerCleanup();
@@ -2192,7 +2232,8 @@ function initBookingForm(element, data) {
                     ? `${Now.translate('Selected weekdays')}: ${checkedDays.join(', ')}`
                     : Now.translate('Selected weekdays');
             } else {
-                summaryRepeat.textContent = Now.translate('Every day');
+                const sameDay = Boolean(beginDateInput?.value) && beginDateInput.value === endDateInput?.value;
+                summaryRepeat.textContent = Now.translate(sameDay ? 'Single day' : 'Every day');
             }
         }
     };
@@ -2549,6 +2590,12 @@ function initBookingForm(element, data) {
             }
         });
     }
+    // After the combobox exists: relabelling the daily option has to refresh its
+    // displayed text, and the summary listener on the date fields runs first.
+    const cleanupSingleDayRepeat = initSingleDayRepeat(element, () => {
+        if (scheduleTypeCombobox) scheduleTypeCombobox.sync();
+        updateLiveSummary();
+    });
 
     // 4. Global sync for MultiSelect & DatePicker dropdown active state & rotating arrow
     const onDropdownShow = (e) => {
@@ -2829,6 +2876,7 @@ function initBookingForm(element, data) {
         if (scheduleTypeCombobox) {
             scheduleTypeCombobox.destroy();
         }
+        cleanupSingleDayRepeat();
         document.removeEventListener('dropdown:show', onDropdownShow);
         document.removeEventListener('dropdown:hide', onDropdownHide);
         document.removeEventListener('gdatetime:open', onDateTimeOpen, true);
