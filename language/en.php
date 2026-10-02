@@ -104,7 +104,8 @@ return array(
   'HH:MM (เช่น 08:30)' => 'HH:MM (e.g. 08:30)',
   'HH:MM (เช่น 12:00)' => 'HH:MM (e.g. 12:00)',
   'HH:MM' => 'HH:MM',
-  'Select or search topic...' => 'Select or search topic...',
-  'No topics found' => 'No topics found',
+  'Topic' => 'Usage type',
+  'Select or search topic...' => 'Search or select a usage type...',
+  'No topics found' => 'No usage types found',
   'Select repeat option...' => 'Select repeat option...'
 );

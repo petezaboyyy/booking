@@ -2777,10 +2777,10 @@ function initBookingForm(element, data) {
             checkValidity: checkFieldValidity,
             placeholder: () => (window.Now && typeof Now.translate === 'function')
                 ? Now.translate('Select or search topic...')
-                : 'พิมพ์ค้นหา หรือเลือกหัวข้อ...',
+                : 'พิมพ์ค้นหา หรือเลือกลักษณะการใช้งาน...',
             getEmptyText: () => (window.Now && typeof Now.translate === 'function')
                 ? Now.translate('No topics found')
-                : 'ไม่พบหัวข้อที่ตรงกับการค้นหา',
+                : 'ไม่พบลักษณะการใช้งานที่ตรงกับการค้นหา',
             getFallbackOptions: () => data?.options?.topic,
             renderItemIcon: (iconWrap) => {
                 iconWrap.innerHTML = '<span class="icon-bookmark" aria-hidden="true"></span>';
