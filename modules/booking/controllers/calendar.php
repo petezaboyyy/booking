@@ -76,9 +76,18 @@ class Controller extends ApiController
             }
 
             $query->orderBy('O.begin');
+            $rows = $query->fetchAll();
+
+            // Staff identity only for signed-in users: this endpoint also serves
+            // the public calendar (see Booking\View\Controller for the same rule).
+            $approvers = $this->authenticateRequest($request)
+                ? self::getApproverNames(array_values(array_unique(array_map(static function ($row) {
+                    return (int) $row->id;
+                }, $rows))))
+                : [];
 
             $events = [];
-            foreach ($query->fetchAll() as $item) {
+            foreach ($rows as $item) {
                 $label = !empty($item->room_number) ? $item->room_number : $item->room_name;
                 $events[] = [
                     // The calendar looks events up by id, so it must be unique
@@ -90,6 +99,7 @@ class Controller extends ApiController
                     'room_number' => (string) ($item->room_number ?? ''),
                     'room_name' => (string) ($item->room_name ?? ''),
                     'member_name' => (string) ($item->member_name ?? ''),
+                    'approver_name' => $approvers[(int) $item->id] ?? '',
                     'course_code' => trim((string) ($item->course_code ?? '')),
                     'title' => $label.', '.substr((string) $item->begin, 11, 5).'-'.substr((string) $item->end, 11, 5),
                     'description' => (string) $item->topic,
@@ -115,5 +125,45 @@ class Controller extends ApiController
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500, $e);
         }
+    }
+
+    /**
+     * Name of the staff member whose decision approved each reservation, keyed by
+     * reservation id. Review\Controller::processDecision() logs every decision with
+     * the resulting status, so this is the latest 'Status' log whose status is
+     * approved. Bookings approved automatically (no approval step configured) have
+     * no such entry and are simply absent.
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, string>
+     */
+    private static function getApproverNames(array $reservationIds): array
+    {
+        if (empty($reservationIds)) {
+            return [];
+        }
+        $rows = \Kotchasan\Model::createQuery()
+            ->select('L.src_id', 'L.datas', 'U.name')
+            ->from('logs L')
+            ->join('user U', ['U.id', 'L.member_id'], 'LEFT')
+            ->where([
+                ['L.module', 'booking'],
+                ['L.action', 'Status'],
+                ['L.src_id', $reservationIds]
+            ])
+            ->orderBy('L.id')
+            ->fetchAll();
+
+        $names = [];
+        foreach ($rows as $row) {
+            $data = json_decode((string) $row->datas, true);
+            $name = trim((string) ($row->name ?? ''));
+            if ($name !== '' && is_array($data) && (int) ($data['status'] ?? -1) === Helper::STATUS_APPROVED) {
+                $names[(int) $row->src_id] = $name;
+            }
+        }
+
+        return $names;
     }
 }

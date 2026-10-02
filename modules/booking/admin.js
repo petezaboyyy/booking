@@ -11,6 +11,10 @@ if (window.EventCalendar && !EventCalendar._bookingTopicDescriptionsEnabled) {
         if (courseCode) {
             descriptionParts.push(`${Now.translate('Course code')}: ${courseCode}`);
         }
+        const approver = String(event?.approver_name || event?.data?.approver_name || '').trim();
+        if (approver) {
+            descriptionParts.push(`${Now.translate('Approver')}: ${approver}`);
+        }
         const eventWithTopicLabel = descriptionParts.length > 0
             ? {...event, description: descriptionParts.join(' · ')}
             : event;
