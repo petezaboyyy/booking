@@ -4229,3 +4229,41 @@ html[data-ui-role='guest'] [data-member-only] {
     padding: 18px 14px 14px;
   }
 }
+
+/* Phone: the My bookings filter bar keeps fixed sizes (!important) from the
+   desktop rules above, so the status select and the 280px search box ran off
+   a 390px screen. Each control takes its own full-width row instead. */
+@media (max-width: 600px) {
+  /* Desktop keeps these 960px wide and scrolls the panel sideways; a phone shows rows as cards. */
+  .roomly-bookings-panel .table_nav:first-child,
+  .roomly-bookings-panel .splitpage {
+    min-width: 0;
+  }
+
+  .roomly-bookings-panel .table_nav:first-child > div,
+  .roomly-bookings-panel .table_nav .filter-control {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .roomly-bookings-panel .table_nav span.form-control,
+  .roomly-bookings-panel .table_nav .form-control {
+    flex: 1 1 0 !important;
+    min-width: 0;
+  }
+
+  .roomly-bookings-panel .table_nav select {
+    width: 100% !important;
+  }
+
+  .roomly-bookings-panel .table_nav:first-child > :last-child {
+    width: 100%;
+  }
+
+  .roomly-bookings-panel .table_nav:first-child > :last-child input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}

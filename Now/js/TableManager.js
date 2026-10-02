@@ -3600,7 +3600,24 @@ const TableManager = {
       }
     }
 
+    this.labelRowCells(table, tr);
     return tr;
+  },
+
+  /**
+   * Copy each column's header text onto its cells as data-label, so the phone
+   * stylesheet can show a row as label/value pairs (td::before reads it).
+   * Cells line up with the last header row; a cell without header text gets no label.
+   */
+  labelRowCells(table, tr) {
+    const head = table.element.tHead;
+    const headerRow = head && head.rows.length ? head.rows[head.rows.length - 1] : null;
+    if (!headerRow) return;
+    Array.from(tr.cells).forEach((td, i) => {
+      if (td.hasAttribute('data-label')) return;
+      const label = headerRow.cells[i] ? headerRow.cells[i].textContent.trim() : '';
+      if (label) td.setAttribute('data-label', label);
+    });
   },
 
   getRowSequence(table, index) {

@@ -1117,3 +1117,141 @@ td a {
     min-inline-size: 0;
   }
 }
+
+/* Phone: data tables (8-10 columns, ~1000px wide) become one card per row,
+   each cell as "label: value" from the data-label TableManager copies from the
+   header. The inline-editable categories table keeps its grid. Desktop and
+   tablet keep the normal table. */
+@media (max-width: 600px) {
+  table[data-table]:not([data-editable-rows]) {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 0;
+    background: transparent;
+  }
+
+  table[data-table]:not([data-editable-rows]) thead,
+  table[data-table]:not([data-editable-rows]) colgroup {
+    display: none;
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody tr {
+    display: block;
+    height: auto !important;
+    padding: 4px 14px;
+    border: 1px solid var(--roomly-outline, #e2e8f0);
+    border-radius: 14px;
+    background: var(--roomly-surface, #fff);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody td {
+    display: grid;
+    grid-template-columns: minmax(84px, 34%) minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    padding: 9px 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--roomly-outline, #e2e8f0) !important;
+    background: transparent !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody td:last-child {
+    border-bottom: 0 !important;
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody td::before {
+    content: attr(data-label);
+    color: var(--roomly-muted, #64748b);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody td:not([data-label]) {
+    display: block;
+  }
+
+  table[data-table]:not([data-editable-rows]) tbody td:not([data-label])::before {
+    content: none;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Long values (e.g. a long room name) wrap inside the card instead of being cut off. */
+  table[data-table]:not([data-editable-rows]) tbody td > *,
+  table[data-table]:not([data-editable-rows]) tbody td .booking-table-label,
+  table[data-table]:not([data-editable-rows]) tbody td strong {
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  /* Short values such as the status pill sit at the start, not centred. */
+  table[data-table]:not([data-editable-rows]) tbody td > * {
+    justify-self: start;
+  }
+
+  /* "All N entries, displayed …" keeps the full width once the table is a block. */
+  table[data-table]:not([data-editable-rows]) caption {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+
+  /* Filter bar: each group shrinks to the screen instead of running off it. */
+  .table_nav > div {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .table_nav .form-control,
+  .table_nav select,
+  .table_nav input {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  /* The framework centres status badges with margin: 0 auto; in a card they start the value. */
+  table[data-table]:not([data-editable-rows]) tbody td > [class^="status"],
+  table[data-table]:not([data-editable-rows]) tbody td > [class*=" status"] {
+    margin: 0;
+  }
+
+  /* Filter controls (fixed 196px select, 225px search box) shrink to the screen and wrap. */
+  .table_nav div {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .table_nav .form-control {
+    flex: 1 1 140px !important;
+    width: auto !important;
+  }
+
+  .table_nav select,
+  .table_nav input:not([type='checkbox']):not([type='radio']) {
+    width: 100% !important;
+  }
+}
