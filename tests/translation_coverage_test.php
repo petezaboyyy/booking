@@ -24,7 +24,6 @@ use Booking\Helper\Controller as Helper;
 use Kotchasan\Language;
 
 $fail = 0;
-$restoreTopicEn = null;
 
 function check($condition, string $message): void
 {
@@ -133,52 +132,7 @@ try {
     check(strpos($settings, "'{LNG_Not configured}' : '{LNG_Configured}'") !== false,
         'the Microsoft secret status is sent as {LNG_} so data-text translates it');
 
-    // =====================================================================
-    echo "\n[4] Equipment names follow the language\n";
-    // =====================================================================
-    $names = static function () {
-        return array_column(Helper::getAccessoryOptions(), 'text', 'value');
-    };
-    Language::setName('th');
-    $thaiNames = $names();
-    check(($thaiNames['1'] ?? '') === 'เครื่องคอมพิวเตอร์', 'Thai shows the Thai name from the database');
-    check(Helper::formatAccessoryNames('1,2') === 'เครื่องคอมพิวเตอร์, จอโปรเจ็คเตอร์', 'and so does a saved booking');
-    Language::setName('en');
-    $englishNames = $names();
-    check(($englishNames['1'] ?? '') === 'Computer', 'English shows the built-in English name');
-    check(Helper::formatAccessoryNames('1,2') === 'Computer, Projector', 'and so does a saved booking');
-
-    $method = new ReflectionMethod(Helper::class, 'accessoryEnglishNames');
-    $method->setAccessible(true);
-    $resolved = $method->invoke(null, [
-        ['value' => '1', 'text' => 'เครื่องคอมพิวเตอร์'],
-        ['value' => '2', 'text' => 'จอทีวี'],
-        ['value' => '9', 'text' => 'ไมโครโฟน']
-    ]);
-    check(($resolved['1'] ?? '') === 'Computer', 'an untouched built-in item keeps its English');
-    check(!isset($resolved['2']), 'a renamed built-in item no longer claims the old English name');
-    check(!isset($resolved['9']), 'an added item with no English name falls back to its Thai name');
-
-    // An English name typed on the categories page wins.
-    $db = \Kotchasan\Model::createQuery();
-    $row = \Kotchasan\Model::createQuery()->select('topic_en')->from('category')
-        ->where([['type', 'accessories'], ['category_id', 2]])->first();
-    check($row !== false, 'found equipment item 2 to give an English name');
-    $restoreTopicEn = (string) ($row->topic_en ?? '');
-    \Kotchasan\Model::createQuery()->update('category')->set(['topic_en' => 'Projector and screen'])
-        ->where([['type', 'accessories'], ['category_id', 2]])->execute();
-    $resolved = $method->invoke(null, [['value' => '2', 'text' => 'จอโปรเจ็คเตอร์']]);
-    check(($resolved['2'] ?? '') === 'Projector and screen', 'the admin-entered English name is used');
-
-    $columns = array_column(\Booking\Categories\Model::getColumns(false, 'accessories'), 'field');
-    check(in_array('topic_en', $columns, true), 'the categories page offers an English name for equipment');
-    check(!in_array('requires_course_code', $columns, true), 'but not the course-code switch, which is for "use" only');
 } finally {
-    if ($restoreTopicEn !== null) {
-        \Kotchasan\Model::createQuery()->update('category')->set(['topic_en' => $restoreTopicEn])
-            ->where([['type', 'accessories'], ['category_id', 2]])->execute();
-        echo "\nrestored the English name of equipment item 2\n";
-    }
     Language::setName('th');
 }
 

@@ -415,6 +415,9 @@ if (defined('ROOT_PATH')) {
                     $content[] = '<li class="correct">category: ลบ published</li>';
                 }
                 $db->query("UPDATE `$table_category` SET `type` = 'car_accessory' WHERE `type` = 'car_accessories'");
+                $db->query("DELETE FROM `$table_category` WHERE `type` = 'accessories'");
+                $db->query("DELETE FROM `$table_rooms_meta` WHERE `name` = 'accessories'");
+                $db->query("DELETE FROM `$table_reservation_data` WHERE `name` = 'accessories'");
                 $content[] = '<li class="correct">category อัปเกรดสำเร็จ</li>';
 
                 // =========================================================

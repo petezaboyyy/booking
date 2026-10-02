@@ -43,9 +43,6 @@ class Controller extends ApiController
 
             return $this->successResponse([
                 'data' => $data,
-                'options' => [
-                    'accessories' => Helper::getAccessoryOptions()
-                ],
                 'actions' => [
                     [
                         'type' => 'modal',
@@ -101,9 +98,6 @@ class Controller extends ApiController
                 'number' => $request->post('number')->topic(),
                 'seats' => $request->post('seats')->topic()
             ];
-            $accessoryIds = (array) $request->post('accessories', [])->toInt();
-            $validAccessoryIds = array_map('intval', array_column(Helper::getAccessoryOptions(), 'value'));
-            $meta['accessories'] = implode(',', array_values(array_unique(array_intersect($accessoryIds, $validAccessoryIds))));
 
             $errors = [];
             if ($save['name'] === '') {

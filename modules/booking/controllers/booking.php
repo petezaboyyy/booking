@@ -44,7 +44,6 @@ class Controller extends ApiController
                 'room_id' => Helper::getRoomOptions(true, $includeRoomId),
                 'use' => Helper::getUseOptions(),
                 'topic' => Helper::getTopicOptions(!empty($data->topic) ? (string) $data->topic : null),
-                'accessories' => Helper::getAccessoryOptions(),
                 'recurrence_days' => Helper::getWeekdayOptions()
             ];
 
@@ -107,11 +106,10 @@ class Controller extends ApiController
 
             $meta = [
                 'use' => $save['use'],
-                'accessories' => array_values(array_filter(array_map('intval', $save['accessories']))),
                 'recurrence_days' => $save['recurrence_days'],
                 'excluded_dates' => $save['excluded_dates']
             ];
-            unset($save['use'], $save['accessories'], $save['recurrence_days'], $save['excluded_dates']);
+            unset($save['use'], $save['recurrence_days'], $save['excluded_dates']);
 
             $result = Model::saveReservation($booking->id, $save, $meta);
             if (!empty($result['conflicts'])) {
@@ -166,7 +164,6 @@ class Controller extends ApiController
                 $request->post('excluded_dates')->toString()
             ),
             'version' => $request->post('version')->toInt(),
-            'accessories' => $request->post('accessories', [])->toInt(),
             'comment' => $request->post('comment')->textarea(),
             'topic' => $request->post('topic')->topic(),
             'course_code' => $request->post('course_code')->topic(),
@@ -189,12 +186,6 @@ class Controller extends ApiController
         $errors = [];
         if ($save['room_id'] <= 0) {
             $errors['room_id'] = 'Please select';
-        } elseif (!empty($save['accessories'])) {
-            $roomMeta = \Booking\Room\Model::getMetaValues((int) $save['room_id']);
-            $allowedAccessories = Model::csvToArray($roomMeta['accessories'] ?? '');
-            if (array_diff(array_map('strval', (array) $save['accessories']), $allowedAccessories)) {
-                $errors['accessories'] = 'Invalid data';
-            }
         }
         if ($save['attendees'] <= 0) {
             $errors['attendees'] = 'Please fill in';

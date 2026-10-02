@@ -46,7 +46,6 @@ class Model extends \Kotchasan\Model
                 'excluded_dates' => [],
                 'version' => 0,
                 'use' => '',
-                'accessories' => [],
                 'canEdit' => true,
                 'approve' => 1,
                 'closed' => $closedLevel > 0 ? $closedLevel : 1
@@ -85,7 +84,6 @@ class Model extends \Kotchasan\Model
         $record->begin_time = !empty($record->begin) ? date('H:i', strtotime((string) $record->begin)) : '';
         $record->end_time = !empty($record->end) ? date('H:i', strtotime((string) $record->end)) : '';
         $record->use = (string) ($meta['use'] ?? '');
-        $record->accessories = self::csvToArray($meta['accessories'] ?? '');
         $record->recurrence_days = Helper::normalizeRecurrenceDays(
             $meta['recurrence_days'] ?? ''
         );
@@ -173,7 +171,6 @@ class Model extends \Kotchasan\Model
                 'Building.value room_building',
                 'Seats.value room_seats',
                 'UseMeta.value use_id',
-                'Accessories.value accessories',
                 'RecurrenceDays.value recurrence_days'
             )
             ->from('reservation R')
@@ -183,7 +180,6 @@ class Model extends \Kotchasan\Model
             ->join('rooms_meta Building', [['Building.room_id', 'Room.id'], ['Building.name', 'building']], 'LEFT')
             ->join('rooms_meta Seats', [['Seats.room_id', 'Room.id'], ['Seats.name', 'seats']], 'LEFT')
             ->join('reservation_data UseMeta', [['UseMeta.reservation_id', 'R.id'], ['UseMeta.name', 'use']], 'LEFT')
-            ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
             ->join('reservation_data RecurrenceDays', [['RecurrenceDays.reservation_id', 'R.id'], ['RecurrenceDays.name', 'recurrence_days']], 'LEFT')
             ->where(['R.id', $id])
             ->first();
@@ -251,7 +247,6 @@ class Model extends \Kotchasan\Model
             ]),
             'use_id' => (string) ($row->use_id ?? ''),
             'use_text' => Helper::getUseLabel($row->use_id ?? ''),
-            'accessories_text' => Helper::formatAccessoryNames($row->accessories ?? ''),
             'status' => Helper::getStatusValue($row),
             'status_text' => Helper::getStatusText($row),
             'approve' => (int) ($row->approve ?? 1),
@@ -780,7 +775,6 @@ class Model extends \Kotchasan\Model
                 'RoomNumber.value room_number',
                 'Building.value room_building',
                 'UseMeta.value use_id',
-                'Accessories.value accessories',
                 'O.begin',
                 'O.end'
             )
@@ -791,7 +785,6 @@ class Model extends \Kotchasan\Model
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'Room.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Building', [['Building.room_id', 'Room.id'], ['Building.name', 'building']], 'LEFT')
             ->join('reservation_data UseMeta', [['UseMeta.reservation_id', 'R.id'], ['UseMeta.name', 'use']], 'LEFT')
-            ->join('reservation_data Accessories', [['Accessories.reservation_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
             ->where([
                 ['R.id', $ids],
                 ['R.status', Helper::STATUS_APPROVED],

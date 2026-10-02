@@ -102,9 +102,6 @@ class Controller extends \Gcms\Table
 
         return $this->successResponse([
             'data' => (array) $room,
-            'options' => [
-                'accessories' => Helper::getAccessoryOptions()
-            ],
             'actions' => [
                 'type' => 'modal',
                 'template' => 'booking/room.html',

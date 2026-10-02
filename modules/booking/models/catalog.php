@@ -68,14 +68,12 @@ class Model extends \Kotchasan\Model
                 'R.is_active',
                 'Building.value building',
                 'RoomNumber.value room_number',
-                'Seats.value seats',
-                'Accessories.value accessories'
+                'Seats.value seats'
             )
             ->from('rooms R')
             ->join('rooms_meta Building', [['Building.room_id', 'R.id'], ['Building.name', 'building']], 'LEFT')
             ->join('rooms_meta RoomNumber', [['RoomNumber.room_id', 'R.id'], ['RoomNumber.name', 'number']], 'LEFT')
             ->join('rooms_meta Seats', [['Seats.room_id', 'R.id'], ['Seats.name', 'seats']], 'LEFT')
-            ->join('rooms_meta Accessories', [['Accessories.room_id', 'R.id'], ['Accessories.name', 'accessories']], 'LEFT')
             ->orderBy('R.name');
 
         if ($activeOnly) {
@@ -101,8 +99,6 @@ class Model extends \Kotchasan\Model
         $row->room_number = (string) ($row->room_number ?? '');
         $rawSeats = (string) ($row->seats ?? '');
         $row->seats = preg_match('/^\s*(\d+)/', $rawSeats, $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', $rawSeats));
-        $row->accessories_text = Helper::formatAccessoryNames($row->accessories ?? '');
-        unset($row->accessories);
         $row->gallery = $gallery;
         $row->gallery_count = count($gallery);
         $row->first_image_url = $gallery[0]['url'] ?? null;

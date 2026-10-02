@@ -13,7 +13,6 @@ class Controller extends \Gcms\Category
      * @var array
      */
     protected $categories = [
-        'use' => '{LNG_Use for}',
-        'accessories' => '{LNG_Accessories}'
+        'use' => '{LNG_Use for}'
     ];
 }

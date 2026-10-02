@@ -1905,26 +1905,6 @@ html[data-theme='dark'] .roomly-theme-sun {
   line-height: 1.55;
 }
 
-/* Warning variant - e.g. the accessories hint when the selected room has
-   no equipment to choose from at all, so it reads as a notice rather than
-   a neutral instruction. The bare rule covers forms outside .roomly-form-card
-   (the admin booking form). */
-.comment.is-warning {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.roomly-form-card .comment.is-warning {
-  border-left-color: #ef4444;
-  background: color-mix(in srgb, #ef4444 8%, transparent);
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.roomly-form-card #result_accessories {
-  margin-top: 8px;
-}
-
 .roomly-reservation-card > div:not(.form-group):not(.comment) {
   margin-top: 18px;
 }
@@ -2734,14 +2714,6 @@ html[data-theme='dark'] .roomly-theme-sun {
   border-left: 3px solid var(--roomly-primary);
   border-radius: 0 9px 9px 0;
   background: color-mix(in srgb, var(--roomly-primary) 7%, transparent);
-}
-
-.roomly-booking-page .roomly-form-card .comment.is-warning,
-.roomly-booking-page .roomly-form-card > .comment.is-warning {
-  border-left-color: #ef4444;
-  background: color-mix(in srgb, #ef4444 8%, transparent);
-  color: #ef4444;
-  font-weight: 600;
 }
 
 .roomly-booking-page .roomly-form-card select[multiple] {

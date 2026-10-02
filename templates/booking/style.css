@@ -326,16 +326,6 @@
   border-radius: 0.9rem;
   border: 1px solid rgba(148, 163, 184, 0.18);
 }
-.booking-catalog-equipment {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-.booking-catalog-equipment strong {
-  color: var(--color-text);
-}
 .booking-catalog-actions {
   display: flex;
   flex-wrap: wrap;
@@ -727,7 +717,7 @@
   color: #059669;
 }
 
-.roomly-icon-accessories {
+.roomly-icon-notes {
   background: color-mix(in srgb, #f59e0b 14%, transparent);
   color: #d97706;
 }
@@ -765,8 +755,7 @@
 }
 
 .roomly-field-wrap label,
-.roomly-notes-wrap label,
-.roomly-accessories-wrap label {
+.roomly-notes-wrap label {
   display: block;
   margin: 0 0 8px;
   color: var(--roomly-text);
@@ -1053,7 +1042,6 @@
 /* Multi-selects inside form-control: Single Line Height (48px) */
 .roomly-booking-page .form-control:has(select[multiple]),
 .roomly-admin-booking-content .form-control:has(select[multiple]),
-.roomly-accessories-wrap .form-control,
 .form-control:has(select[multiple]) {
   min-height: 48px !important;
   max-height: 48px !important;
@@ -1780,13 +1768,8 @@
   flex-shrink: 0;
 }
 
-.roomly-accessories-wrap,
 .roomly-notes-wrap {
   margin-bottom: 20px;
-}
-
-.roomly-accessories-wrap .comment {
-  margin-top: 8px;
 }
 
 /* Decision Card */
@@ -2140,7 +2123,7 @@
   color: #34d399;
 }
 
-[data-theme='dark'] .roomly-icon-accessories {
+[data-theme='dark'] .roomly-icon-notes {
   background: rgba(245, 158, 11, .2);
   color: #fbbf24;
 }
