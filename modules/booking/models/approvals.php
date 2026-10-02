@@ -80,6 +80,7 @@ class Model extends \Kotchasan\Model
                 'R.room_id',
                 'R.reason',
                 'R.topic',
+                'R.course_code',
                 'R.comment',
                 'R.attendees',
                 'R.begin',
@@ -110,6 +111,7 @@ class Model extends \Kotchasan\Model
             $query->where([
                 ['Room.name', 'LIKE', $search],
                 ['R.topic', 'LIKE', $search],
+                ['R.course_code', 'LIKE', $search],
                 ['R.comment', 'LIKE', $search],
                 ['R.reason', 'LIKE', $search]
             ], 'OR');

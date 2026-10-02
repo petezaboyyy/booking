@@ -2948,6 +2948,10 @@ const TableManager = {
 
           if (checkboxChanged && table.config.showCheckbox) {
             this.setupCheckboxes(table, tableId);
+            // The checkbox column was inserted after column resizing captured
+            // its headers; rebuild it so widths and handles include the new
+            // column (createDynamicHeaders does the same pair of calls).
+            this.setupColumnResizing(tableId);
           }
           if (checkboxChanged || actionsChanged) {
             this.setupActions(table, tableId);
@@ -3426,6 +3430,8 @@ const TableManager = {
       if (config.params.pageSize > 0) {
         this.updatePagination(table, tableId, totalRecords, totalPages);
       }
+
+      this.fitFixedColumnWidths(table.element);
 
       EventManager.emit('table:render', {
         tableId,
@@ -5239,6 +5245,57 @@ const TableManager = {
     }).catch(err => console.error('Action submit error', err));
   },
 
+  /**
+   * The narrowest each header column can be before its content spills into
+   * the next one, measured from the header row as it is now.
+   *
+   * Under table-layout: fixed a cell no longer grows with its content, so a
+   * badge or room name that cannot wrap is drawn over the neighbouring column.
+   * Shrinking an auto-layout table to 1px makes the browser lay every column
+   * out at its min-content width, which is exactly the limit wanted; the
+   * styles are put back before anything paints.
+   *
+   * @param {HTMLTableElement} tableEl
+   * @returns {{headers: HTMLElement[], mins: number[]}}
+   */
+  measureMinColumnWidths(tableEl) {
+    const headerRow = tableEl.querySelector('thead tr:last-child') || tableEl.querySelector('thead tr');
+    const headers = headerRow ? Array.from(headerRow.querySelectorAll('th')) : [];
+    const widths = headers.map(th => th.style.width);
+    const saved = {layout: tableEl.style.tableLayout, width: tableEl.style.width, minWidth: tableEl.style.minWidth};
+
+    headers.forEach(th => { th.style.width = ''; });
+    tableEl.style.tableLayout = 'auto';
+    tableEl.style.width = '1px';
+    tableEl.style.minWidth = '0';
+    const mins = headers.map(th => Math.ceil(th.getBoundingClientRect().width));
+
+    headers.forEach((th, idx) => { th.style.width = widths[idx]; });
+    tableEl.style.tableLayout = saved.layout;
+    tableEl.style.width = saved.width;
+    tableEl.style.minWidth = saved.minWidth;
+
+    return {headers, mins};
+  },
+
+  /**
+   * After new rows render into a table whose columns were resized, widen any
+   * column the new content no longer fits (a longer room name on the next
+   * page, a longer label after switching language). Columns are only ever
+   * widened here, never narrowed, so a width the user chose survives.
+   *
+   * @param {HTMLTableElement} tableEl
+   */
+  fitFixedColumnWidths(tableEl) {
+    if (!tableEl || tableEl.style.tableLayout !== 'fixed') return;
+    const {headers, mins} = this.measureMinColumnWidths(tableEl);
+    headers.forEach((th, idx) => {
+      if (th.getBoundingClientRect().width < mins[idx]) {
+        th.style.width = `${mins[idx]}px`;
+      }
+    });
+  },
+
   setupColumnResizing(tableId) {
     const tableObj = this.state.tables.get(tableId);
     if (!tableObj || !tableObj.element) return;
@@ -5263,16 +5320,25 @@ const TableManager = {
           headers.forEach((th, idx) => {
             if (widths[idx]) th.style.width = widths[idx];
           });
-        } else {
-          localStorage.removeItem(`table_${tableId}_columns`);
         }
+        // A count mismatch is skipped, not deleted: this runs once before an
+        // API-driven checkbox column is inserted and again after, and only the
+        // second pass has the column count the widths were saved with. The
+        // next resize overwrites anything that really is stale.
+
       }
     } catch (err) {
       // ignore
     }
 
     const freezeColumns = () => {
-      headers.forEach(c => {
+      // Pin every column in the row as it is now, not the list captured at
+      // setup: a checkbox or drag-handle column added later (the approvals
+      // table only learns showCheckbox from the API response) would
+      // otherwise get no width and collapse to 0 under table-layout: fixed,
+      // leaving its checkbox drawn over the next column.
+      const currentHeaders = Array.from(headerRow.querySelectorAll('th'));
+      currentHeaders.forEach(c => {
         if (!c.style.width) c.style.width = `${c.offsetWidth}px`;
       });
       tableEl.style.tableLayout = 'fixed';
@@ -5330,13 +5396,17 @@ const TableManager = {
         // Capture startX/startWidth inside each drag to avoid shared state.
         const startX = e.clientX;
         const startWidth = th.offsetWidth;
+        // Never narrower than its own content, or that content overlaps the
+        // next column once the table is fixed-layout.
+        const measured = this.measureMinColumnWidths(tableEl);
+        const minWidth = Math.max(30, measured.mins[measured.headers.indexOf(th)] || 0);
 
         // Flag on table element for all sort handlers.
         tableEl.dataset.colResizing = '1';
         document.body.style.cursor = 'col-resize';
 
         const onMouseMove = (ev) => {
-          th.style.width = `${Math.max(30, startWidth + (ev.clientX - startX))}px`;
+          th.style.width = `${Math.max(minWidth, startWidth + (ev.clientX - startX))}px`;
         };
 
         const onMouseUp = () => {

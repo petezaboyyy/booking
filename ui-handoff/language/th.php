@@ -1646,7 +1646,7 @@ return array(
   'Tooltip' => 'คำอธิบาย',
   'Top level menu' => 'เมนูระดับบน',
   'Top Performers this month' => 'ผู้ที่ผลงานดีที่สุดในเดือนนี้',
-  'Topic' => 'หัวข้อ',
+  'Topic' => 'ลักษณะการใช้งาน',
   'Total' => 'รวม',
   'Total Area' => 'พื้นที่รวม',
   'Total Customers' => 'ลูกค้าทั้งหมด',
