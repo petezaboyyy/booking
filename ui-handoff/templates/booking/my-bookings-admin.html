@@ -16,7 +16,7 @@
         <div class='content-body'>
           <div class='tablebody'>
             <table class='table border fullwidth' data-table='myBookings' data-source='api/booking/mybookings' data-default-sort='created_at desc' data-page-size='25'
-                   data-search-columns='room_name,topic,comment' data-action-url='api/booking/mybookings/action' data-row-actions='{
+                   data-search-columns='room_name,topic,course_code,comment' data-action-url='api/booking/mybookings/action' data-row-actions='{
                                 "view":{
                                   "title":"View",
                                   "className":"btn btn-warning icon-search"
@@ -38,6 +38,7 @@
                 <tr>
                   <th data-field='room_name' data-sort='room_name' data-formatter='formatRoomWithImage' data-i18n>{LNG_Room}</th>
                   <th data-field='topic' data-template="<span class='two_line'>${topic}</span>" data-i18n>{LNG_Topic}</th>
+                  <th data-field='course_code' class='center' data-cell-class='center' data-i18n>{LNG_Course code}</th>
                   <th data-field='reservation_text' data-sort='begin' class='center' data-cell-class='center' data-i18n>{LNG_Reservation period}</th>
                   <th data-field='occurrence_summary' class='center' data-cell-class='center' data-i18n>{LNG_Active / total dates}</th>
                   <th data-field='created_at' data-sort='created_at' class='center' data-cell-class='center' data-format='datetime' data-i18n>{LNG_Created}</th>

@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261002-table-columns-1';
+const ROOMLY_ROLE_UI_VERSION = '20261002-mybookings-course-code-1';
 
 /**
  * Has this visitor signed in at all?
