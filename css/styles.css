@@ -1098,3 +1098,22 @@ td a {
   background-color: #e8f6fd;
   color: #006a9b;
 }
+
+/* Phone scale for staff screens: 2rem titles and a non-wrapping submit row
+   (two button groups side by side overflowed the review page on a 390px
+   phone). */
+@media (max-width: 600px) {
+  .card-groups h1 {
+    font-size: 1.45rem;
+  }
+
+  .card-groups h2 {
+    font-size: 1.2rem;
+  }
+
+  fieldset.submit {
+    flex-wrap: wrap;
+    gap: 8px;
+    min-inline-size: 0;
+  }
+}
