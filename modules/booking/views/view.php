@@ -31,6 +31,9 @@ class View extends \Kotchasan\KBase
      */
     public static function render($index, $email = false)
     {
+        if (!$email) {
+            return self::renderModal($index);
+        }
         $content = [];
         $escape = static function ($value) {
             return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -43,10 +46,6 @@ class View extends \Kotchasan\KBase
             $content[] = '<header>';
             $content[] = '<h4>{LNG_Reservation details} '.$escape($index['room_name']).'</h4>';
             $content[] = '</header>';
-        }
-
-        if (!empty($index['room_image_url']) && !$email) {
-            $content[] = '<p class="center"><img src="'.$escape($index['room_image_url']).'" alt="'.$escape($index['room_name']).'" style="max-width:100%;max-height:240px"></p>';
         }
 
         $content[] = '<table class="fullwidth">';
@@ -93,6 +92,94 @@ class View extends \Kotchasan\KBase
     }
 
     /**
+     * Booking details for the in-app modal: label/value rows styled by
+     * .roomly-booking-detail (css/dashboard.css), dates as chips, status as a pill.
+     * Email keeps the plain table above, since mail clients ignore the stylesheet.
+     *
+     * @param array $index
+     *
+     * @return string
+     */
+    private static function renderModal(array $index): string
+    {
+        $escape = static function ($value) {
+            return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        };
+        $multiline = static function ($value) use ($escape) {
+            return nl2br($escape($value));
+        };
+        $chips = static function (array $dates, string $class) use ($escape) {
+            $items = array_map(static function ($date) use ($escape, $class) {
+                return '<span class="roomly-detail-chip'.$class.'">'.$escape($date).'</span>';
+            }, $dates);
+            return '<div class="roomly-detail-chips">'.implode('', $items).'</div>';
+        };
+
+        $rows = [];
+        $add = static function ($label, $html) use (&$rows) {
+            $rows[] = '<div class="roomly-detail-row"><dt>{LNG_'.$label.'}</dt><dd>'.$html.'</dd></div>';
+        };
+
+        // Absent for guests: the public view strips the requester's identity.
+        if (!empty($index['member_name'])) {
+            $add('Name', $escape($index['member_name']));
+        }
+        $room = $escape($index['room_name']);
+        if (!empty($index['room_number'])) {
+            $room .= ' <span class="roomly-detail-muted">('.$escape($index['room_number']).')</span>';
+        }
+        $add('Room', $room);
+        if (!empty($index['room_building'])) {
+            $add('Building', $escape($index['room_building']));
+        }
+        if (!empty($index['topic'])) {
+            $add('Topic', $multiline($index['topic']));
+        }
+        if (trim((string) ($index['course_code'] ?? '')) !== '') {
+            $add('Course code', $escape($index['course_code']));
+        }
+        if (!empty($index['comment'])) {
+            $add('Notes', $multiline($index['comment']));
+        }
+        $add('Reservation period', $escape(!empty($index['reservation_text'])
+            ? $index['reservation_text']
+            : $index['begin_text'].' - '.$index['end_text']));
+        if (!empty($index['active_dates'])) {
+            $add('Selected booking dates', $chips($index['active_dates'], ''));
+        } elseif (!empty($index['active_dates_text'])) {
+            $add('Selected booking dates', $escape($index['active_dates_text']));
+        }
+        if (!empty($index['cancelled_dates'])) {
+            $add('Cancelled dates', $chips($index['cancelled_dates'], ' is-cancelled'));
+        } elseif (!empty($index['cancelled_dates_text'])) {
+            $add('Cancelled dates', $escape($index['cancelled_dates_text']));
+        }
+        $add('Attendees number', $escape($index['attendees']));
+        if (!empty($index['accessories_text'])) {
+            $add('Accessories', $escape($index['accessories_text']));
+        }
+        $statusClass = [
+            \Booking\Helper\Controller::STATUS_PENDING_REVIEW => ' is-pending',
+            \Booking\Helper\Controller::STATUS_APPROVED => ' is-approved',
+            \Booking\Helper\Controller::STATUS_REJECTED => ' is-rejected',
+            \Booking\Helper\Controller::STATUS_CANCELLED_BY_REQUESTER => ' is-cancelled',
+            \Booking\Helper\Controller::STATUS_CANCELLED_BY_OFFICER => ' is-cancelled',
+            \Booking\Helper\Controller::STATUS_RETURNED_FOR_EDIT => ' is-pending'
+        ][(int) ($index['status'] ?? -1)] ?? '';
+        $add('Status', '<span class="roomly-detail-status'.$statusClass.'">'.$escape($index['status_text']).'</span>');
+        if (!empty($index['reason'])) {
+            $add('Reason', $multiline($index['reason']));
+        }
+
+        $media = '';
+        if (!empty($index['room_image_url'])) {
+            $media = '<div class="roomly-detail-media"><img src="'.$escape($index['room_image_url']).'" alt="'.$escape($index['room_name']).'"></div>';
+        }
+
+        return '<div class="roomly-booking-detail">'.$media.'<dl class="roomly-detail-list">'.implode('', $rows).'</dl></div>';
+    }
+
+    /**
      * Build the shared modal action payload for booking details.
      *
      * @param array $index
@@ -105,8 +192,7 @@ class View extends \Kotchasan\KBase
             'type' => 'modal',
             'action' => 'show',
             'html' => Language::trans(static::render($index)),
-            'title' => trim(Language::get('Details of').' '.$index['room_name']),
-            'titleClass' => 'icon-office'
+            'title' => trim(Language::get('Details of').' '.$index['room_name'])
         ];
     }
 }

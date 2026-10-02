@@ -258,6 +258,8 @@ class Model extends \Kotchasan\Model
             'closed' => (int) ($row->closed ?? 1),
             'created_at' => (string) ($row->created_at ?? ''),
             'room_image_url' => Helper::getRoomFirstImageUrl((int) $row->room_id),
+            'active_dates' => $activeDates,
+            'cancelled_dates' => $cancelledDates,
             'active_dates_text' => implode(', ', $activeDates),
             'cancelled_dates_text' => implode(', ', $cancelledDates),
             'occurrence_count' => count($activeDates) + count($cancelledDates),

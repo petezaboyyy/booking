@@ -4047,3 +4047,122 @@ html[data-theme='dark'] .roomly-theme-sun {
 html[data-ui-role='guest'] [data-member-only] {
   display: none !important;
 }
+
+/* Booking details modal (Booking\View\View::renderModal): label/value rows,
+   no icons, dates as chips and the status as a coloured pill. */
+.roomly-booking-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--roomly-text);
+}
+
+.roomly-detail-media img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.roomly-detail-list {
+  margin: 0;
+  border: 1px solid var(--roomly-outline);
+  border-radius: 14px;
+  background: var(--roomly-surface);
+  overflow: hidden;
+}
+
+.roomly-detail-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 140px) minmax(0, 1fr);
+  gap: 16px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--roomly-outline);
+}
+
+.roomly-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.roomly-detail-row dt {
+  margin: 0;
+  color: var(--roomly-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.roomly-detail-row dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--roomly-text);
+  font-size: 14.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.roomly-detail-muted {
+  color: var(--roomly-muted);
+}
+
+.roomly-detail-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  max-height: 196px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.roomly-detail-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border: 1px solid var(--roomly-outline);
+  border-radius: 999px;
+  background: var(--roomly-surface-low);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.roomly-detail-chip.is-cancelled {
+  color: var(--roomly-muted);
+  text-decoration: line-through;
+}
+
+.roomly-detail-status {
+  --status-color: var(--roomly-primary);
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border: 1px solid color-mix(in srgb, var(--status-color) 30%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-color) 12%, transparent);
+  color: var(--status-color);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.roomly-detail-status.is-approved { --status-color: #15803d; }
+.roomly-detail-status.is-pending { --status-color: #b45309; }
+.roomly-detail-status.is-rejected { --status-color: #dc2626; }
+.roomly-detail-status.is-cancelled { --status-color: var(--roomly-muted); }
+
+[data-theme='dark'] .roomly-detail-status.is-approved { --status-color: #4ade80; }
+[data-theme='dark'] .roomly-detail-status.is-pending { --status-color: #fbbf24; }
+[data-theme='dark'] .roomly-detail-status.is-rejected { --status-color: #f87171; }
+
+@media (max-width: 560px) {
+  .roomly-detail-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 12px 14px;
+  }
+  .roomly-detail-chip {
+    padding: 3px 6px;
+    font-size: 12px;
+  }
+}
