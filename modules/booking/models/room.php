@@ -94,6 +94,13 @@ class Model extends \Kotchasan\Model
         $removed = $db->delete('rooms', ['id', $ids], 0);
 
         foreach ($ids as $id) {
+            if (\Download\Storage\Model::isConfigured()) {
+                foreach (\Download\Storage\Model::list('booking/'.$id.'/') as $file) {
+                    if (!empty($file['name'])) {
+                        \Download\Storage\Model::delete('booking/'.$id.'/'.basename((string) $file['name']));
+                    }
+                }
+            }
             \Kotchasan\File::removeDirectory(ROOT_PATH.DATA_FOLDER.'booking/'.$id.'/');
         }
 

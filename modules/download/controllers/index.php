@@ -115,6 +115,24 @@ class Controller extends \Gcms\Controller
                 }
             }
         }
+        if ($module === 'booking' && \Download\Storage\Model::isConfigured()) {
+            foreach (\Download\Storage\Model::list($module.'/'.$id.'/') as $item) {
+                $name = isset($item['name']) ? basename((string) $item['name']) : '';
+                $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                if ($name === '' || !in_array($ext, $typies, true) || (!empty($excludes) && in_array(pathinfo($name, PATHINFO_FILENAME), $excludes, true))) {
+                    continue;
+                }
+                $icon = file_exists(ROOT_PATH.'images/ext/'.$ext.'.png') ? WEB_URL.'images/ext/'.$ext.'.png' : WEB_URL.'images/ext/file.png';
+                $results[] = [
+                    'id' => json_encode(['file' => $name, 'id' => $id], JSON_UNESCAPED_UNICODE),
+                    'url' => \Download\Storage\Model::publicUrl($module.'/'.$id.'/'.$name),
+                    'name' => $name,
+                    'icon' => $icon,
+                    'ext' => $ext,
+                    'is_image' => self::isImageExtension($ext)
+                ];
+            }
+        }
         return $results;
     }
 
