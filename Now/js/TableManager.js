@@ -1344,6 +1344,22 @@ const TableManager = {
 
         table.filterWrapper.addEventListener('change', fwChange);
         table.eventHandlers.filterWrapperChange = fwChange;
+
+        // A text box only fires "change" on Enter or blur, so an external
+        // filter form's search waited for Enter while its selects applied at
+        // once. Search as the user types instead, like the dashboard filter;
+        // the pause keeps a server-side table from querying on every key.
+        if (table.externalFilterForm) {
+          let liveSearchTimer = null;
+          const fwInput = (e) => {
+            const target = e.target;
+            if (!target || e.isComposing || !target.matches?.('input[type="search"], input[type="text"]')) return;
+            clearTimeout(liveSearchTimer);
+            liveSearchTimer = setTimeout(() => this.handleExternalFilterSubmit(table, tableId), 400);
+          };
+          table.filterWrapper.addEventListener('input', fwInput);
+          table.eventHandlers.filterWrapperInput = fwInput;
+        }
       }
     } catch (err) {
       console.warn('Delegation setup failed', err);
@@ -1808,6 +1824,15 @@ const TableManager = {
         }
       });
     }
+
+    // Nothing to do when the form already matches what the table shows. Enter
+    // fires both "change" and "submit", and a box searched as the user typed
+    // fires "change" again on blur - e.g. when a row checkbox is clicked -
+    // which used to reload the table and drop that selection.
+    const unchanged = Object.keys(params).every(key =>
+      String(params[key] ?? '') === String(table.config.params[key] ?? '')
+    );
+    if (unchanged) return;
 
     // Update table config params
     Object.assign(table.config.params, params);
@@ -5025,6 +5050,9 @@ const TableManager = {
 
         if (table.eventHandlers.filterWrapperChange && table.filterWrapper) {
           table.filterWrapper.removeEventListener('change', table.eventHandlers.filterWrapperChange);
+        }
+        if (table.eventHandlers.filterWrapperInput && table.filterWrapper) {
+          table.filterWrapper.removeEventListener('input', table.eventHandlers.filterWrapperInput);
         }
 
         this.cleanupActionBindings(table);
