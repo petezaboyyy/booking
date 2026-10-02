@@ -102,8 +102,27 @@ check(
 check(strpos($template, 'course_code,comment') !== false, 'and is searchable from the table');
 
 $model = file_get_contents($root.'modules/booking/models/approvals.php');
+$th = json_decode(file_get_contents($root.'language/th.json'), true);
 check(strpos($model, "'R.course_code',") !== false, 'the query selects the course code');
 check(strpos($model, "['R.course_code', 'LIKE', \$search]") !== false, 'the search box matches on it');
+
+// =========================================================================
+echo "\n[2b] The search box finds room numbers and says what it searches\n";
+// =========================================================================
+// The room number is printed under every room name, so "R-0001" has to find
+// those rows; the dashboard search already did.
+check(strpos($model, "['RoomNumber.value', 'LIKE', \$search]") !== false, 'the search box matches the room number');
+check(strpos($template, 'room_name,room_number,') !== false, 'and the table lists it as searchable');
+check(
+    strpos($template, 'placeholder="{LNG_Search room, room number, course code or usage type...}"') !== false,
+    'the placeholder names what is searched'
+);
+check(
+    ($th['Search room, room number, course code or usage type...'] ?? '') === 'ค้นหาห้อง เลขห้อง รหัสวิชา หรือลักษณะการใช้งาน...',
+    'in Thai too'
+);
+$style = file_get_contents($root.'templates/booking/style.css');
+check(strpos($style, '.booking-approvals-search {') !== false, 'the box is wide enough for that text');
 
 // =========================================================================
 echo "\n[3] \"Topic\" reads as the usage type in Thai\n";

@@ -3314,3 +3314,15 @@ div.modal {
   outline: 3px solid rgba(16, 185, 129, .25);
   outline-offset: 2px;
 }
+
+/* Approvals search: wide enough for its placeholder, which says what it
+   searches, without pushing past the screen on a phone. */
+.booking-approvals-search {
+  width: 24rem;
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  .booking-approvals-search::placeholder {
+    font-size: 0.82em;
+  }
+}

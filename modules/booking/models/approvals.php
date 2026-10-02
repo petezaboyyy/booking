@@ -110,6 +110,8 @@ class Model extends \Kotchasan\Model
             $search = '%'.$params['search'].'%';
             $query->where([
                 ['Room.name', 'LIKE', $search],
+                // The room number is shown under the name, so it has to be findable too.
+                ['RoomNumber.value', 'LIKE', $search],
                 ['R.topic', 'LIKE', $search],
                 ['R.course_code', 'LIKE', $search],
                 ['R.comment', 'LIKE', $search],
