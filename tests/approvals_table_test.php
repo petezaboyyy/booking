@@ -125,6 +125,33 @@ $style = file_get_contents($root.'templates/booking/style.css');
 check(strpos($style, '.booking-approvals-search {') !== false, 'the box is wide enough for that text');
 
 // =========================================================================
+echo "\n[2c] The search box filters as you type, like the dashboard\n";
+// =========================================================================
+// An external filter form only listened for "change", which a text box fires
+// on Enter or blur, so the search waited for Enter and Enter queried twice
+// (change + submit). Headless Chrome: typing now queries once after a pause,
+// Enter queries once, and ticking a row afterwards no longer reloads and
+// drops the selection.
+check(
+    strpos($source, "table.filterWrapper.addEventListener('input', fwInput);") !== false
+        && strpos($source, "setTimeout(() => this.handleExternalFilterSubmit(table, tableId), 400)") !== false,
+    'typing in the search box reloads after a 400ms pause'
+);
+check(
+    strpos($source, "removeEventListener('input', table.eventHandlers.filterWrapperInput)") !== false,
+    'and the listener is removed when the table is destroyed'
+);
+check(
+    preg_match('/const unchanged = Object\.keys\(params\)\.every\(.*?\);\s*if \(unchanged\) return;/s', $source) === 1,
+    'a submit that changes nothing does not reload (no double query on Enter, no reload on blur)'
+);
+check(
+    strpos($bundle, 'addEventListener("input",') !== false && strpos($bundle, 'handleExternalFilterSubmit(') !== false
+        && preg_match('/Object\.keys\(\w+\)\.every\(\w+=>String\(\w+\[\w+\]\?\?""\)===String\(/', $bundle) === 1,
+    'the built now.table.min.js has both (rebuild with: npm run build:table)'
+);
+
+// =========================================================================
 echo "\n[3] \"Topic\" reads as the usage type in Thai\n";
 // =========================================================================
 $th = json_decode(file_get_contents($root.'language/th.json'), true);
