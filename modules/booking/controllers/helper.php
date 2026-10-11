@@ -865,6 +865,46 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * Current "use" category name of each reservation, looked up by the
+     * category id the reservation stores (reservation_data 'use').
+     *
+     * The reservation's own `topic` column keeps the name it was booked under,
+     * so it goes stale when a category is renamed. Reservations without a
+     * stored id (or whose category no longer exists) are left out; callers fall
+     * back to `topic` for those.
+     *
+     * @param array<int|string> $reservationIds
+     *
+     * @return array<int, string> reservation id => category name
+     */
+    public static function getUseLabelsByReservation(array $reservationIds): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $reservationIds))));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $rows = \Kotchasan\Model::createQuery()
+            ->select('reservation_id', 'value')
+            ->from('reservation_data')
+            ->where([
+                ['reservation_id', $ids],
+                ['name', 'use']
+            ])
+            ->fetchAll();
+
+        $labels = [];
+        foreach ($rows as $row) {
+            $label = self::getUseLabel((string) $row->value);
+            if ($label !== '') {
+                $labels[(int) $row->reservation_id] = $label;
+            }
+        }
+
+        return $labels;
+    }
+
+    /**
      * Department name helper.
      *
      * @param string|null $departmentId

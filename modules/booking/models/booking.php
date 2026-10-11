@@ -270,7 +270,9 @@ class Model extends \Kotchasan\Model
             'room_building' => (string) ($row->room_building ?? ''),
             'room_seats' => preg_match('/^\s*(\d+)/', (string) ($row->room_seats ?? ''), $m) ? $m[1] : trim(preg_replace('/(\s*(ที่นั่ง|คน|seats?))+/iu', '', (string) ($row->room_seats ?? ''))),
             'reason' => (string) $row->reason,
-            'topic' => (string) $row->topic,
+            // Shown as the "Topic"/"Use for" line, so follow the category's
+            // current name (by id) rather than the text stored at booking time.
+            'topic' => Helper::getUseLabel($row->use_id ?? '') ?: (string) $row->topic,
             'course_code' => trim((string) ($row->course_code ?? '')),
             'comment' => (string) $row->comment,
             'attendees' => (int) $row->attendees,

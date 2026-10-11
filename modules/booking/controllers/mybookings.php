@@ -84,7 +84,12 @@ class Controller extends \Gcms\Table
             return (int) ($item->id ?? 0);
         }, $datas));
 
+        $useLabels = Helper::getUseLabelsByReservation(array_map(static function ($item) {
+            return (int) ($item->id ?? 0);
+        }, $datas));
+
         foreach ($datas as $item) {
+            $item->topic = $useLabels[(int) $item->id] ?? $item->topic;
             $item->can_edit = Helper::canEditBooking($item);
             $item->can_cancel = Helper::canCancelBookingByRequester($item);
             $item->first_image_url = Helper::getRoomFirstImageUrl((int) ($item->room_id ?? 0));

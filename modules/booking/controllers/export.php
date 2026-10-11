@@ -102,7 +102,7 @@ class Controller extends ApiController
                     substr($begin, 11, 5),
                     substr($end, 11, 5),
                     $row->course_code,
-                    $row->topic,
+                    Helper::getUseLabel($row->use_id ?? '') ?: $row->topic,
                     Helper::getUseLabel($row->use_id ?? ''),
                     $row->attendees,
                     $row->comment

@@ -68,7 +68,7 @@ class Controller extends ApiController
                 'room_name' => (string) $row->room_name,
                 'room_number' => (string) ($row->room_number ?? ''),
                 'reason' => (string) $row->reason,
-                'topic' => (string) $row->topic,
+                'topic' => (string) ($row->use_text !== '' ? $row->use_text : $row->topic),
                 'comment' => (string) $row->comment,
                 'attendees' => (int) $row->attendees,
                 'reservation_text' => Helper::formatBookingTime($row),
