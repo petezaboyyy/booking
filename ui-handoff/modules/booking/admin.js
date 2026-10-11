@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261002-mybookings-course-code-1';
+const ROOMLY_ROLE_UI_VERSION = '20261011-booking-pending-1';
 
 /**
  * Has this visitor signed in at all?
@@ -1933,6 +1933,10 @@ function initSingleDayRepeat(element, afterSync) {
 }
 
 function initBookingForm(element, data) {
+    // The data has arrived, so the data-if bindings have been evaluated and the
+    // decision card / "already processed" notice can be trusted again.
+    element.classList.remove('booking-form-pending');
+
     const isRoomly = element.classList.contains('roomly-booking-form')
         || Boolean(element.querySelector('.roomly-reservation-surface'))
         || Boolean(element.closest('.roomly-booking-page'));

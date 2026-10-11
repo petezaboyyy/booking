@@ -4267,3 +4267,14 @@ html[data-ui-role='guest'] [data-member-only] {
     min-width: 0 !important;
   }
 }
+
+/* Until the booking is loaded, data-if has not run yet and the raw template
+   would flash "Latest decision" and "already processed" on a new booking.
+   Hidden without display:none, because data-if remembers the computed display
+   to restore it later. initBookingForm drops the class once data is bound. */
+.booking-form-pending [data-if="reason"],
+.booking-form-pending [data-if="!canEdit"] {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
