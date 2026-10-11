@@ -1590,10 +1590,16 @@ const TableManager = {
     const elementManager = Now.getManager('element');
     if (!elementManager && !isExternalFilter) return;
 
-    // Create a debounced filter change handler
-    const debouncedFilterChange = Utils.function.debounce((table, tableId, key, value, element) => {
+    // Create debounced filter change handlers. This used to wait a full second
+    // for every control, so picking a status or page size felt like the table
+    // had not reacted. A select applies at once (the 50ms only folds duplicate
+    // change events into one request); text and search boxes wait for a pause
+    // in typing, the same 400ms the external filter form uses.
+    const applyFilterChange = (table, tableId, key, value, element) => {
       this.handleFilterChange(table, tableId, key, value, element);
-    }, 1000);
+    };
+    const debouncedFilterChange = Utils.function.debounce(applyFilterChange, 400);
+    const selectFilterChange = Utils.function.debounce(applyFilterChange, 50);
 
     // Add page size selector if configured (internal UI only)
     if (!isExternalFilter && config.params.pageSize > 0 && Array.isArray(config.pageSizes) && config.pageSizes.length > 0) {
@@ -1609,7 +1615,7 @@ const TableManager = {
         label: 'Show',
         wrapper: 'div',
         onChange: (element, value) => {
-          debouncedFilterChange(table, tableId, 'pageSize', parseInt(value), element);
+          selectFilterChange(table, tableId, 'pageSize', parseInt(value), element);
         }
       });
 
@@ -1660,7 +1666,8 @@ const TableManager = {
         wrapper: 'div',
         wrapperClass: 'filter-control',
         onChange: (element, value) => {
-          debouncedFilterChange(table, tableId, field, value, element);
+          const change = attributes.type === 'select' ? selectFilterChange : debouncedFilterChange;
+          change(table, tableId, field, value, element);
         }
       };
 
