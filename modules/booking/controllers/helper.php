@@ -849,7 +849,18 @@ class Controller extends \Gcms\Controller
     }
 
     /**
+     * The "use" categories as read for this request.
+     *
+     * @var \Booking\Category\Controller|null
+     */
+    private static $useCategories = null;
+
+    /**
      * Use category label.
+     *
+     * Read without the 1-hour query cache, like getUseOptions(): a category an
+     * admin just renamed must show its new name straight away. The list is
+     * loaded once per request, so labelling many rows is still one query.
      *
      * @param string|null $useId
      *
@@ -860,8 +871,11 @@ class Controller extends \Gcms\Controller
         if ($useId === null || trim($useId) === '') {
             return '';
         }
+        if (self::$useCategories === null) {
+            self::$useCategories = BookingCategory::init(true, true, false);
+        }
 
-        return (string) BookingCategory::init()->get('use', $useId);
+        return (string) self::$useCategories->get('use', $useId);
     }
 
     /**
