@@ -86,8 +86,39 @@ class Controller extends ApiController
                 }, $rows))
                 : [];
 
+            // The category filter compares an event's `description` with the
+            // category's current name. A booking stores the name it was made
+            // under, so renaming a category would hide its older bookings from
+            // that filter. Resolve the name through the stable category id the
+            // booking also stores; fall back to the stored text if it has none.
+            $categories = Helper::getTopicOptions();
+            $categoryNames = [];
+            foreach ($categories as $category) {
+                if ($category['category_id'] !== '') {
+                    $categoryNames[$category['category_id']] = $category['value'];
+                }
+            }
+            $useByReservation = [];
+            $reservationIds = array_values(array_unique(array_map(static function ($row) {
+                return (int) $row->id;
+            }, $rows)));
+            if (!empty($categoryNames) && !empty($reservationIds)) {
+                $useRows = \Kotchasan\Model::createQuery()
+                    ->select('reservation_id', 'value')
+                    ->from('reservation_data')
+                    ->where([
+                        ['reservation_id', $reservationIds],
+                        ['name', 'use']
+                    ])
+                    ->fetchAll();
+                foreach ($useRows as $useRow) {
+                    $useByReservation[(int) $useRow->reservation_id] = (string) $useRow->value;
+                }
+            }
+
             $events = [];
             foreach ($rows as $item) {
+                $categoryName = $categoryNames[$useByReservation[(int) $item->id] ?? ''] ?? null;
                 $label = !empty($item->room_number) ? $item->room_number : $item->room_name;
                 $events[] = [
                     // The calendar looks events up by id, so it must be unique
@@ -102,7 +133,9 @@ class Controller extends ApiController
                     'approver_name' => $approvers[(int) $item->id] ?? '',
                     'course_code' => trim((string) ($item->course_code ?? '')),
                     'title' => $label.', '.substr((string) $item->begin, 11, 5).'-'.substr((string) $item->end, 11, 5),
-                    'description' => (string) $item->topic,
+                    // The calendar's category filter matches on this id.
+                    'categoryId' => $useByReservation[(int) $item->id] ?? '',
+                    'description' => $categoryName ?? (string) $item->topic,
                     'start' => $item->begin,
                     'end' => $item->end,
                     'status' => (int) $item->status,
@@ -119,7 +152,7 @@ class Controller extends ApiController
                 // one-off text has ended up as a booking's topic - the same
                 // options the booking form's Topic field uses, so the value
                 // stored in `description` above always matches an option here.
-                'categories' => Helper::getTopicOptions()
+                'categories' => $categories
             ], 'Calendar data retrieved')
             ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         } catch (\Exception $e) {

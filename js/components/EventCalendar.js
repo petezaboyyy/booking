@@ -1339,7 +1339,8 @@ const EventCalendar = {
       categories = instance.categoryOptions
         .map(opt => ({
           value: String(opt?.value ?? '').trim(),
-          label: String(opt?.text ?? opt?.label ?? opt?.value ?? '').trim()
+          label: String(opt?.text ?? opt?.label ?? opt?.value ?? '').trim(),
+          id: String(opt?.category_id ?? opt?.categoryId ?? '').trim()
         }))
         .filter(opt => opt.value);
     } else {
@@ -1354,6 +1355,13 @@ const EventCalendar = {
 
     const allLabel = strings.categoryFilterAll || 'All categories';
     select.setAttribute('aria-label', allLabel);
+
+    // Option value -> category id, read by getFilteredEvents(). Rebuilt on
+    // every call so it stays current even when the option list is unchanged.
+    instance.categoryIdByValue = {};
+    categories.forEach(c => {
+      if (c.id) instance.categoryIdByValue[c.value] = c.id;
+    });
 
     const signature = `\u0003${allLabel}\u0001` + categories.map(c => `${c.value}\u0002${c.label}`).join('\u0001');
     if (select._categorySignature === signature) {
@@ -1701,6 +1709,9 @@ const EventCalendar = {
         slotEndTime,
         recurrenceDays,
         category: event.category || null,
+        // Stable id of the booking's category; the category filter matches on
+        // it so a renamed category still finds its older bookings.
+        categoryId: String(event.categoryId ?? event.category_id ?? '').trim(),
         description: event.description || null,
         location: event.location || null,
         data: event // Keep original data
@@ -4265,7 +4276,14 @@ const EventCalendar = {
       : instance.events;
 
     if (instance.categoryFilter) {
-      events = events.filter(event => String(event?.description || '').trim() === instance.categoryFilter);
+      // Match on the category id when both sides have one; only bookings
+      // without an id (or a list that carries none) fall back to the name.
+      const selectedId = instance.categoryIdByValue?.[instance.categoryFilter] || '';
+      events = events.filter(event => {
+        const eventId = String(event?.categoryId || '').trim();
+        if (selectedId && eventId) return eventId === selectedId;
+        return String(event?.description || '').trim() === instance.categoryFilter;
+      });
     }
 
     return events;

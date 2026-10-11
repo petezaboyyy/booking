@@ -49,7 +49,8 @@ $checks = [
     [strpos($roomlyAdminJs, 'topicCourseCodeRequirementMap') !== false && strpos($roomlyAdminJs, 'updateCourseCodeVisibility') !== false, 'admin booking form JS wires up the course-code requirement/visibility logic'],
     [strpos($adminBookingForm, "data-on-load='initBookingForm'") !== false, "admin booking form's <form> has data-on-load so initBookingForm reruns with the loaded options.topic/options.use payload - without it, initBookingForm only ever sees the empty pre-load data and the course-code field never shows, no matter which category is selected"],
     [
-        strpos($calendar, "'categories' => Helper::getTopicOptions()") !== false,
+        strpos($calendar, '$categories = Helper::getTopicOptions();') !== false
+            && strpos($calendar, "'categories' => \$categories") !== false,
         "calendar API sends the real \"use\" category list alongside events, so the calendar's category filter dropdown lists การเรียน/ประชุม/สัมมนา/จัดเลี้ยง instead of every one-off string a booking's free-text topic has ever held"
     ]
 ];
