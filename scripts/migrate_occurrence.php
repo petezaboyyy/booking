@@ -27,6 +27,11 @@ foreach ($applied as $sql) {
     echo '  '.$sql."\n";
 }
 
+// One room per building + room number. Safe to re-run: it also gives a key to
+// rooms added directly in SQL (seed scripts, imports) that bypassed the app.
+require_once __DIR__.'/migrations/room_key.php';
+echo booking_apply_room_key_migration($pdo, (string) $cfg['prefix'])."\n";
+
 // A missing occurrence table usually means the whole schema is behind, so name
 // anything else install/database.sql expects but the database does not have.
 $expected = [];

@@ -157,7 +157,8 @@ CREATE TABLE `{prefix}_rooms` (
   `name` varchar(150) NOT NULL,
   `detail` text NOT NULL,
   `color` varchar(20) NOT NULL,
-  `is_active` int(1) NOT NULL DEFAULT 1
+  `is_active` int(1) NOT NULL DEFAULT 1,
+  `room_key` char(40) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -309,7 +310,8 @@ ALTER TABLE `{prefix}_reservation_data`
 -- Indexes for table `{prefix}_rooms`
 --
 ALTER TABLE `{prefix}_rooms`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_rooms_room_key` (`room_key`);
 
 --
 -- Indexes for table `{prefix}_rooms_meta`

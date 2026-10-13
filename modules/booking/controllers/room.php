@@ -103,12 +103,25 @@ class Controller extends ApiController
             if ($save['name'] === '') {
                 $errors['name'] = 'Please fill in';
             }
+            if (Model::findDuplicate($id, $meta['building'], $meta['number']) !== null) {
+                $errors['number'] = 'A room with this room number already exists in this building';
+            }
 
             if (!empty($errors)) {
                 return $this->formErrorResponse($errors, 400);
             }
 
-            $id = Model::save($id, $save, $meta);
+            try {
+                $id = Model::save($id, $save, $meta);
+            } catch (\Throwable $e) {
+                // Someone saved the same building + number between the check above and the insert.
+                if (Model::isDuplicateKeyError($e)) {
+                    return $this->formErrorResponse([
+                        'number' => 'A room with this room number already exists in this building'
+                    ], 400);
+                }
+                throw $e;
+            }
 
             $ret = [];
             \Download\Upload\Model::execute($ret, $request, $id, 'booking', self::$cfg->img_typies, 0, self::$cfg->stored_img_size);

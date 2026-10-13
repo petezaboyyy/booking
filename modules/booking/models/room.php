@@ -64,6 +64,10 @@ class Model extends \Kotchasan\Model
     {
         $db = \Kotchasan\DB::create();
 
+        // Building + room number, kept as one value on the room so the database
+        // itself refuses a second room with the same pair (UNIQUE room_key).
+        $save['room_key'] = self::roomKey((string) ($meta['building'] ?? ''), (string) ($meta['number'] ?? ''));
+
         if ($id === 0) {
             $id = (int) $db->insert('rooms', $save);
         } else {
@@ -73,6 +77,63 @@ class Model extends \Kotchasan\Model
         self::saveMeta($id, $meta);
 
         return $id;
+    }
+
+    /**
+     * The unique key of a room: its building and room number, normalized.
+     * Null when the room has no room number.
+     *
+     * @param string $building
+     * @param string $number
+     *
+     * @return string|null
+     */
+    public static function roomKey(string $building, string $number): ?string
+    {
+        require_once ROOT_PATH.'scripts/migrations/room_key.php';
+
+        return booking_room_key($building, $number);
+    }
+
+    /**
+     * Another room that already uses this building and room number.
+     *
+     * @param int    $id       the room being saved (0 for a new one), never its own duplicate
+     * @param string $building
+     * @param string $number
+     *
+     * @return object|null the existing room (id, name), or null when the pair is free
+     */
+    public static function findDuplicate(int $id, string $building, string $number)
+    {
+        $key = self::roomKey($building, $number);
+        if ($key === null) {
+            return null;
+        }
+
+        return static::createQuery()
+            ->select('id', 'name')
+            ->from('rooms')
+            ->where([
+                ['room_key', $key],
+                ['id', '!=', $id]
+            ])
+            ->first();
+    }
+
+    /**
+     * Is this exception the database refusing a duplicate room_key (two people
+     * saving the same building + number at the same moment)?
+     *
+     * @param \Throwable $e
+     *
+     * @return bool
+     */
+    public static function isDuplicateKeyError(\Throwable $e): bool
+    {
+        return (string) $e->getCode() === '23000'
+            || stripos($e->getMessage(), 'Duplicate entry') !== false
+            || stripos($e->getMessage(), 'uq_rooms_room_key') !== false;
     }
 
     /**
