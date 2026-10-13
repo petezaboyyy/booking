@@ -84,6 +84,8 @@
                                     <th data-field="created_at" data-sort="created_at" class="center" data-cell-class="center" data-format="datetime" data-i18n>{LNG_Created}</th>
                                     <th data-field="status" data-sort="status" data-formatter="formatTableOptionStatus" class="center" data-cell-class="center" data-i18n>
                                         {LNG_Status}</th>
+                                    <!-- Filled only for a pending request that shares its room and time with another pending one (amber), or that an approved booking already holds (red). Open Review for the details. -->
+                                    <th data-field="competing_text" data-template="<span class='booking-competing-tag'>${competing_text}</span><span class='booking-blocked-tag'>${blocked_text}</span>" class="center" data-cell-class="center" data-i18n>{LNG_Competing requests}</th>
                                     <th data-field="reason" data-template="<span class='two_line'>${reason}</span>" data-i18n>{LNG_Reason}</th>
                                 </tr>
                             </thead>

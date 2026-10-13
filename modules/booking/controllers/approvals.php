@@ -6,9 +6,11 @@
 namespace Booking\Approvals;
 
 use Booking\Booking\Model as BookingModel;
+use Booking\Competition\Model as CompetitionModel;
 use Booking\Helper\Controller as Helper;
 use Gcms\Api as ApiController;
 use Kotchasan\Http\Request;
+use Kotchasan\Language;
 
 class Controller extends \Gcms\Table
 {
@@ -103,7 +105,26 @@ class Controller extends \Gcms\Table
             return (int) ($item->id ?? 0);
         }, $datas));
 
+        // Pending requests that want the same room at an overlapping time as
+        // another pending request. The review page ranks and compares them.
+        $pendingIds = array_map(static function ($item) {
+            return (int) ($item->id ?? 0);
+        }, array_filter($datas, static function ($item) {
+            return (int) ($item->status ?? -1) === Helper::STATUS_PENDING_REVIEW;
+        }));
+        $competing = CompetitionModel::countCompetitors($pendingIds);
+        // ...and pending requests whose room and time an approved booking already holds:
+        // they can no longer be approved, so they get a warning instead of the count.
+        $blocked = CompetitionModel::conflictingWithApproved($pendingIds);
+
         foreach ($datas as $item) {
+            $id = (int) $item->id;
+            $item->blocked_text = isset($blocked[$id])
+                ? Language::replace('Clashes with an approved booking (:count date(s))', [':count' => $blocked[$id]])
+                : '';
+            $item->competing_text = isset($competing[$id]) && !isset($blocked[$id])
+                ? Language::replace('Competes with :count other request(s)', [':count' => $competing[$id]])
+                : '';
             $item->topic = $useLabels[(int) $item->id] ?? $item->topic;
             $item->first_image_url = Helper::getRoomFirstImageUrl((int) ($item->room_id ?? 0));
             $item->reservation_text = Helper::formatBookingTime($item);

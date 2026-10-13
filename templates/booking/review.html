@@ -84,6 +84,29 @@
                             <div class="booking-review-occurrences" id="booking_review_occurrences"></div>
                             <div class="comment" data-i18n>An approved date can be cancelled individually without cancelling the other dates</div>
                         </fieldset>
+                        <fieldset id="booking_review_blocked" hidden>
+                            <legend data-i18n>Room already booked</legend>
+                            <div class="booking-clash-notice" id="booking_review_blocked_body"></div>
+                        </fieldset>
+                        <fieldset id="booking_review_competition" hidden>
+                            <legend><span data-i18n>Competing requests</span> (<span id="booking_review_competition_count">0</span>)</legend>
+                            <div class="comment" data-i18n>These requests want the same room at overlapping times. Approving one means the others can no longer be approved for the dates that overlap.</div>
+                            <div class="booking-competition-list" id="booking_review_competition_list"></div>
+                        </fieldset>
+                        <fieldset id="booking_review_clashing" hidden>
+                            <legend><span data-i18n>Pending requests that clash with this booking</span> (<span id="booking_review_clashing_count">0</span>)</legend>
+                            <div class="comment" data-i18n>The room is now booked for this request, so these requests can no longer be approved. Reject them together, or open each one to decide separately.</div>
+                            <div class="booking-competition-list" id="booking_review_clashing_list"></div>
+                            <div class="booking-clash-actions">
+                                <label for="booking_review_clashing_reason" data-i18n>Reason shown to the requesters</label>
+                                <span class="form-control icon-edit">
+                                    <textarea id="booking_review_clashing_reason" rows="3" maxlength="255"></textarea>
+                                </span>
+                                <div>
+                                    <button type="button" class="btn btn-danger icon-ban" id="booking_review_clashing_button" data-i18n>Reject all clashing requests</button>
+                                </div>
+                            </div>
+                        </fieldset>
                         <fieldset data-attr="disabled:!canProcess&&!canCancelAction">
                             <legend data-i18n>Approval decision</legend>
                             <div>
@@ -100,7 +123,7 @@
                                 <button type="button" class="btn btn-success icon-valid" data-action="click.prevent:requestApi" data-api-url="api/booking/review/approve"
                                         data-api-method="post" data-param-id="{id}" data-param-approval_reason="{approval_reason}" data-confirm="Confirm approval"
                                         data-param-version="{version}"
-                                        data-loading-text="Approving" data-notify-success="true" data-attr="disabled:!canApproveAction" data-i18n>Approve</button>
+                                        data-loading-text="Approving" data-notify-success="true" data-attr="disabled:!canApproveButton" data-i18n>Approve</button>
                                 <button type="button" class="btn btn-danger icon-ban" data-action="click.prevent:requestApi" data-api-url="api/booking/review/reject"
                                         data-api-method="post" data-param-id="{id}" data-param-approval_reason="{approval_reason}" data-confirm="Confirm rejection"
                                         data-param-version="{version}"

@@ -18,7 +18,9 @@ $thPhp = file_get_contents($root.'/language/th.php');
 
 $checks = [
     [strpos($schema, '`topic_en` varchar(150) NOT NULL DEFAULT') !== false, 'schema has an optional English name column, additive only (no data touched)'],
-    [strpos($bootstrap, 'schema-v5.done') !== false, 'the self-migration marker was bumped so the new column reaches already-deployed containers'],
+    // v5 is the marker this column shipped with. Later migrations bump it again (room_key made it v6),
+    // so ask for "v5 or newer": an older marker would never run the sync on a deployed container.
+    [preg_match('/schema-v(\d+)\.done/', $bootstrap, $marker) === 1 && (int) $marker[1] >= 5, 'the self-migration marker was bumped so the new column reaches already-deployed containers'],
     [strpos($categoriesModel, 'function englishNames') !== false, 'model exposes per-category English names keyed by category_id'],
     [strpos($categoriesModel, "'field' => 'topic_en'") !== false, 'categories admin table renders an English name column for the "use" type'],
     [strpos($categoriesController, "post('topic_en'") !== false, 'category save reads the English name field'],

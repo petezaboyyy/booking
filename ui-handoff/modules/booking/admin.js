@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261011-booking-pending-1';
+const ROOMLY_ROLE_UI_VERSION = '20261013-clash-1';
 
 /**
  * Has this visitor signed in at all?
@@ -3711,7 +3711,208 @@ function openOccurrenceCancelDialog(button, booking, occurrence, isLastApprovedD
     });
 }
 
+/**
+ * "Competing requests" on the review page: other pending requests for the same
+ * room at overlapping times, in the order of the server's rules, each with the
+ * reasons behind its score. The order is advice; the approver still decides.
+ */
+function renderReviewCompetition(element, data) {
+    const section = element.querySelector('#booking_review_competition');
+    const list = element.querySelector('#booking_review_competition_list');
+    if (!section || !list) return;
+
+    const items = Array.isArray(data?.competition?.items) ? data.competition.items : [];
+    const seats = Number(data?.competition?.seats) || 0;
+    list.replaceChildren();
+    // Nothing to compare unless somebody else wants the slot.
+    if (items.length < 2) {
+        section.hidden = true;
+        return;
+    }
+    section.hidden = false;
+    const count = element.querySelector('#booking_review_competition_count');
+    if (count) count.textContent = String(items.length);
+
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `booking-competition-item${item.is_current ? ' is-current' : ''}`;
+
+        const rank = document.createElement('span');
+        rank.className = 'booking-competition-rank';
+        rank.textContent = `#${item.rank}`;
+
+        const main = document.createElement('div');
+        main.className = 'booking-competition-main';
+        const name = document.createElement('strong');
+        name.textContent = item.member_name || '-';
+        if (item.is_current) {
+            const tag = document.createElement('span');
+            tag.className = 'booking-competition-tag';
+            tag.textContent = Now.translate('This request');
+            name.appendChild(tag);
+        }
+        const what = document.createElement('small');
+        const seatText = seats > 0 ? `${item.attendees}/${seats}` : String(item.attendees);
+        what.textContent = [item.topic, `${Now.translate('Attendees number')}: ${seatText}`].filter(Boolean).join(' · ');
+        const when = document.createElement('small');
+        when.textContent = item.reservation_text || '';
+        const submitted = document.createElement('small');
+        submitted.textContent = `${Now.translate('Submitted')}: ${item.created_at}`
+            + (item.is_current ? '' : ` · ${Now.translate('Overlapping dates')}: ${item.overlap_dates}`);
+        const reasons = document.createElement('ul');
+        reasons.className = 'booking-competition-reasons';
+        (item.reasons || []).forEach(text => {
+            const li = document.createElement('li');
+            li.textContent = text;
+            reasons.appendChild(li);
+        });
+        main.append(name, what, when, submitted, reasons);
+
+        const side = document.createElement('div');
+        side.className = 'booking-competition-side';
+        const score = document.createElement('span');
+        score.className = 'booking-competition-score';
+        score.title = Now.translate('Rule score');
+        score.textContent = `${Now.translate('Rule score')}: ${item.score}`;
+        side.appendChild(score);
+        if (!item.is_current) {
+            const open = document.createElement('a');
+            open.className = 'btn btn-warning';
+            open.href = `/booking-review?id=${encodeURIComponent(item.id)}`;
+            open.textContent = Now.translate('Review booking');
+            side.appendChild(open);
+        }
+
+        row.append(rank, main, side);
+        list.appendChild(row);
+    });
+}
+
+/**
+ * Notice on a pending request whose room and time an approved booking already
+ * holds. The server refuses to approve it, so the Approve button is off too.
+ */
+function renderReviewBlocked(element, data) {
+    const section = element.querySelector('#booking_review_blocked');
+    const body = element.querySelector('#booking_review_blocked_body');
+    if (!section || !body) return;
+
+    body.replaceChildren();
+    const conflicts = Array.isArray(data?.blocked?.conflicts) ? data.blocked.conflicts : [];
+    if (conflicts.length === 0) {
+        section.hidden = true;
+        return;
+    }
+    section.hidden = false;
+
+    const headline = document.createElement('strong');
+    headline.textContent = Now.translate('An approved booking already holds this room at the same time, so this request cannot be approved.');
+    const advice = document.createElement('small');
+    advice.textContent = Now.translate('Reject it, or return it to the requester to pick another time.');
+    const list = document.createElement('ul');
+    conflicts.forEach(conflict => {
+        const li = document.createElement('li');
+        li.append(`${conflict.date} ${conflict.begin_time}-${conflict.end_time} · `);
+        const link = document.createElement('a');
+        link.href = `/booking-review?id=${encodeURIComponent(conflict.reservation_id)}`;
+        link.textContent = `${Now.translate('Approved booking')} ${conflict.approved_begin_time}-${conflict.approved_end_time}`;
+        li.appendChild(link);
+        list.appendChild(li);
+    });
+    body.append(headline, advice, list);
+}
+
+/**
+ * On an approved request: the pending requests it left behind, with one button
+ * to reject them together (reason required, confirmed first). Each request is
+ * still checked on the server like a single rejection, and the requesters are
+ * told the same way.
+ */
+function renderReviewClashing(element, data) {
+    const section = element.querySelector('#booking_review_clashing');
+    const list = element.querySelector('#booking_review_clashing_list');
+    const button = element.querySelector('#booking_review_clashing_button');
+    const reason = element.querySelector('#booking_review_clashing_reason');
+    if (!section || !list || !button || !reason) return;
+
+    const items = Array.isArray(data?.clashing) ? data.clashing : [];
+    list.replaceChildren();
+    if (items.length === 0 || !data?.canRejectClashing) {
+        section.hidden = true;
+        return;
+    }
+    section.hidden = false;
+    const count = element.querySelector('#booking_review_clashing_count');
+    if (count) count.textContent = String(items.length);
+    if (reason.value.trim() === '') {
+        reason.value = Now.translate('The room was approved for another request at the same time');
+    }
+
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'booking-competition-item';
+        const main = document.createElement('div');
+        main.className = 'booking-competition-main';
+        const name = document.createElement('strong');
+        name.textContent = item.member_name || '-';
+        const when = document.createElement('small');
+        when.textContent = item.reservation_text || '';
+        const submitted = document.createElement('small');
+        submitted.textContent = `${Now.translate('Submitted')}: ${item.created_at} · ${Now.translate('Overlapping dates')}: ${item.overlap_dates}`;
+        main.append(name, when, submitted);
+        const side = document.createElement('div');
+        side.className = 'booking-competition-side';
+        const open = document.createElement('a');
+        open.className = 'btn btn-warning';
+        open.href = `/booking-review?id=${encodeURIComponent(item.id)}`;
+        open.textContent = Now.translate('Review booking');
+        side.appendChild(open);
+        row.append(main, side);
+        list.appendChild(row);
+    });
+
+    button.onclick = async event => {
+        event.preventDefault();
+        const text = reason.value.trim();
+        if (text === '') {
+            window.NotificationManager?.error(Now.translate('Please fill in'));
+            reason.focus();
+            return;
+        }
+        const question = `${Now.translate('Reject all clashing requests')} (${items.length})`;
+        const confirmed = window.DialogManager?.confirm
+            ? await window.DialogManager.confirm(question, Now.translate('Confirm rejection'))
+            : window.confirm(question);
+        if (!confirmed) return;
+
+        button.disabled = true;
+        button.classList.add('loading');
+        try {
+            const response = await window.httpAction.post('api/booking/review/rejectconflicts', {
+                id: data.id,
+                approval_reason: text
+            }, {}, {trigger: button, element: button, target: button});
+            const payload = response?.data && typeof response.data === 'object' ? response.data : null;
+            const success = payload?.success ?? response?.success ?? false;
+            // A success carries its own notification and reload; a failure does not.
+            if (!success) {
+                window.NotificationManager?.error(payload?.message || response?.message || 'Request failed.');
+            }
+        } catch (err) {
+            console.error('[booking-review] reject clashing requests failed:', err);
+            window.NotificationManager?.error(err?.message || 'Request failed.');
+        } finally {
+            button.disabled = false;
+            button.classList.remove('loading');
+        }
+    };
+}
+
 function initBookingReview(element, data) {
+    renderReviewCompetition(element, data);
+    renderReviewBlocked(element, data);
+    renderReviewClashing(element, data);
+
     const container = element.querySelector('#booking_review_occurrences');
     if (!container) return () => {};
 

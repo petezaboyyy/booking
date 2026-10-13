@@ -94,9 +94,11 @@ check(
 );
 
 $controllerSource = file_get_contents(__DIR__.'/../modules/booking/controllers/review.php');
+// Two actions take their reason as $reason: cancelling one date, and rejecting
+// the requests an approved booking left behind. Each must check the length.
 check(
-    substr_count($controllerSource, 'mb_strlen($reason) > Helper::MAX_CANCELLATION_REASON_LENGTH') === 1,
-    'the per-date cancellation path checks the length server-side'
+    substr_count($controllerSource, 'mb_strlen($reason) > Helper::MAX_CANCELLATION_REASON_LENGTH') === 2,
+    'the per-date cancellation and the reject-clashing paths each check the length server-side'
 );
 check(
     substr_count($controllerSource, 'mb_strlen($approvalReason) > Helper::MAX_CANCELLATION_REASON_LENGTH') === 1,
