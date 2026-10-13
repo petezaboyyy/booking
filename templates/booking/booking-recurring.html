@@ -177,9 +177,7 @@
                           <span data-i18n>Start time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
-                          <input type="text" id="begin_time" name="begin_time" data-attr="value:begin_time"
-                                 inputmode="numeric" maxlength="5" placeholder="{LNG_ชช:นน (เช่น 08:30)}" data-i18n-placeholder="ชช:นน (เช่น 08:30)"
-                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="{LNG_Use 24-hour time format (HH:MM)}" required>
+                          <input type="text" id="begin_time" name="begin_time" data-attr="value:begin_time" data-time-wheel autocomplete="off" required>
                         </span>
                       </div>
                     </div>
@@ -198,9 +196,7 @@
                           <span data-i18n>End time</span><span class="roomly-req-star">*</span><span class="roomly-req-badge" data-i18n>Required</span>
                         </label>
                         <span class="form-control">
-                          <input type="text" id="end_time" name="end_time" data-attr="value:end_time"
-                                 inputmode="numeric" maxlength="5" placeholder="{LNG_ชช:นน (เช่น 12:00)}" data-i18n-placeholder="ชช:นน (เช่น 12:00)"
-                                 pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]" title="{LNG_Use 24-hour time format (HH:MM)}" required>
+                          <input type="text" id="end_time" name="end_time" data-attr="value:end_time" data-time-wheel autocomplete="off" required>
                         </span>
                       </div>
                     </div>

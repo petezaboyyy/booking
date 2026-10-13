@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261013-clash-1';
+const ROOMLY_ROLE_UI_VERSION = '20261013-time-wheel-5';
 
 /**
  * Has this visitor signed in at all?
@@ -670,6 +670,13 @@ function initBookingTime24Inputs(root = document) {
     ['begin_time', 'end_time'].forEach(id => {
         const input = root.querySelector(`#${id}`);
         if (!input) return;
+        // The booking forms pick the time on wheels, so there is nothing to type and
+        // no text mask: the field only holds the value, and a button in front of it
+        // opens the wheels.
+        if (input.dataset.timeWheel !== undefined || input.tagName === 'SELECT') {
+            initBookingTimeWheel(input);
+            return;
+        }
 
         const currentValue = input.value;
         input.type = 'text';
@@ -715,6 +722,426 @@ function initBookingTime24Inputs(root = document) {
     });
 }
 
+/**
+ * Booking times are chosen in steps of this many minutes. Keep it equal to
+ * Booking\Helper\Controller::BOOKING_TIME_STEP_MINUTES (booking_time_step_test
+ * compares the two).
+ */
+const BOOKING_TIME_STEP_MINUTES = 5;
+const BOOKING_TIME_MINUTES = Array.from({length: 60 / BOOKING_TIME_STEP_MINUTES}, (_, index) => String(index * BOOKING_TIME_STEP_MINUTES).padStart(2, '0'));
+const BOOKING_TIME_HOURS = Array.from({length: 24}, (_, hour) => String(hour).padStart(2, '0'));
+const BOOKING_TIME_PATTERN = new RegExp(`^(?:[01][0-9]|2[0-3]):(?:${BOOKING_TIME_MINUTES.join('|')})$`);
+
+/**
+ * Show a booking's time fields as wheels. Run once the form data has arrived
+ * (route hooks may not have run yet); each field is bound only once.
+ */
+function syncBookingTimeFields(element) {
+    ['begin_time', 'end_time'].forEach(id => {
+        const field = element.querySelector(`#${id}`);
+        initBookingTimeWheel(field);
+        field?._timeWheelRefresh?.();
+    });
+}
+
+/* ---------------------------------------------------------------------------
+ * iPhone-style time wheel
+ *
+ * The (hidden) text field is the real field: the form submits it, validates it
+ * and reads its value everywhere. A button shows the chosen time in its place;
+ * pressing it opens two wheels, hours and minutes (in BOOKING_TIME_STEP_MINUTES
+ * steps), that snap to the centre as they are scrolled and turn round without
+ * end: past 23 comes 00 again, past 55 comes 00.
+ *
+ * To turn round, each wheel repeats its values in many copies and starts on the
+ * middle copy. Whenever it comes to rest it is put back on the middle copy,
+ * which looks the same (the rows are identical), so there is always room to
+ * keep going either way.
+ * ------------------------------------------------------------------------- */
+const TIME_WHEEL_ITEM_HEIGHT = 40;
+const TIME_WHEEL_VISIBLE_ITEMS = 5;
+/** Hour the wheel starts on when no time has been chosen yet. */
+const TIME_WHEEL_DEFAULT_HOUR = 8;
+/** At least this many rows per wheel, in whole copies of its values, so a hard flick cannot reach either end. */
+const TIME_WHEEL_MIN_ROWS = 192;
+/** The furthest (px) a wheel dragged with the mouse glides on after it is let go: 12 rows. */
+const TIME_WHEEL_MAX_GLIDE = TIME_WHEEL_ITEM_HEIGHT * 12;
+
+/** Odd number of copies of a wheel's values (so there is a middle one), enough for TIME_WHEEL_MIN_ROWS. */
+function timeWheelCopies(count) {
+    const copies = Math.max(3, Math.ceil(TIME_WHEEL_MIN_ROWS / count));
+    return copies % 2 === 0 ? copies + 1 : copies;
+}
+
+/** The row of the middle copy that shows a value. */
+function timeWheelCentreRow(valueIndex, count) {
+    return Math.floor(timeWheelCopies(count) / 2) * count + valueIndex;
+}
+
+/** Index of the row a wheel is centred on, for a scroll position. */
+function timeWheelIndex(scrollTop, rows, itemHeight = TIME_WHEEL_ITEM_HEIGHT) {
+    const index = Math.round((Number(scrollTop) || 0) / itemHeight);
+    return Math.min(Math.max(index, 0), Math.max(rows - 1, 0));
+}
+
+/** The wheel positions for a stored time. A time off the step (08:07) opens on the step below it. */
+function timeWheelStart(value) {
+    const match = /^(\d{2}):(\d{2})/.exec(String(value || ''));
+    if (!match) return {hour: TIME_WHEEL_DEFAULT_HOUR, minuteIndex: 0};
+    return {
+        hour: Math.min(Number(match[1]), 23),
+        minuteIndex: Math.min(Math.floor(Number(match[2]) / BOOKING_TIME_STEP_MINUTES), BOOKING_TIME_MINUTES.length - 1)
+    };
+}
+
+/** The wheel that is open, if any: only one at a time. */
+let openTimeWheel = null;
+
+function closeTimeWheel(commit) {
+    const wheel = openTimeWheel;
+    if (!wheel) return;
+    openTimeWheel = null;
+    if (commit) wheel.commit();
+    wheel.dispose();
+    wheel.trigger.setAttribute('aria-expanded', 'false');
+    if (wheel.restoreFocus) wheel.trigger.focus();
+}
+
+function initBookingTimeWheel(field) {
+    if (!field || !['INPUT', 'SELECT'].includes(field.tagName) || field.dataset.timeWheelBound === 'true') return;
+    field.dataset.timeWheelBound = 'true';
+
+    const host = field.closest('.form-control') || field.parentElement;
+    if (!host) return;
+    host.classList.add('booking-time-wheel-host');
+    // The button is the control people use; the field only holds the value.
+    field.tabIndex = -1;
+    field.setAttribute('aria-hidden', 'true');
+    if (field.tagName === 'INPUT') field.readOnly = true;
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'booking-time-trigger';
+    trigger.setAttribute('aria-haspopup', 'dialog');
+    trigger.setAttribute('aria-expanded', 'false');
+    const fieldLabel = field.id ? document.querySelector(`label[for="${field.id}"]`) : null;
+    if (fieldLabel) {
+        if (!fieldLabel.id) fieldLabel.id = `${field.id}_label`;
+        trigger.setAttribute('aria-labelledby', fieldLabel.id);
+    }
+    host.appendChild(trigger);
+
+    const refresh = () => {
+        const value = field.value;
+        trigger.textContent = value || Now.translate('Select time');
+        trigger.classList.toggle('is-empty', !value);
+        // A stored time that is not on the step (08:07, from before the rule) shows as it is, flagged.
+        trigger.classList.toggle('is-off-grid', Boolean(value) && !BOOKING_TIME_PATTERN.test(value));
+    };
+    field._timeWheelRefresh = refresh;
+
+    // Data binding sets field.value from code, with no event: follow it.
+    const nativeValue = Object.getOwnPropertyDescriptor(field.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype, 'value');
+    Object.defineProperty(field, 'value', {
+        configurable: true,
+        get() { return nativeValue.get.call(this); },
+        set(next) { nativeValue.set.call(this, next); refresh(); }
+    });
+    field.addEventListener('change', refresh);
+    // The field's label points at the field; send that focus to the button.
+    field.addEventListener('focus', () => trigger.focus());
+    refresh();
+
+    trigger.addEventListener('click', () => {
+        if (openTimeWheel && openTimeWheel.trigger === trigger) {
+            closeTimeWheel(true);
+            return;
+        }
+        closeTimeWheel(true);
+        openBookingTimeWheel(field, trigger);
+    });
+}
+
+function openBookingTimeWheel(field, trigger) {
+    const start = timeWheelStart(field.value);
+    const hours = BOOKING_TIME_HOURS;
+    const minutes = BOOKING_TIME_MINUTES;
+    // What is chosen, as an index into the values (not a row: rows repeat).
+    const pending = {hourIndex: start.hour, minuteIndex: start.minuteIndex};
+    // Only what the user actually moved is committed. Opening and closing the
+    // wheels must not rewrite a stored time that has no wheel position (08:07).
+    let ready = false;
+    let dirty = false;
+
+    const layer = document.createElement('div');
+    layer.className = 'booking-time-wheel-layer';
+    const backdrop = document.createElement('div');
+    backdrop.className = 'booking-time-wheel-backdrop';
+
+    const panel = document.createElement('div');
+    panel.className = 'booking-time-wheel';
+    panel.setAttribute('role', 'dialog');
+    if (trigger.getAttribute('aria-labelledby')) {
+        panel.setAttribute('aria-labelledby', trigger.getAttribute('aria-labelledby'));
+    } else {
+        panel.setAttribute('aria-label', Now.translate('Select time'));
+    }
+
+    const body = document.createElement('div');
+    body.className = 'booking-time-wheel-body';
+    body.style.height = `${TIME_WHEEL_ITEM_HEIGHT * TIME_WHEEL_VISIBLE_ITEMS}px`;
+    const band = document.createElement('div');
+    band.className = 'booking-time-wheel-band';
+    band.setAttribute('aria-hidden', 'true');
+
+    const wheels = [];
+    const makeWheel = (key, labels, label) => {
+        const count = labels.length;
+        const copies = timeWheelCopies(count);
+        const rows = copies * count;
+        const column = document.createElement('div');
+        column.className = 'booking-time-wheel-col';
+        column.dataset.wheel = key;
+        column.tabIndex = 0;
+        column.setAttribute('role', 'listbox');
+        column.setAttribute('aria-label', Now.translate(label));
+        const padHeight = TIME_WHEEL_ITEM_HEIGHT * Math.floor(TIME_WHEEL_VISIBLE_ITEMS / 2);
+        const padTop = document.createElement('div');
+        padTop.className = 'booking-time-wheel-pad';
+        padTop.style.height = `${padHeight}px`;
+        column.appendChild(padTop);
+        const items = [];
+        for (let row = 0; row < rows; row++) {
+            const item = document.createElement('div');
+            item.className = 'booking-time-wheel-item';
+            item.setAttribute('role', 'option');
+            item.dataset.row = String(row);
+            item.dataset.value = String(row % count);
+            item.textContent = labels[row % count];
+            item.style.height = `${TIME_WHEEL_ITEM_HEIGHT}px`;
+            item.style.lineHeight = `${TIME_WHEEL_ITEM_HEIGHT}px`;
+            column.appendChild(item);
+            items.push(item);
+        }
+        column.appendChild(padTop.cloneNode(false));
+
+        const indexKey = key === 'hour' ? 'hourIndex' : 'minuteIndex';
+        const wheel = {key, column, items, count, rows, row: 0, timer: null};
+        const mark = row => {
+            wheel.row = row;
+            items.forEach((item, i) => {
+                const distance = Math.min(Math.abs(i - row), 3);
+                item.dataset.distance = String(distance);
+                item.classList.toggle('is-selected', i === row);
+                item.setAttribute('aria-selected', i === row ? 'true' : 'false');
+            });
+        };
+        const scrollToRow = (row, smooth) => {
+            const top = row * TIME_WHEEL_ITEM_HEIGHT;
+            if (typeof column.scrollTo === 'function') {
+                column.scrollTo({top, behavior: smooth ? 'smooth' : 'auto'});
+            } else {
+                column.scrollTop = top;
+            }
+        };
+        // Put the wheel on the middle copy, showing the same value: nothing moves
+        // on screen, but there is room to keep turning in either direction.
+        const recentre = row => {
+            const centre = timeWheelCentreRow(row % count, count);
+            if (row === centre) return row;
+            scrollToRow(centre, false);
+            mark(centre);
+            return centre;
+        };
+        // byUser: a tap or key press counts as choosing even when it lands on the row
+        // already showing (an empty field opens on 08:00, and a tap on 08 means 08).
+        wheel.set = (row, smooth, byUser = false) => {
+            const next = Math.min(Math.max(row, 0), rows - 1);
+            const value = next % count;
+            if (ready && (byUser || value !== pending[indexKey])) dirty = true;
+            pending[indexKey] = value;
+            mark(next);
+            scrollToRow(next, smooth);
+        };
+        // Start on the middle copy, showing the stored value.
+        wheel.show = value => {
+            const row = timeWheelCentreRow(value, count);
+            pending[indexKey] = value;
+            mark(row);
+            scrollToRow(row, false);
+        };
+        // A wheel settles after the finger or mouse wheel stops: read where it came to rest.
+        column.addEventListener('scroll', () => {
+            // The highlight follows the wheel while it turns (it is not a choice yet).
+            const passing = timeWheelIndex(column.scrollTop, rows);
+            if (passing !== wheel.row) mark(passing);
+            clearTimeout(wheel.timer);
+            wheel.timer = setTimeout(() => {
+                const settled = timeWheelIndex(column.scrollTop, rows);
+                const value = settled % count;
+                if (ready && value !== pending[indexKey]) dirty = true;
+                pending[indexKey] = value;
+                mark(settled);
+                recentre(settled);
+            }, 80);
+        });
+
+        // Mouse: press and drag the wheel like a finger, and let go to send it on a
+        // little further, then it settles on a row. (A finger or trackpad already
+        // scrolls the column natively; only the mouse needs this.) Capture starts
+        // only once the pointer has really moved, so a plain click still reaches the row.
+        let drag = null;
+        let justDragged = false;
+        column.addEventListener('pointerdown', event => {
+            if (event.pointerType !== 'mouse' || event.button !== 0) return;
+            drag = {id: event.pointerId, startY: event.clientY, startTop: column.scrollTop, lastY: event.clientY, lastT: event.timeStamp, velocity: 0, moved: false};
+        });
+        column.addEventListener('pointermove', event => {
+            if (!drag || event.pointerId !== drag.id) return;
+            const dy = event.clientY - drag.startY;
+            if (!drag.moved) {
+                if (Math.abs(dy) < 4) return;
+                drag.moved = true;
+                column.classList.add('is-dragging');
+                column.setPointerCapture?.(drag.id);
+            }
+            column.scrollTop = drag.startTop - dy;
+            const dt = event.timeStamp - drag.lastT;
+            if (dt > 0) drag.velocity = (drag.lastY - event.clientY) / dt;
+            drag.lastY = event.clientY;
+            drag.lastT = event.timeStamp;
+        });
+        const endDrag = event => {
+            if (!drag || event.pointerId !== drag.id) return;
+            const finished = drag;
+            drag = null;
+            if (!finished.moved) return;
+            column.classList.remove('is-dragging');
+            column.releasePointerCapture?.(finished.id);
+            // The click that follows the release must not also pick the row under the pointer.
+            justDragged = true;
+            setTimeout(() => { justDragged = false; }, 0);
+            // Held still before letting go: no glide. Otherwise carry on a little with the
+            // release speed, but never far: a mouse reports positions so often that one
+            // quick sample can look very fast.
+            const held = event.timeStamp - finished.lastT > 80;
+            const glide = held ? 0 : Math.max(-TIME_WHEEL_MAX_GLIDE, Math.min(TIME_WHEEL_MAX_GLIDE, finished.velocity * 180));
+            wheel.set(timeWheelIndex(column.scrollTop + glide, rows), true, true);
+        };
+        column.addEventListener('pointerup', endDrag);
+        column.addEventListener('pointercancel', endDrag);
+        column.addEventListener('click', event => {
+            if (justDragged) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        }, true);
+        items.forEach(item => item.addEventListener('click', () => wheel.set(Number(item.dataset.row), true, true)));
+        column.addEventListener('keydown', event => {
+            const step = {ArrowUp: -1, ArrowDown: 1, PageUp: -3, PageDown: 3}[event.key];
+            if (step !== undefined) {
+                event.preventDefault();
+                wheel.set(wheel.row + step, true, true);
+            } else if (event.key === 'Home' || event.key === 'End') {
+                // The first or last value of the turn the wheel is on.
+                event.preventDefault();
+                const turnStart = wheel.row - (wheel.row % count);
+                wheel.set(event.key === 'Home' ? turnStart : turnStart + count - 1, true, true);
+            }
+        });
+        wheels.push(wheel);
+        return column;
+    };
+
+    const separator = document.createElement('div');
+    separator.className = 'booking-time-wheel-sep';
+    separator.setAttribute('aria-hidden', 'true');
+    separator.textContent = ':';
+    body.append(band, makeWheel('hour', hours, 'Hour'), separator, makeWheel('minute', minutes, 'Minute'));
+
+    const actions = document.createElement('div');
+    actions.className = 'booking-time-wheel-actions';
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'booking-time-wheel-cancel';
+    cancel.textContent = Now.translate('Cancel');
+    const done = document.createElement('button');
+    done.type = 'button';
+    done.className = 'booking-time-wheel-done';
+    done.textContent = Now.translate('Done');
+    actions.append(cancel, done);
+
+    panel.append(body, actions);
+    layer.append(backdrop, panel);
+    document.body.appendChild(layer);
+
+    const wheel = {
+        trigger,
+        restoreFocus: true,
+        commit() {
+            if (!dirty) return;
+            const value = `${hours[pending.hourIndex]}:${minutes[pending.minuteIndex]}`;
+            if (value === field.value) return;
+            field.value = value;
+            field.dispatchEvent(new Event('input', {bubbles: true}));
+            field.dispatchEvent(new Event('change', {bubbles: true}));
+        },
+        dispose() {
+            document.removeEventListener('keydown', onKey, true);
+            window.removeEventListener('resize', onViewportChange);
+            window.removeEventListener('scroll', onViewportChange, true);
+            wheels.forEach(item => clearTimeout(item.timer));
+            layer.remove();
+        }
+    };
+    const onKey = event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeTimeWheel(false);
+        } else if (event.key === 'Enter' && !event.target.closest?.('.booking-time-wheel-cancel')) {
+            event.preventDefault();
+            closeTimeWheel(true);
+        } else if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && panel.contains(event.target)) {
+            event.preventDefault();
+            wheels[event.key === 'ArrowLeft' ? 0 : 1].column.focus();
+        }
+    };
+    // The window resizing (a phone's address bar or keyboard coming and going) or
+    // the page scrolling would leave the panel in the wrong place: put it back
+    // under the field. Never close it for that: it would vanish mid-scroll.
+    // Scrolling inside the wheels themselves does not count.
+    const onViewportChange = event => {
+        if (event && event.type === 'scroll' && panel.contains(event.target)) return;
+        placePanel();
+    };
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('resize', onViewportChange);
+    window.addEventListener('scroll', onViewportChange, true);
+    backdrop.addEventListener('click', () => closeTimeWheel(true));
+    cancel.addEventListener('click', () => closeTimeWheel(false));
+    done.addEventListener('click', () => closeTimeWheel(true));
+
+    // Anchor under the field on a wide screen (above it when there is no room
+    // below); the stylesheet turns it into a bottom sheet on a phone.
+    function placePanel() {
+        const box = trigger.getBoundingClientRect();
+        const width = Math.max(box.width, 240);
+        const left = Math.min(Math.max(box.left, 12), Math.max(window.innerWidth - width - 12, 12));
+        panel.style.width = `${width}px`;
+        panel.style.left = `${left}px`;
+        const below = box.bottom + 8;
+        const panelHeight = TIME_WHEEL_ITEM_HEIGHT * TIME_WHEEL_VISIBLE_ITEMS + 76;
+        panel.style.top = `${below + panelHeight > window.innerHeight ? Math.max(box.top - panelHeight - 8, 8) : below}px`;
+    }
+    placePanel();
+
+    openTimeWheel = wheel;
+    trigger.setAttribute('aria-expanded', 'true');
+    wheels[0].show(pending.hourIndex);
+    wheels[1].show(pending.minuteIndex);
+    ready = true;
+    wheels[0].column.focus({preventScroll: true});
+}
 const refreshBookingTime24Inputs = () => {
     requestAnimationFrame(() => initBookingTime24Inputs());
 };
@@ -1937,6 +2364,9 @@ function initBookingForm(element, data) {
     // decision card / "already processed" notice can be trusted again.
     element.classList.remove('booking-form-pending');
 
+    // Start and end time are wheels; make sure they exist now that the data is in.
+    syncBookingTimeFields(element);
+
     const isRoomly = element.classList.contains('roomly-booking-form')
         || Boolean(element.querySelector('.roomly-reservation-surface'))
         || Boolean(element.closest('.roomly-booking-page'));
@@ -2591,7 +3021,7 @@ function initBookingForm(element, data) {
             return isNaN(n) || n <= 0;
         }
         if (input.id === 'begin_time' || input.id === 'end_time') {
-            return !/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(val);
+            return !BOOKING_TIME_PATTERN.test(val);
         }
         return false;
     }

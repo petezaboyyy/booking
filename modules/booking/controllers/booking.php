@@ -208,6 +208,17 @@ class Controller extends ApiController
         if ($save['end_time'] === '') {
             $errors['end_time'] = 'Please fill in';
         }
+        // Times are chosen in fixed steps (the form's wheels offer only those);
+        // refuse anything else so a request sent around the form cannot overlap by
+        // odd minutes.
+        foreach (['begin_time', 'end_time'] as $field) {
+            if (!isset($errors[$field]) && !Helper::isBookingTimeOnStep($save[$field])) {
+                $errors[$field] = Language::replace(
+                    'Time must be in steps of :minutes minutes',
+                    [':minutes' => Helper::BOOKING_TIME_STEP_MINUTES]
+                );
+            }
+        }
 
         if (empty($errors)) {
             if ($save['end_date'] >= $save['begin_date']) {

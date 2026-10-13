@@ -173,6 +173,194 @@
   resize: vertical;
 }
 
+/* ==========================================================================
+   Booking time wheel: iPhone-style hour and minute wheels for the start and end
+   time, turning round without end. The text field stays in the page as the real
+   field (hidden); a button shows the chosen time and opens the wheels.
+   ========================================================================== */
+.booking-time-wheel-host {
+  position: relative;
+}
+.booking-time-wheel-host > input[data-time-wheel],
+.booking-time-wheel-host > select {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  clip: rect(0, 0, 0, 0) !important;
+}
+.booking-time-trigger {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--roomly-text, inherit);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.booking-time-trigger.is-empty {
+  color: var(--roomly-muted, #64748b);
+  font-weight: 400;
+}
+.booking-time-trigger.is-off-grid {
+  color: #b91c1c;
+}
+.booking-time-trigger:focus-visible {
+  outline: 2px solid var(--roomly-primary, #2563eb);
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.booking-time-wheel-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+}
+.booking-time-wheel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+.booking-time-wheel {
+  position: fixed;
+  box-sizing: border-box;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--roomly-outline, #d0d7de);
+  border-radius: 16px;
+  background: var(--roomly-surface, #fff);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+  color: var(--roomly-text, #0f172a);
+}
+.booking-time-wheel-body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* The highlight the selected row sits in. */
+.booking-time-wheel-band {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--roomly-primary, #2563eb) 14%, transparent);
+  pointer-events: none;
+}
+.booking-time-wheel-col {
+  position: relative;
+  flex: 1 1 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  outline: none;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+  /* Rows fade towards the top and bottom edges, like a drum. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28%, #000 72%, transparent 100%);
+}
+.booking-time-wheel-col::-webkit-scrollbar {
+  display: none;
+}
+/* Dragged with the mouse: follow the pointer freely (no snapping) until it is let go. */
+.booking-time-wheel-col.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+}
+.booking-time-wheel-col:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--roomly-primary, #2563eb) 45%, transparent);
+  border-radius: 10px;
+}
+.booking-time-wheel-item {
+  scroll-snap-align: center;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--roomly-muted, #64748b);
+  cursor: inherit;
+  user-select: none;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.booking-time-wheel-item[data-distance='1'] {
+  opacity: 0.75;
+}
+.booking-time-wheel-item[data-distance='2'] {
+  opacity: 0.45;
+}
+.booking-time-wheel-item[data-distance='3'] {
+  opacity: 0.25;
+}
+.booking-time-wheel-item.is-selected {
+  color: var(--roomly-text, #0f172a);
+  opacity: 1;
+}
+.booking-time-wheel-sep {
+  width: 14px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--roomly-text, #0f172a);
+}
+.booking-time-wheel-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+.booking-time-wheel-cancel,
+.booking-time-wheel-done {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.booking-time-wheel-cancel {
+  background: transparent;
+  color: var(--roomly-muted, #64748b);
+}
+.booking-time-wheel-done {
+  background: var(--roomly-primary, #2563eb);
+  color: #fff;
+}
+@media (max-width: 640px) {
+  /* A bottom sheet on a phone, with the page dimmed behind it. */
+  .booking-time-wheel-backdrop {
+    background: rgba(15, 23, 42, 0.4);
+  }
+  .booking-time-wheel {
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0;
+    width: auto !important;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 20px 20px 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .booking-time-wheel-item {
+    transition: none;
+  }
+}
+
 /* Review page: other pending requests for the same room at overlapping times. */
 .booking-competition-list {
   display: grid;

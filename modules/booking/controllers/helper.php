@@ -46,6 +46,18 @@ class Controller extends \Gcms\Controller
     public const MAX_BOOKING_OCCURRENCES = 366;
 
     /**
+     * Booking times (start and end) are chosen in steps of this many minutes.
+     *
+     * Free minutes let requests overlap by odd amounts (08:00-09:52 against
+     * 09:47-11:00), which leaves ragged gaps in the timetable. The booking form's
+     * time wheels offer only these steps, and the server refuses anything else so
+     * a request sent around the form cannot break the rule. 60 must be divisible
+     * by it. The wheels read the same value from BOOKING_TIME_STEP_MINUTES in
+     * ui-handoff/modules/booking/admin.js; booking_time_step_test checks they agree.
+     */
+    public const BOOKING_TIME_STEP_MINUTES = 5;
+
+    /**
      * Longest cancellation note that fits reservation_occurrence.cancellation_reason.
      */
     public const MAX_CANCELLATION_REASON_LENGTH = 255;
@@ -1300,6 +1312,28 @@ class Controller extends \Gcms\Controller
         }
 
         return $occurrences;
+    }
+
+    /**
+     * Does this time fall on a booking time step (BOOKING_TIME_STEP_MINUTES)?
+     *
+     * Accepts H:i or H:i:s; seconds must be zero.
+     *
+     * @param string|null $time e.g. "08:30", "8:30", "08:30:00"
+     *
+     * @return bool
+     */
+    public static function isBookingTimeOnStep(?string $time): bool
+    {
+        if (!preg_match('/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/', trim((string) $time), $match)) {
+            return false;
+        }
+        $hours = (int) $match[1];
+        $minutes = (int) $match[2];
+        $seconds = isset($match[3]) ? (int) $match[3] : 0;
+
+        return $hours < 24 && $minutes < 60 && $seconds === 0
+            && $minutes % self::BOOKING_TIME_STEP_MINUTES === 0;
     }
 
     /**
