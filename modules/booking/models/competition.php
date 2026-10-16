@@ -35,7 +35,7 @@ class Model extends \Kotchasan\Model
      */
     const POINTS_OVER_CAPACITY = -35;
     /** Points for a request that carries a course code (a teaching booking). */
-    const POINTS_COURSE_CODE = 20;
+    const POINTS_COURSE_CODE = 10;
     /** Points for a "use for" category the site has marked as a priority. */
     const POINTS_PRIORITY_USE = 20;
     /**
@@ -43,7 +43,7 @@ class Model extends \Kotchasan\Model
      * staff, member status 2). The heaviest single rule: more than any two of
      * the other rules together (at most 30 + 25 = 55), so a staff request comes
      * first unless another request is ahead on all of first-come, room fit and
-     * course code (75), or the room cannot seat the staff request's attendees.
+     * course code (65), or the room cannot seat the staff request's attendees.
      */
     const POINTS_PRIORITY_ROLE = 60;
     /** Member status of staff in the default configuration (member_status in Gcms\Config). */
@@ -418,8 +418,15 @@ class Model extends \Kotchasan\Model
         }
         unset($item);
 
-        usort($items, static function ($a, $b) use ($position) {
-            return [$b['score'], $position[$a['id']]] <=> [$a['score'], $position[$b['id']]];
+        // Equal scores are settled by head count (more people first, a request the
+        // room cannot seat counting as none), then by who asked first.
+        $headCount = static function (array $item) use ($seats): int {
+            $people = (int) $item['attendees'];
+
+            return $seats > 0 && $people > $seats ? 0 : $people;
+        };
+        usort($items, static function ($a, $b) use ($position, $headCount) {
+            return [$b['score'], $headCount($b), $position[$a['id']]] <=> [$a['score'], $headCount($a), $position[$b['id']]];
         });
         foreach ($items as $index => &$item) {
             $item['rank'] = $index + 1;

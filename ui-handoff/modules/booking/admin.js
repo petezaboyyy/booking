@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261013-time-wheel-5';
+const ROOMLY_ROLE_UI_VERSION = '20261016-review-locale-1';
 
 /**
  * Has this visitor signed in at all?
@@ -4279,8 +4279,10 @@ function renderReviewClashing(element, data) {
     section.hidden = false;
     const count = element.querySelector('#booking_review_clashing_count');
     if (count) count.textContent = String(items.length);
-    if (reason.value.trim() === '') {
+    // The suggested reason follows the language until the approver edits it.
+    if (reason.value.trim() === '' || reason.value === reason.dataset.suggested) {
         reason.value = Now.translate('The room was approved for another request at the same time');
+        reason.dataset.suggested = reason.value;
     }
 
     items.forEach(item => {
@@ -4343,7 +4345,57 @@ function renderReviewClashing(element, data) {
     };
 }
 
+/**
+ * The review page, and its server-written text (score reasons, dates, topic
+ * names) follows a language change: those strings arrive already translated, so
+ * the data is fetched again in the new language and the page redrawn from it.
+ */
 function initBookingReview(element, data) {
+    renderBookingReview(element, data);
+
+    let current = null;
+    let timer = null;
+    const reload = () => {
+        clearTimeout(timer);
+        // locale:changed and i18n:updated arrive together; one fetch is enough.
+        timer = setTimeout(async () => {
+            if (!data?.id || !element.isConnected) return;
+            current?.abort();
+            current = new AbortController();
+            try {
+                const locale = (document.documentElement.getAttribute('lang') || window.I18nManager?.getCurrentLocale?.() || 'th').toLowerCase();
+                const headers = {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'};
+                const token = window.AuthManager?.getToken?.() || '';
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                const response = await fetch(`${window.WEB_URL || '/'}api/booking/review/get?id=${encodeURIComponent(data.id)}&lang=${encodeURIComponent(locale)}`, {
+                    method: 'GET',
+                    headers,
+                    credentials: 'same-origin',
+                    signal: current.signal
+                });
+                if (!response.ok) return;
+                const body = await response.json();
+                const fresh = body?.data;
+                if (body?.success && fresh && element.isConnected) {
+                    renderBookingReview(element, {...data, ...fresh});
+                }
+            } catch (err) {
+                if (err?.name !== 'AbortError') console.error('[booking-review] reload on language change failed:', err);
+            }
+        }, 150);
+    };
+    window.EventManager?.on?.('locale:changed', reload);
+    window.EventManager?.on?.('i18n:updated', reload);
+
+    return () => {
+        clearTimeout(timer);
+        current?.abort();
+        window.EventManager?.off?.('locale:changed', reload);
+        window.EventManager?.off?.('i18n:updated', reload);
+    };
+}
+
+function renderBookingReview(element, data) {
     renderReviewCompetition(element, data);
     renderReviewBlocked(element, data);
     renderReviewClashing(element, data);

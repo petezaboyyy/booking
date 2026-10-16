@@ -114,7 +114,7 @@ try {
     $order = array_column($ranked, 'id');
     $score = array_column($ranked, 'score', 'id');
     $check($order === [$a, $b, $c], 'ranking: course code + good room fit outweigh being earlier (A, then B, then C)');
-    $check($score[$a] === 60 && $score[$b] === 30 && $score[$c] === 25, 'scores add up as documented (A 15+25+20, B 30+0, C 0+25)');
+    $check($score[$a] === 50 && $score[$b] === 30 && $score[$c] === 25, 'scores add up as documented (A 15+25+10, B 30+0, C 0+25)');
     $check(array_column($ranked, 'rank') === [1, 2, 3], 'each request gets its rank');
     $check(count($ranked[0]['reasons']) >= 3 && count($ranked[1]['reasons']) >= 2, 'every score comes with the reasons behind it');
 
@@ -152,6 +152,18 @@ try {
     ], 0);
     $check(array_column($tie, 'id') === [4, 5], 'with nothing else to separate them, the earlier submission goes first');
     $check(Model::rank([], 10) === [], 'nothing to rank is not an error');
+    $check(Model::POINTS_COURSE_CODE === 10, 'a course code is worth 10 points');
+
+    // Equal scores are settled by head count, then by who asked first.
+    $person = static function (int $id, string $at, int $count) {
+        return ['id' => $id, 'created_at' => $at, 'attendees' => $count, 'course_code' => '', 'use_id' => '', 'overlap_dates' => 1, 'topic' => '', 'comment' => '', 'reservation_text' => '', 'member_name' => '', 'is_current' => false];
+    };
+    // 50 seats. X: first (30) + fair fit 15/50 (10) = 40. Y: second (15) + good fit 30/50 (25) = 40. Z: last (0), 1 person.
+    $level = Model::rank([$person(1, '2037-01-01 08:00:00', 15), $person(2, '2037-01-01 09:00:00', 30), $person(3, '2037-01-01 10:00:00', 1)], 50);
+    $check(array_column($level, 'score', 'id')[1] === 40 && array_column($level, 'score', 'id')[2] === 40, 'setup: two requests end on the same score');
+    $check(array_column($level, 'id') === [2, 1, 3], 'on equal scores the request with more people goes first, though it asked later');
+    $levelOrder = Model::rank([$person(1, '2037-01-01 08:00:00', 15), $person(2, '2037-01-01 09:00:00', 15)], 50);
+    $check(array_column($levelOrder, 'id') === [1, 2], 'and with the same head count too, the earlier submission goes first');
 
     // 3. Requests made by staff come first
     $mk = static function (int $id, string $at, int $people, string $code, int $status): array {
@@ -164,9 +176,9 @@ try {
     // member: first + good fit (30 + 25 = 55); staff: last, 2 of 50 seats, no code (just the role: 60)
     $bareStaff = Model::rank([$mk(1, '2037-01-01 08:00:00', 40, '', 0), $mk(2, '2037-01-01 09:00:00', 2, '', 2)], 50);
     $check($ids($bareStaff) === [2, 1] && $bareStaff[0]['score'] === 60, 'a staff request outranks a member who is first and fills the room (60 against 55)');
-    // member: first + good fit + course code (75)
+    // member: first + good fit + course code (65)
     $fullMember = Model::rank([$mk(1, '2037-01-01 08:00:00', 40, '204321', 0), $mk(2, '2037-01-01 09:00:00', 2, '', 2)], 50);
-    $check($ids($fullMember) === [1, 2], 'a member ahead on every other rule (75) still outranks a bare staff request (60)');
+    $check($ids($fullMember) === [1, 2], 'a member ahead on every other rule (65) still outranks a bare staff request (60)');
     // the room cannot seat the staff request: 60 - 35 = 25 against a plain member who is first (30)
     $tooMany = Model::rank([$mk(1, '2037-01-01 08:00:00', 5, '', 0), $mk(2, '2037-01-01 09:00:00', 80, '', 2)], 50);
     $check($ids($tooMany) === [1, 2], 'a staff request the room cannot seat does not jump the queue');
