@@ -1214,7 +1214,7 @@ html[data-theme='dark'] .roomly-theme-sun {
 
 .roomly-bookings-table th:not(:first-child),
 .roomly-bookings-table td:not(:first-child) {
-  border-left: 0 !important;
+  border-left: 1px solid var(--roomly-outline) !important;
 }
 
 .roomly-bookings-table tbody tr {

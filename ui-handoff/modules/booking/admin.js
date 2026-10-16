@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261016-review-locale-1';
+const ROOMLY_ROLE_UI_VERSION = '20261016-approver-col-1';
 
 /**
  * Has this visitor signed in at all?

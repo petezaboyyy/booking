@@ -65,7 +65,7 @@
                         <input type="search" name="search" class="booking-approvals-search" placeholder="{LNG_Search room, room number, course code or usage type...}">
                     </form>
                     <div class="tablebody">
-                        <table class="table border fullwidth" data-table="bookingApprovals" data-source="api/booking/approvals" data-default-sort="create_date desc"
+                        <table class="table border fullwidth" data-table="bookingApprovals" data-source="api/booking/approvals" data-default-sort="status asc,created_at desc"
                                data-page-size="25" data-search-columns="room_name,room_number,topic,course_code,comment,reason" data-action-url="api/booking/approvals/action" data-row-actions='{
                                 "review": {
                                   "label": "Review",

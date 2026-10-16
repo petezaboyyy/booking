@@ -227,6 +227,49 @@ class Model extends \Kotchasan\Model
     }
 
     /**
+     * Name of the staff member behind each decision on a reservation (approved,
+     * rejected, returned for edit), keyed by reservation id and then by the status
+     * that decision set. The latest decision per status wins. The list of bookings
+     * picks the entry for the booking's current status, so a request that was
+     * returned and has been sent in again (pending) shows nobody.
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, array<int, string>>
+     */
+    public static function getDeciderNames(array $reservationIds): array
+    {
+        $reservationIds = array_values(array_unique(array_filter(array_map('intval', $reservationIds))));
+        if (empty($reservationIds)) {
+            return [];
+        }
+        $rows = static::createQuery()
+            ->select('L.src_id', 'L.datas', 'U.name')
+            ->from('logs L')
+            ->join('user U', ['U.id', 'L.member_id'], 'LEFT')
+            ->where([
+                ['L.module', 'booking'],
+                ['L.action', 'Status'],
+                ['L.src_id', $reservationIds]
+            ])
+            ->orderBy('L.id')
+            ->fetchAll();
+
+        $decisions = [Helper::STATUS_APPROVED, Helper::STATUS_REJECTED, Helper::STATUS_RETURNED_FOR_EDIT];
+        $names = [];
+        foreach ($rows as $row) {
+            $data = json_decode((string) $row->datas, true);
+            $name = trim((string) ($row->name ?? ''));
+            $status = is_array($data) ? (int) ($data['status'] ?? -1) : -1;
+            if ($name !== '' && in_array($status, $decisions, true)) {
+                $names[(int) $row->src_id][$status] = $name;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Get normalized booking detail data.
      *
      * @param int $id

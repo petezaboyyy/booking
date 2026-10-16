@@ -125,6 +125,22 @@ $style = file_get_contents($root.'templates/booking/style.css');
 check(strpos($style, '.booking-approvals-search {') !== false, 'the box is wide enough for that text');
 
 // =========================================================================
+echo "\n[2d] Requests waiting for approval are on top by default\n";
+// =========================================================================
+// The default sort used to name a column that does not exist ("create_date"),
+// which the server skips, so the rows came back in no particular order.
+check(
+    preg_match('/data-default-sort="([^"]*)"/', $template, $sort) === 1 && $sort[1] === 'status asc,created_at desc',
+    'the table opens sorted by status, then newest first'
+);
+check(\Booking\Helper\Controller::STATUS_PENDING_REVIEW === 0, 'pending is the lowest status, so ascending puts it first');
+$approvals = (new \ReflectionClass(\Booking\Approvals\Controller::class))->newInstanceWithoutConstructor();
+$parse = new \ReflectionMethod($approvals, 'parseSort');
+$parse->setAccessible(true);
+$parsed = $parse->invoke($approvals, 'status asc,created_at desc');
+check($parsed['columns'] === ['status', 'created_at'] && $parsed['directions'] === ['asc', 'desc'], 'the server accepts both sort columns, in that order');
+
+// =========================================================================
 echo "\n[2c] The search box filters as you type, like the dashboard\n";
 // =========================================================================
 // An external filter form only listened for "change", which a text box fires
