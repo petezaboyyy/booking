@@ -94,7 +94,7 @@
   transform: scale(1.05);
 }
 .color-swatch.selected::after {
-  content: '✓';
+  content: '\2713';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -213,7 +213,7 @@
 }
 .color-swatch[data-color="transparent"]::before,
 .color-swatch[data-color=""]::before {
-  content: '∅';
+  content: '\2205';
   position: absolute;
   top: 50%;
   left: 50%;

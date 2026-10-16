@@ -1025,7 +1025,7 @@ td .figure[style*="url("]:not([style*="url(null)"]),
 }
 .btn-table-action[data-action="active"][data-value="0"]:before,
 .btn-table-action[data-action="active"][data-value="1"]:before {
-  content: "✓";
+  content: "\2713";
   color: var(--color-silver);
   font-size: 1.5rem;
 }

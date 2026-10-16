@@ -832,7 +832,7 @@
   content: "+";
 }
 .icon-omega:before {
-  content: "Ω";
+  content: "\03a9";
 }
 .icon-strikethrough:before {
   content: "S";
@@ -844,10 +844,10 @@
   font-weight: 700;
 }
 .icon-superscript:before {
-  content: "A²";
+  content: "A\00b2";
 }
 .icon-subscript:before {
-  content: "A₂";
+  content: "A\2082";
 }
 .icon-ltr:before {
   content: "LTR";
@@ -873,7 +873,7 @@
   font-family: Arial !important;
 }
 .icon-amp:before {
-  content: "⚡";
+  content: "\26a1";
 }
 .icon-zoom-reset:before,
 .icon-search:before {

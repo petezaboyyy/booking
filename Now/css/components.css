@@ -446,7 +446,7 @@ td.checkbox .form-control {
   -webkit-user-select: none;
 }
 .sortable:after {
-  content: '↕';
+  content: '\2195';
   margin-left: 5px;
   color: var(--table-sort-icon-color);
   position: absolute;
@@ -456,10 +456,10 @@ td.checkbox .form-control {
   outline: 2px dashed var(--color-border);
 }
 .sort_asc:after {
-  content: '↑';
+  content: '\2191';
 }
 .sort_desc:after {
-  content: '↓';
+  content: '\2193';
 }
 .table_nav {
   display: flex;
@@ -1048,7 +1048,7 @@ button,
   color: inherit;
 }
 .icon-picker label.icon-option.icon-none:before {
-  content: '✕';
+  content: '\2715';
   font-family: sans-serif;
   font-size: 1rem;
   color: var(--color-text-muted, #aaa);

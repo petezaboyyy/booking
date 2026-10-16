@@ -24,6 +24,12 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/api/
 RewriteRule ^(.*)$ index.html [L,QSA]
 
+# Say outright that scripts and styles are UTF-8. A host that guesses another
+# charset for text/css turns the sort arrows and tick marks into "â†•".
+<IfModule mod_mime.c>
+  AddCharset UTF-8 .css .js
+</IfModule>
+
 <IfModule mod_headers.c>
   # Revalidate SPA templates so removed controls are not left in the browser cache.
   <FilesMatch "\.html$">

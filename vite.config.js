@@ -70,7 +70,24 @@ if (!targetConfig) {
   throw new Error(`Unknown BUILD_TARGET: ${buildTarget}`);
 }
 
+// Built stylesheets stay pure ASCII. The minifier writes "\2195" back out as the
+// arrow itself, and a host that serves text/css with some other charset then
+// shows the sort arrows and tick marks as "â†•". Escapes cannot be misread.
+const asciiCss = () => ({
+  name: 'ascii-css',
+  enforce: 'post',
+  generateBundle(_, bundle) {
+    for (const file of Object.values(bundle)) {
+      if (file.type !== 'asset' || !file.fileName.endsWith('.css')) continue;
+      const source = typeof file.source === 'string' ? file.source : Buffer.from(file.source).toString('utf8');
+      // The space after the hex digits ends the escape and is not part of the text.
+      file.source = source.replace(/[^\x00-\x7f]/gu, ch => `\\${ch.codePointAt(0).toString(16)} `);
+    }
+  }
+});
+
 export default defineConfig({
+  plugins: [asciiCss()],
   build: {
     emptyOutDir: buildTarget === 'core', // Only empty for core build
     lib: {

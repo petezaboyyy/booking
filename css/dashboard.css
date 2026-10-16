@@ -1784,7 +1784,7 @@ html[data-theme='dark'] .roomly-theme-sun {
   border-radius: 9px;
   background: var(--roomly-surface-container);
   color: var(--roomly-primary);
-  content: '✓';
+  content: '\2713';
   font-size: 14px;
   vertical-align: middle;
 }
