@@ -1082,7 +1082,9 @@ const EventCalendar = {
           e.stopPropagation();
           selectValue(opt.value);
         };
-        item.addEventListener('pointerdown', handleSelect);
+        // click, not pointerdown: on touch, pointerdown fires as the finger lands,
+        // so scrolling the list would choose the row under it
+        item.addEventListener('click', handleSelect);
         panel.appendChild(item);
       });
     };
@@ -1155,7 +1157,10 @@ const EventCalendar = {
     });
 
     this.addTrackedListener(instance, window, 'resize', positionPanel);
-    this.addTrackedListener(instance, window, 'scroll', positionPanel, true);
+    this.addTrackedListener(instance, window, 'scroll', (e) => {
+      if (e && e.target instanceof Node && panel.contains(e.target)) return;
+      positionPanel();
+    }, true);
   },
 
   /**

@@ -2001,7 +2001,9 @@ function createRoomlyCombobox(selectEl, config = {}) {
                     e.stopPropagation();
                     selectOption(val, text);
                 };
-                item.addEventListener('pointerdown', handleSelect);
+                // Select on click, never on pointerdown: on a touch screen pointerdown
+                // fires the moment the finger lands, so a swipe to scroll the list
+                // would pick whichever room was under it. click only fires for a tap.
                 item.addEventListener('click', handleSelect);
 
                 dropdown.appendChild(item);
@@ -2280,7 +2282,10 @@ function createRoomlyCombobox(selectEl, config = {}) {
         };
         document.addEventListener('pointerdown', onDocClick);
 
-        const onViewportChange = () => {
+        const onViewportChange = (e) => {
+            // Scrolling the list itself must not re-place it (scroll events from
+            // inside the dropdown are caught here by the capture listener).
+            if (e && e.type === 'scroll' && e.target instanceof Node && dropdown.contains(e.target)) return;
             if (isOpen) {
                 updateDropdownPosition();
             }

@@ -3296,6 +3296,10 @@ div.modal {
   box-sizing: border-box !important;
   animation: roomlyDropdownPop .18s cubic-bezier(0.16, 1, 0.3, 1) !important;
   scrollbar-width: thin !important;
+  /* a finger drag scrolls the list, and does not scroll the page behind it */
+  touch-action: pan-y !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .roomly-combobox-dropdown.is-open {
