@@ -737,42 +737,11 @@ class ApiController extends \Kotchasan\KBase
             return null;
         }
 
-        // 1. Try opaque/refresh tokens stored on the user row
-        $user = \Index\Auth\Model::getUserByToken($accessToken);
-        if ($user) {
-            // Check token expiry if token_expires column exists
-            if (isset($user->token_expires) && !empty($user->token_expires)) {
-                $expiresAt = strtotime($user->token_expires);
-                if ($expiresAt !== false && time() > $expiresAt) {
-                    // Token has expired
-                    return null;
-                }
-            }
-            return $user;
-        }
-
-        // 2. Attempt to decode JWT access tokens when configured
-        if (!empty(self::$cfg->jwt_secret)) {
-            try {
-                // Jwt::decode() already checks exp claim and returns null if expired
-                $payload = \Kotchasan\Jwt::decode($accessToken, self::$cfg->jwt_secret);
-
-                if (!empty($payload) && isset($payload['sub'])) {
-                    $jwtUserId = (int) $payload['sub'];
-                    if ($jwtUserId > 0) {
-                        $jwtUser = \Index\Auth\Model::getUserById($jwtUserId);
-                        if ($jwtUser) {
-                            return $jwtUser;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // JWT decode failed (invalid signature, malformed, etc.)
-                // Treat as unauthorized
-            }
-        }
-
-        return null;
+        // The token must belong to a live session (Index\Auth\Model checks the
+        // signature, the session's idle and absolute limits, and that the account
+        // is active). A JWT is never accepted on its signature alone: that would
+        // keep a signed-out or timed-out token working until its exp.
+        return \Index\Auth\Model::getUserByToken($accessToken);
     }
 
     /**

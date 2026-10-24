@@ -30,7 +30,7 @@ class BootstrapMigrations
     {
         // The marker is versioned: adding a migration must not be skipped on a
         // container whose datas/ still carries an older run's marker.
-        $marker = $rootPath.$dataFolder.'migrations/schema-v6.done';
+        $marker = $rootPath.$dataFolder.'migrations/schema-v7.done';
         if (is_file($marker)) {
             return;
         }
@@ -60,6 +60,9 @@ class BootstrapMigrations
             // After the column sync: the room key column may have just been added.
             require_once $rootPath.'scripts/migrations/room_key.php';
             $summary .= "\n".booking_apply_room_key_migration($pdo, (string) $cfg['prefix']);
+
+            require_once $rootPath.'scripts/migrations/user_session.php';
+            $summary .= "\n".booking_apply_user_session_migration($pdo, (string) $cfg['prefix']);
 
             // What the schema still lacks afterwards. Without log access this
             // file is the only way to tell "nothing was missing" apart from

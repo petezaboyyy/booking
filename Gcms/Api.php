@@ -13,27 +13,6 @@ namespace Gcms;
 class Api extends \Kotchasan\ApiController
 {
     /**
-     * Authenticate request and prefer the auth model so user_meta is available.
-     *
-     * @param \Kotchasan\Http\Request $request
-     *
-     * @return object|null
-     */
-    protected function authenticateRequest(\Kotchasan\Http\Request $request)
-    {
-        $accessToken = $this->getAccessToken($request);
-
-        if (!empty($accessToken) && class_exists('\\Index\\Auth\\Model')) {
-            $user = \Index\Auth\Model::getUserByToken($accessToken);
-            if ($user !== null) {
-                return $user;
-            }
-        }
-
-        return parent::authenticateRequest($request);
-    }
-
-    /**
      * Permission helper: check that user has a specific permission key or admin.
      * User object comes from authenticateRequest() and may contain `permission` as string or array.
      *

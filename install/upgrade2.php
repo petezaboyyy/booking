@@ -480,6 +480,27 @@ if (defined('ROOT_PATH')) {
                 $content[] = '<li class="correct">login_attempt อัปเกรดสำเร็จ</li>';
 
                 // =========================================================
+                // user_session (one row per signed-in device)
+                // =========================================================
+                $table_user_session = $db_config['prefix'].'_user_session';
+                if (!$db->tableExists($table_user_session)) {
+                    $db->query("CREATE TABLE `$table_user_session` (
+                        `id` varchar(64) NOT NULL,
+                        `member_id` int(11) NOT NULL,
+                        `created_at` datetime NOT NULL,
+                        `last_seen` datetime NOT NULL,
+                        `expires_at` datetime NOT NULL,
+                        `ip` varchar(45) NOT NULL DEFAULT '',
+                        `user_agent` varchar(500) NOT NULL DEFAULT '',
+                        PRIMARY KEY (`id`),
+                        KEY `idx_member` (`member_id`),
+                        KEY `idx_expires` (`expires_at`),
+                        KEY `idx_last_seen` (`last_seen`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    $content[] = '<li class="correct">user_session: สร้างตาราง session แยกตามเครื่อง</li>';
+                }
+
+                // =========================================================
                 // language
                 // =========================================================
                 $table_language = $db_config['prefix'].'_language';

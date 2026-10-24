@@ -627,20 +627,10 @@ class Model extends \Kotchasan\Model
         if ((int) ($existingUser->active ?? 0) !== 1 || !empty($existingUser->activatecode)) {
             return ['success' => false, 'message' => 'Account is not active', 'code' => 401];
         }
-        $loginResult = \Index\Auth\Model::generateTokens($existingUser->id);
-        if (!$loginResult) {
-            return [
-                'success' => false,
-                'message' => 'Login failed',
-                'code' => 401
-            ];
-        }
-
-        \Index\Auth\Model::updateUserToken(
-            $existingUser->id,
-            $loginResult['access_token'],
-            $loginResult['expires_at']
-        );
+        // A session of its own for this device; the user's other devices stay signed in.
+        $loginResult = \Index\Auth\Model::startSession($existingUser->id, [
+            'ip' => (string) ($clientIp ?? ($_SERVER['REMOTE_ADDR'] ?? ''))
+        ]);
 
         \Index\Auth\Model::logLoginActivity(
             $existingUser->id,

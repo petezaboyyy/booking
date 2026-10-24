@@ -217,8 +217,7 @@ class Model extends \Kotchasan\Model
         // Generate token for auto-login if enabled
         $token = null;
         if ($options['auto_login'] && empty($save['activatecode'])) {
-            $tokens = \Index\Auth\Model::generateTokens($userId);
-            \Index\Auth\Model::updateUserToken($userId, $tokens['access_token'], $tokens['expires_at']);
+            $tokens = \Index\Auth\Model::startSession($userId);
             $token = $tokens['access_token'];
         }
 

@@ -253,6 +253,23 @@ CREATE TABLE `{prefix}_user_meta` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `{prefix}_user_session`
+-- One row per signed-in device (Index\Auth\Model)
+--
+
+CREATE TABLE `{prefix}_user_session` (
+  `id` varchar(64) NOT NULL,
+  `member_id` int(11) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `last_seen` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `ip` varchar(45) NOT NULL DEFAULT '',
+  `user_agent` varchar(500) NOT NULL DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Indexes for table `{prefix}_category`
 --
 ALTER TABLE `{prefix}_category`
@@ -339,6 +356,15 @@ ALTER TABLE `{prefix}_user`
 --
 ALTER TABLE `{prefix}_user_meta`
   ADD KEY `member_id` (`member_id`,`name`);
+
+--
+-- Indexes for table `{prefix}_user_session`
+--
+ALTER TABLE `{prefix}_user_session`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_member` (`member_id`),
+  ADD KEY `idx_expires` (`expires_at`),
+  ADD KEY `idx_last_seen` (`last_seen`);
 
 --
 -- AUTO_INCREMENT for table `{prefix}_language`

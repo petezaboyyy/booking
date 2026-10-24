@@ -212,11 +212,8 @@ class Controller extends ApiController
             $accessToken = $this->getAccessTokenFromRequest($request);
 
             if ($accessToken) {
-                $payload = Model::verifyToken($accessToken);
-                $userId = $payload['sub'] ?? null;
-
-                // Logout in database
-                Model::logout($accessToken, $userId);
+                // Ends this device's session only
+                Model::logout($accessToken);
             }
 
             // Clear all auth cookies

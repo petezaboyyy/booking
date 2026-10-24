@@ -24,14 +24,29 @@ use Kotchasan\Database\Sql;
 class Model extends \Kotchasan\Model
 {
     /**
-     * Token expiry time in seconds (24 hours)
+     * A device that has made no request for this long (seconds, 1 hour) is signed out
      */
-    const TOKEN_EXPIRY = 86400;
+    const SESSION_IDLE_TIMEOUT = 3600;
 
     /**
-     * Refresh token expiry time in seconds (7 days)
+     * A session ends this long after sign-in (seconds, 12 hours), however busy it is
      */
-    const REFRESH_TOKEN_EXPIRY = 604800;
+    const SESSION_ABSOLUTE_TIMEOUT = 43200;
+
+    /**
+     * last_seen is written at most this often (seconds), not on every request
+     */
+    const SESSION_TOUCH_INTERVAL = 60;
+
+    /**
+     * Token expiry time in seconds: tokens never outlive their session
+     */
+    const TOKEN_EXPIRY = self::SESSION_ABSOLUTE_TIMEOUT;
+
+    /**
+     * Refresh token expiry time in seconds: bound by the same session
+     */
+    const REFRESH_TOKEN_EXPIRY = self::SESSION_ABSOLUTE_TIMEOUT;
 
     /**
      * Authenticate user with username/email and password
@@ -115,14 +130,8 @@ class Model extends \Kotchasan\Model
         // Record successful login
         self::recordLoginAttempt($username, $clientIp, true);
 
-        // Generate tokens
-        $tokens = self::generateTokens($user->id, $deviceContext);
-
-        // Update user record with new token
-        self::updateUserToken($user->id, $tokens['access_token'], $tokens['expires_at']);
-
-        // Register active auth session/device metadata
-        self::touchSession($user->id, $tokens, $deviceContext, 'login');
+        // A session of its own for this device
+        $tokens = self::startSession($user->id, $deviceContext);
 
         // Log successful login
         self::logLoginActivity($user->id, 'Login successful', $clientIp);
@@ -240,12 +249,16 @@ class Model extends \Kotchasan\Model
      * Generate access and refresh tokens
      *
      * @param int $userId
+     * @param array $deviceContext
+     * @param string|null $sessionId Existing session to issue for (refresh)
+     * @param int|null $expiresAt Unix time the tokens expire; defaults to a full session from now
      *
      * @return array
      */
-    public static function generateTokens($userId, array $deviceContext = [], $sessionId = null)
+    public static function generateTokens($userId, array $deviceContext = [], $sessionId = null, $expiresAt = null)
     {
         $now = time();
+        $expiresAt = $expiresAt ?: $now + self::SESSION_ABSOLUTE_TIMEOUT;
         $sessionId = $sessionId ?: bin2hex(random_bytes(12));
         $fingerprint = $deviceContext['fingerprint'] ?? null;
 
@@ -257,14 +270,14 @@ class Model extends \Kotchasan\Model
         }
 
         // Generate cryptographically secure tokens
-        $accessToken = self::generateSecureToken($userId, $now, self::TOKEN_EXPIRY, 'access', $extraPayload);
-        $refreshToken = self::generateSecureToken($userId, $now, self::REFRESH_TOKEN_EXPIRY, 'refresh', $extraPayload);
+        $accessToken = self::generateSecureToken($userId, $now, $expiresAt - $now, 'access', $extraPayload);
+        $refreshToken = self::generateSecureToken($userId, $now, $expiresAt - $now, 'refresh', $extraPayload);
 
         return [
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
-            'expires_at' => $now + self::TOKEN_EXPIRY,
-            'refresh_expires_at' => $now + self::REFRESH_TOKEN_EXPIRY,
+            'expires_at' => $expiresAt,
+            'refresh_expires_at' => $expiresAt,
             'session_id' => $sessionId,
             'device_fingerprint' => $fingerprint
         ];
@@ -304,13 +317,31 @@ class Model extends \Kotchasan\Model
     }
 
     /**
-     * Verify and decode a token
+     * Verify and decode a token whose session is still live, and count the
+     * request as activity on that session.
      *
      * @param string $token
      *
      * @return array|null Returns decoded payload or null if invalid
      */
     public static function verifyToken($token)
+    {
+        $payload = self::decodeToken($token);
+        if (!$payload || !self::checkSession($payload, true)) {
+            return null;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Check a token's signature and expiry only, not its session.
+     *
+     * @param string $token
+     *
+     * @return array|null
+     */
+    private static function decodeToken($token)
     {
         if (empty($token)) {
             return null;
@@ -321,11 +352,6 @@ class Model extends \Kotchasan\Model
         $payload = \Kotchasan\Jwt::decode($token, self::getTokenSecret(), ['HS256']);
 
         if (!$payload || !isset($payload['exp']) || !isset($payload['sub'])) {
-            return null;
-        }
-
-        // Revocation (jti/session) is application state, not part of the JWT spec.
-        if (self::isTokenRevoked($payload)) {
             return null;
         }
 
@@ -352,22 +378,39 @@ class Model extends \Kotchasan\Model
     }
 
     /**
-     * Update user token in database
+     * Sign a user in on one device: a new session row and the tokens for it.
+     * Sessions on the user's other devices are left alone.
      *
      * @param int $userId
-     * @param string $token
-     * @param int $expiresAt Unix timestamp
+     * @param array $deviceContext ip, user_agent, fingerprint (taken from the request when missing)
+     *
+     * @return array Tokens, as generateTokens()
      */
-    public static function updateUserToken($userId, $token, $expiresAt)
+    public static function startSession($userId, array $deviceContext = [])
     {
-        // Convert timestamp to datetime format for database
-        $expiresDateTime = date('Y-m-d H:i:s', $expiresAt);
+        $deviceContext += [
+            'ip' => (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+            'user_agent' => (string) ($_SERVER['HTTP_USER_AGENT'] ?? '')
+        ];
+        $tokens = self::generateTokens($userId, $deviceContext);
+        $now = date('Y-m-d H:i:s');
 
-        \Kotchasan\DB::create()->update('user', ['id', $userId], [
-            'token' => $token,
-            'token_expires' => $expiresDateTime,
+        self::pruneSessions();
+        $db = \Kotchasan\DB::create();
+        $db->insert('user_session', [
+            'id' => $tokens['session_id'],
+            'member_id' => (int) $userId,
+            'created_at' => $now,
+            'last_seen' => $now,
+            'expires_at' => date('Y-m-d H:i:s', $tokens['expires_at']),
+            'ip' => substr((string) $deviceContext['ip'], 0, 45),
+            'user_agent' => mb_substr((string) $deviceContext['user_agent'], 0, 500)
+        ]);
+        $db->update('user', ['id', $userId], [
             'visited' => Sql::create('`visited` + 1')
         ]);
+
+        return $tokens;
     }
 
     /**
@@ -385,18 +428,15 @@ class Model extends \Kotchasan\Model
             return null;
         }
 
-        $userId = $payload['sub'];
-        $currentDateTime = date('Y-m-d H:i:s');
-
-        // Get user from database
+        // The session is live; the account must still be allowed in too, so an
+        // admin deactivating it takes effect on the next request.
         $user = static::createQuery()
             ->select('U.*', Sql::GROUP_CONCAT(['D.name', '|', 'D.value'], 'metas'))
             ->from('user U')
             ->join('user_meta D', ['D.member_id', 'U.id'], 'LEFT')
             ->where([
-                ['U.id', $userId],
-                ['U.token', $token],
-                ['U.token_expires', '>=', $currentDateTime]
+                ['U.id', $payload['sub']],
+                ['U.active', 1]
             ])
             ->groupBy('U.id')
             ->first();
@@ -443,8 +483,12 @@ class Model extends \Kotchasan\Model
      */
     public static function refreshAccessToken($refreshToken, array $deviceContext = [])
     {
-        // Verify refresh token
-        $payload = self::verifyToken($refreshToken);
+        // Verify refresh token. A refresh runs on a timer, so it is not activity:
+        // it must not keep an idle session alive.
+        $payload = self::decodeToken($refreshToken);
+        if ($payload && !self::checkSession($payload, false)) {
+            $payload = null;
+        }
 
         if (!$payload || ($payload['type'] ?? '') !== 'refresh') {
             return [
@@ -477,14 +521,9 @@ class Model extends \Kotchasan\Model
             ];
         }
 
-        // Generate new tokens
-        // Rotate refresh token and revoke previous refresh JTI.
-        self::revokeTokenPayload($payload);
-        $tokens = self::generateTokens($userId, $deviceContext, $payload['sid'] ?? null);
-
-        // Update user record
-        self::updateUserToken($userId, $tokens['access_token'], $tokens['expires_at']);
-        self::touchSession($userId, $tokens, $deviceContext, 'refresh');
+        // New tokens for the same session, ending when the session ends: a
+        // refresh never extends the 12 hours.
+        $tokens = self::generateTokens($userId, $deviceContext, $payload['sid'], self::sessionExpiresAt($payload['sid']));
 
         return [
             'success' => true,
@@ -500,203 +539,102 @@ class Model extends \Kotchasan\Model
      * Logout user
      *
      * @param string $token
-     * @param int|null $userId
      *
      * @return bool
      */
-    public static function logout($token, $userId = null)
+    public static function logout($token)
     {
-        $where = [];
-        $payload = null;
-        if (!empty($token)) {
-            $payload = self::verifyToken($token);
-            if ($payload) {
-                self::revokeTokenPayload($payload);
-            }
-        }
-        if ($userId) {
-            $where[] = ['id', $userId];
-        }
-        if ($token) {
-            $where[] = ['token', $token];
-        }
-        if (!empty($where)) {
-            // Clear token in database
-            \Kotchasan\Model::createQuery()
-                ->update('user')
-                ->where($where, count($where) == 1 ? 'AND' : 'OR')
-                ->set([
-                    'token' => null,
-                    'token_expires' => null
-                ])->execute();
-
-            // Log logout
-            self::logLoginActivity($userId, 'Logout', null);
-        }
-
-        if (!empty($userId) && !empty($payload['sid'])) {
-            self::removeSession($userId, $payload['sid']);
+        // Only this device's session ends; the user's other devices stay signed in.
+        $payload = self::decodeToken($token);
+        if ($payload && !empty($payload['sid'])) {
+            self::removeSession($payload['sid']);
+            self::logLoginActivity($payload['sub'], 'Logout', null);
         }
 
         return true;
     }
 
     /**
-     * Store and update session/device metadata.
+     * Whether a token's session is live: it exists, belongs to the token's user,
+     * is younger than SESSION_ABSOLUTE_TIMEOUT and has been used within
+     * SESSION_IDLE_TIMEOUT. A session found dead is deleted.
      *
-     * @param int $userId
-     * @param array $tokens
-     * @param array $deviceContext
-     * @param string $event
-     */
-    private static function touchSession($userId, array $tokens, array $deviceContext, $event)
-    {
-        if (empty($tokens['session_id'])) {
-            return;
-        }
-
-        $store = self::readJsonStore(self::getSessionStorePath());
-        if (!isset($store[$userId]) || !is_array($store[$userId])) {
-            $store[$userId] = [];
-        }
-
-        $sid = $tokens['session_id'];
-        $store[$userId][$sid] = [
-            'session_id' => $sid,
-            'fingerprint' => $tokens['device_fingerprint'] ?? ($deviceContext['fingerprint'] ?? null),
-            'ip' => $deviceContext['ip'] ?? null,
-            'user_agent' => $deviceContext['user_agent'] ?? null,
-            'last_event' => $event,
-            'last_seen' => date('c'),
-            'refresh_expires_at' => date('c', $tokens['refresh_expires_at'] ?? time() + self::REFRESH_TOKEN_EXPIRY)
-        ];
-
-        self::writeJsonStore(self::getSessionStorePath(), $store);
-    }
-
-    /**
-     * Remove one tracked session by session ID.
-     *
-     * @param int $userId
-     * @param string $sessionId
-     */
-    private static function removeSession($userId, $sessionId)
-    {
-        if (empty($sessionId)) {
-            return;
-        }
-
-        $store = self::readJsonStore(self::getSessionStorePath());
-        if (isset($store[$userId][$sessionId])) {
-            unset($store[$userId][$sessionId]);
-            if (empty($store[$userId])) {
-                unset($store[$userId]);
-            }
-            self::writeJsonStore(self::getSessionStorePath(), $store);
-        }
-    }
-
-    /**
-     * Revoke token payload by JTI until its expiration.
-     *
-     * @param array $payload
-     */
-    private static function revokeTokenPayload(array $payload)
-    {
-        if (empty($payload['jti']) || empty($payload['exp'])) {
-            return;
-        }
-
-        $store = self::readJsonStore(self::getRevokedStorePath());
-        $store[$payload['jti']] = (int) $payload['exp'];
-        self::writeJsonStore(self::getRevokedStorePath(), $store);
-    }
-
-    /**
-     * Check whether token JTI is revoked.
-     *
-     * @param array $payload
+     * @param array $payload Decoded token
+     * @param bool $touch Count this request as activity
      *
      * @return bool
      */
-    private static function isTokenRevoked(array $payload)
+    private static function checkSession(array $payload, $touch)
     {
-        if (empty($payload['jti'])) {
+        if (empty($payload['sid'])) {
+            return false;
+        }
+        $session = static::createQuery()
+            ->select('member_id', 'last_seen', 'expires_at')
+            ->from('user_session')
+            ->where([['id', $payload['sid']]])
+            ->first();
+        if (!$session || (int) $session->member_id !== (int) $payload['sub']) {
             return false;
         }
 
-        $storePath = self::getRevokedStorePath();
-        $store = self::readJsonStore($storePath);
+        // Compared in PHP, as they were written, so a database clock or time
+        // zone that differs from PHP's cannot shorten or stretch a session.
         $now = time();
+        $lastSeen = strtotime($session->last_seen);
+        if (strtotime($session->expires_at) <= $now || $lastSeen + self::SESSION_IDLE_TIMEOUT <= $now) {
+            self::removeSession($payload['sid']);
 
-        // Cleanup expired revocation entries.
-        $dirty = false;
-        foreach ($store as $jti => $exp) {
-            if ((int) $exp <= $now) {
-                unset($store[$jti]);
-                $dirty = true;
-            }
+            return false;
         }
-        if ($dirty) {
-            self::writeJsonStore($storePath, $store);
+        if ($touch && $now - $lastSeen >= self::SESSION_TOUCH_INTERVAL) {
+            \Kotchasan\DB::create()->update('user_session', [['id', $payload['sid']]], [
+                'last_seen' => date('Y-m-d H:i:s', $now)
+            ]);
         }
 
-        return isset($store[$payload['jti']]);
+        return true;
     }
 
     /**
-     * Read JSON store from disk.
+     * Unix time a session ends (its absolute limit).
      *
-     * @param string $path
+     * @param string $sessionId
      *
-     * @return array
+     * @return int|null
      */
-    private static function readJsonStore($path)
+    private static function sessionExpiresAt($sessionId)
     {
-        if (!is_file($path)) {
-            return [];
-        }
-        $raw = file_get_contents($path);
-        if ($raw === false || $raw === '') {
-            return [];
-        }
-        $data = json_decode($raw, true);
-        return is_array($data) ? $data : [];
+        $session = static::createQuery()
+            ->select('expires_at')
+            ->from('user_session')
+            ->where([['id', $sessionId]])
+            ->first();
+
+        return $session ? strtotime($session->expires_at) : null;
     }
 
     /**
-     * Write JSON store to disk.
+     * End one session (one device).
      *
-     * @param string $path
-     * @param array $data
+     * @param string $sessionId
      */
-    private static function writeJsonStore($path, array $data)
+    private static function removeSession($sessionId)
     {
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-        file_put_contents($path, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
+        \Kotchasan\DB::create()->delete('user_session', [['id', $sessionId]]);
     }
 
     /**
-     * Path to revoked token store.
-     *
-     * @return string
+     * Delete every session past either limit. Run on sign-in, so the table only
+     * holds sessions that could still be used.
      */
-    private static function getRevokedStorePath()
+    private static function pruneSessions()
     {
-        return ROOT_PATH.DATA_FOLDER.'cache/revoked_tokens.json';
-    }
-
-    /**
-     * Path to auth session store.
-     *
-     * @return string
-     */
-    private static function getSessionStorePath()
-    {
-        return ROOT_PATH.DATA_FOLDER.'cache/auth_sessions.json';
+        $now = time();
+        \Kotchasan\DB::create()->delete('user_session', [
+            ['expires_at', '<=', date('Y-m-d H:i:s', $now)],
+            ['last_seen', '<=', date('Y-m-d H:i:s', $now - self::SESSION_IDLE_TIMEOUT)]
+        ], 0, 'OR');
     }
 
     /**
