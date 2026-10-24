@@ -3644,3 +3644,23 @@ div.modal {
     font-size: 0.82em;
   }
 }
+
+/* ==========================================================================
+   Touch screens: no zooming in on every tap.
+   iOS Safari zooms the page whenever a field under 16px gets focus, and stays
+   zoomed, so the sticky top bar and the bottom sheets then sit over the form.
+   Fields here are 14.5px, so on a touch screen they are 16px. Double-tap zoom
+   is off too (pinch zoom still works). Kept last in the last stylesheet, with
+   enough :not()s to outrank the !important sizes on the booking controls.
+   ========================================================================== */
+@media (hover: none) and (pointer: coarse) {
+  html {
+    touch-action: manipulation;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='button']):not([type='submit']):not([type='reset']):not([type='hidden']),
+  select,
+  textarea,
+  .booking-time-trigger {
+    font-size: 16px !important;
+  }
+}

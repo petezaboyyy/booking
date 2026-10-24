@@ -515,7 +515,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-const ROOMLY_ROLE_UI_VERSION = '20261016-approver-col-1';
+const ROOMLY_ROLE_UI_VERSION = '20261024-time-default-1';
 
 /**
  * Has this visitor signed in at all?
@@ -797,11 +797,12 @@ function timeWheelStart(value) {
 /** The wheel that is open, if any: only one at a time. */
 let openTimeWheel = null;
 
-function closeTimeWheel(commit) {
+/** confirmed: Done or Enter, which also takes the time shown on an empty field without a wheel being moved. */
+function closeTimeWheel(commit, confirmed = false) {
     const wheel = openTimeWheel;
     if (!wheel) return;
     openTimeWheel = null;
-    if (commit) wheel.commit();
+    if (commit) wheel.commit(confirmed);
     wheel.dispose();
     wheel.trigger.setAttribute('aria-expanded', 'false');
     if (wheel.restoreFocus) wheel.trigger.focus();
@@ -870,6 +871,7 @@ function openBookingTimeWheel(field, trigger) {
     const pending = {hourIndex: start.hour, minuteIndex: start.minuteIndex};
     // Only what the user actually moved is committed. Opening and closing the
     // wheels must not rewrite a stored time that has no wheel position (08:07).
+    // An empty field has nothing to protect: Done takes the time on the wheels.
     let ready = false;
     let dirty = false;
 
@@ -1078,8 +1080,8 @@ function openBookingTimeWheel(field, trigger) {
     const wheel = {
         trigger,
         restoreFocus: true,
-        commit() {
-            if (!dirty) return;
+        commit(confirmed) {
+            if (!dirty && !(confirmed && !field.value)) return;
             const value = `${hours[pending.hourIndex]}:${minutes[pending.minuteIndex]}`;
             if (value === field.value) return;
             field.value = value;
@@ -1100,7 +1102,7 @@ function openBookingTimeWheel(field, trigger) {
             closeTimeWheel(false);
         } else if (event.key === 'Enter' && !event.target.closest?.('.booking-time-wheel-cancel')) {
             event.preventDefault();
-            closeTimeWheel(true);
+            closeTimeWheel(true, true);
         } else if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && panel.contains(event.target)) {
             event.preventDefault();
             wheels[event.key === 'ArrowLeft' ? 0 : 1].column.focus();
@@ -1119,7 +1121,7 @@ function openBookingTimeWheel(field, trigger) {
     window.addEventListener('scroll', onViewportChange, true);
     backdrop.addEventListener('click', () => closeTimeWheel(true));
     cancel.addEventListener('click', () => closeTimeWheel(false));
-    done.addEventListener('click', () => closeTimeWheel(true));
+    done.addEventListener('click', () => closeTimeWheel(true, true));
 
     // Anchor under the field on a wide screen (above it when there is no room
     // below); the stylesheet turns it into a bottom sheet on a phone.

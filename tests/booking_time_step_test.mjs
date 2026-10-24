@@ -215,11 +215,21 @@ console.log('\n[7] Empty fields, stored times off the step, and one open at a ti
   let t = setupWheels('');
   t.trigger('begin_time').click();
   check(t.selected('hour') === '08' && t.selected('minute') === '00', 'an empty field opens on 08:00');
+  t.q('.booking-time-wheel-backdrop').click();
+  check(t.$('begin_time').value === '' && t.events.change === 0, 'tapping outside without choosing does not fill it in (it may have been opened by mistake)');
+  t.trigger('begin_time').click();
   t.q('.booking-time-wheel-done').click();
-  check(t.$('begin_time').value === '', 'but leaving without choosing does not fill it in');
+  check(t.$('begin_time').value === '08:00' && t.events.change === 1, 'but Done takes the time on the wheels, 08:00, without a wheel being moved');
+
+  t = setupWheels('');
+  t.trigger('begin_time').click();
+  t.w.document.dispatchEvent(new t.w.KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
+  check(t.$('begin_time').value === '08:00', 'Enter does the same');
+
+  t = setupWheels('');
   t.trigger('begin_time').click();
   t.item('hour', '08').click();
-  t.q('.booking-time-wheel-done').click();
+  t.q('.booking-time-wheel-backdrop').click();
   check(t.$('begin_time').value === '08:00', 'tapping 08 chooses 08:00, even though the wheel was already on it');
 
   t = setupWheels('08:07');
