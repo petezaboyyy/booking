@@ -445,16 +445,8 @@ class Controller extends \Gcms\Controller
             }
         }
 
-        $items = $query->fetchAll();
-
-        // Each option below asks for its room's first photo. Fetch every room's
-        // photo list from Supabase together first, rather than one after another.
-        \Download\Storage\Model::prefetch(array_map(static function ($item) {
-            return 'booking/'.(int) $item->id.'/';
-        }, $items));
-
         $options = [];
-        foreach ($items as $item) {
+        foreach ($query->fetchAll() as $item) {
             $roomNumber = (string) ($item->room_number ?? '');
             $label = $showRoomNumber && $roomNumber !== '' ? $roomNumber : (string) $item->name;
             if ((int) $item->is_active !== 1) {

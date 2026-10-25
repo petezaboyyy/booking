@@ -192,13 +192,11 @@ class Controller extends ApiController
             }
 
             $file = ROOT_PATH.DATA_FOLDER.'booking/'.$json->id.'/'.$json->file;
-            if (file_exists($file)) {
-                @unlink($file);
-            } elseif (\Download\Storage\Model::isConfigured()) {
-                \Download\Storage\Model::delete('booking/'.$json->id.'/'.basename((string) $json->file));
-            } else {
+            if (!file_exists($file)) {
                 return $this->errorResponse('No data available', 404);
             }
+
+            @unlink($file);
 
             \Index\Log\Model::add((int) $json->id, 'booking', 'Delete', 'Removed room image: '.$json->file, $login->id);
 

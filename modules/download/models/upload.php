@@ -75,7 +75,6 @@ class Model extends \Kotchasan\KBase
                                     $time++;
                                     $file_upload = $time.$outputExt;
                                 }
-                                $fileCount = count($files);
                                 try {
                                     if ($image_width == 0 || !$isImage) {
                                         // ไม่ต้องปรับขนาด หรือไม่ใช่รูปภาพ
@@ -101,13 +100,6 @@ class Model extends \Kotchasan\KBase
                                                 'file' => $image['name']
                                             ];
                                         }
-                                    }
-                                    if (\Download\Storage\Model::isConfigured() && isset($files[$fileCount]['file'])) {
-                                        $storedFile = $files[$fileCount]['file'];
-                                        $storedPath = $dir.$storedFile;
-                                        $mime = function_exists('mime_content_type') ? mime_content_type($storedPath) : 'application/octet-stream';
-                                        \Download\Storage\Model::upload($module.'/'.$id.'/'.$storedFile, (string) file_get_contents($storedPath), $mime ?: 'application/octet-stream');
-                                        @unlink($storedPath);
                                     }
                                 } catch (\Exception $exc) {
                                     // ไม่สามารถอัปโหลดได้

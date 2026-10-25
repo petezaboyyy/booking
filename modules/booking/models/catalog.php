@@ -41,16 +41,9 @@ class Model extends \Kotchasan\Model
     public static function getItems(bool $activeOnly = true): array
     {
         $query = self::createCatalogQuery($activeOnly);
-        $rows = $query->fetchAll();
-
-        // Every room asks Supabase for its photo list. Do all of those requests
-        // together up front instead of one after another inside the loop below.
-        \Download\Storage\Model::prefetch(array_map(static function ($row) {
-            return 'booking/'.(int) $row->id.'/';
-        }, $rows));
 
         $items = [];
-        foreach ($rows as $row) {
+        foreach ($query->fetchAll() as $row) {
             $items[] = self::hydrateItem($row);
         }
 
