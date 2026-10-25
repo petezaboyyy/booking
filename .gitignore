@@ -68,6 +68,10 @@ CLAUDE.md
 /error_log.php
 ui-handoff/
 
+# Database exports and backups (contain real user data)
+/tidb-export/
+/db-backups/
+
 # Keep core framework files:
 # - Now/ directory (framework core)
 # - package.json (npm config)
