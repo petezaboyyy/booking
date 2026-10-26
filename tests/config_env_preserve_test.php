@@ -131,14 +131,18 @@ try {
     echo "\n[5] The real settings/config.php\n";
     // =====================================================================
     $real = ROOT_PATH.'settings/config.php';
-    $expected = ['pusher_app_id', 'pusher_key', 'pusher_secret', 'pusher_cluster', 'microsoft_client_secret'];
+    $expected = [
+        'pusher_app_id', 'pusher_key', 'pusher_secret', 'pusher_cluster',
+        'pusher_host', 'pusher_port', 'pusher_scheme', 'pusher_ws_host', 'pusher_ws_port',
+        'microsoft_client_secret'
+    ];
     $method = new \ReflectionMethod(Config::class, 'envBackedEntries');
     $method->setAccessible(true);
     $found = array_keys($method->invoke(null, $real));
     sort($found);
     $sorted = $expected;
     sort($sorted);
-    check($found === $sorted, 'all five env-backed entries are recognised ('.implode(', ', $found).')');
+    check($found === $sorted, 'all '.count($expected).' env-backed entries are recognised ('.implode(', ', $found).')');
 
     // What a booking-settings save does, on a copy.
     $file = tempConfig(file_get_contents($real));

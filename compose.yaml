@@ -20,6 +20,11 @@ services:
       PUSHER_KEY: ${PUSHER_KEY:-}
       PUSHER_SECRET: ${PUSHER_SECRET:-}
       PUSHER_CLUSTER: ${PUSHER_CLUSTER:-ap1}
+      PUSHER_HOST: ${PUSHER_HOST:-}
+      PUSHER_PORT: ${PUSHER_PORT:-}
+      PUSHER_SCHEME: ${PUSHER_SCHEME:-}
+      PUSHER_WS_HOST: ${PUSHER_WS_HOST:-}
+      PUSHER_WS_PORT: ${PUSHER_WS_PORT:-}
     ports:
       - "8080:80"
     volumes:
@@ -33,6 +38,32 @@ services:
           chmod g+rw /var/www/html/settings/config.php
         fi
         exec apache2-foreground
+    restart: unless-stopped
+
+  # Self-hosted Pusher-compatible WebSocket server. Used when PUSHER_HOST is
+  # set (PUSHER_HOST=sockudo); with PUSHER_HOST empty the app talks to
+  # Pusher's cloud and this container just sits idle. Browsers reach it on
+  # /app/ through the reverse proxy, the web container on http://sockudo:6001.
+  sockudo:
+    image: sockudo/sockudo:5.2.0
+    container_name: booking-sockudo
+    environment:
+      SOCKUDO_DEFAULT_APP_ENABLED: "true"
+      SOCKUDO_DEFAULT_APP_ID: ${PUSHER_APP_ID:-}
+      SOCKUDO_DEFAULT_APP_KEY: ${PUSHER_KEY:-}
+      SOCKUDO_DEFAULT_APP_SECRET: ${PUSHER_SECRET:-}
+      # Only the server publishes; browsers just listen.
+      SOCKUDO_DEFAULT_APP_ENABLE_CLIENT_MESSAGES: "false"
+      # Single node: no Redis needed.
+      ADAPTER_DRIVER: local
+      APP_MANAGER_DRIVER: memory
+      CACHE_DRIVER: memory
+      QUEUE_DRIVER: memory
+      # Browsers ping after this many idle seconds; the reverse proxy's read
+      # timeout must stay above it plus pusher-js's 30 s pong wait.
+      ACTIVITY_TIMEOUT: "120"
+    ports:
+      - "6001:6001"
     restart: unless-stopped
 
   database:

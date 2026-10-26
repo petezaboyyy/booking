@@ -6,6 +6,9 @@
  *
  * Provides zero-dependency cURL-based event publishing to Pusher Channels REST API.
  * Uses HMAC-SHA256 authentication as per Pusher specification.
+ *
+ * The same requests work against a self-hosted Pusher-compatible server
+ * (Sockudo): set PUSHER_HOST and events go there instead of Pusher's cloud.
  */
 
 namespace Booking\Pusher;
@@ -34,6 +37,29 @@ class Model extends \Kotchasan\Model
     }
 
     /**
+     * Where the REST API lives, without a trailing slash.
+     *
+     * PUSHER_HOST empty means Pusher's cloud for the configured cluster.
+     * Otherwise it names a self-hosted server, normally reached inside the
+     * Docker network (http://sockudo:6001), so it never needs to go through
+     * the public reverse proxy.
+     */
+    public static function apiBaseUrl(): string
+    {
+        $host = self::$cfg->pusher_host ?? getenv('PUSHER_HOST');
+        if (empty($host)) {
+            $cluster = self::$cfg->pusher_cluster ?? getenv('PUSHER_CLUSTER');
+
+            return 'https://api-'.(empty($cluster) ? 'ap1' : $cluster).'.pusher.com';
+        }
+        $scheme = self::$cfg->pusher_scheme ?? getenv('PUSHER_SCHEME');
+        $scheme = $scheme === 'http' ? 'http' : 'https';
+        $port = (int) (self::$cfg->pusher_port ?? getenv('PUSHER_PORT'));
+
+        return $scheme.'://'.$host.($port > 0 ? ':'.$port : '');
+    }
+
+    /**
      * Trigger a Pusher event on a channel
      *
      * @param string $channel Channel name (e.g. 'booking')
@@ -47,10 +73,6 @@ class Model extends \Kotchasan\Model
         $appId = self::$cfg->pusher_app_id ?? getenv('PUSHER_APP_ID');
         $key = self::$cfg->pusher_key ?? getenv('PUSHER_KEY');
         $secret = self::$cfg->pusher_secret ?? getenv('PUSHER_SECRET');
-        $cluster = self::$cfg->pusher_cluster ?? getenv('PUSHER_CLUSTER');
-        if (empty($cluster)) {
-            $cluster = 'ap1';
-        }
 
         // Silently return if Pusher credentials are not configured
         if (empty($appId) || empty($key) || empty($secret)) {
@@ -75,7 +97,7 @@ class Model extends \Kotchasan\Model
             $stringToSign = "POST\n{$path}\n{$queryString}";
             $authSignature = hash_hmac('sha256', $stringToSign, $secret);
 
-            $url = "https://api-{$cluster}.pusher.com{$path}?{$queryString}&auth_signature={$authSignature}";
+            $url = self::apiBaseUrl()."{$path}?{$queryString}&auth_signature={$authSignature}";
 
             $ch = curl_init();
             curl_setopt_array($ch, [

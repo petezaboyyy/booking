@@ -53,7 +53,9 @@ class Controller extends ApiController
         'discount',
         'company',
         'pusher_key',
-        'pusher_cluster'
+        'pusher_cluster',
+        'pusher_ws_host',
+        'pusher_ws_port'
     ];
 
     /**
@@ -83,6 +85,22 @@ class Controller extends ApiController
             $config['user_register'] = 0;
             $config['user_forgot'] = 0;
         }
+
+        return $config;
+    }
+
+    /**
+     * Tell the browser whether to connect to Pusher's cloud or to our own
+     * Pusher-compatible server. pusher_host itself is an address inside the
+     * Docker network, so only the yes/no leaves the server.
+     *
+     * @param array $config
+     *
+     * @return array
+     */
+    private static function applyRealtime(array $config): array
+    {
+        $config['pusher_self_hosted'] = !empty(self::$cfg->pusher_host);
 
         return $config;
     }
@@ -163,6 +181,7 @@ class Controller extends ApiController
         }
 
         $config = self::applySignInPolicy($config);
+        $config = self::applyRealtime($config);
 
         // Check authentication and add user
         $login = $this->authenticateRequest($request);

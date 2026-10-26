@@ -80,7 +80,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         csp: {
           directives: {
             'script-src': ['https://js.pusher.com'],
-            'connect-src': ['wss://*.pusher.com', 'https://*.pusher.com']
+            // Pusher's cloud, or a self-hosted Pusher-compatible server on this
+            // site's own host (behind the reverse proxy, or on its own port in dev)
+            'connect-src': [
+              'wss://*.pusher.com',
+              'https://*.pusher.com',
+              `wss://${window.location.hostname}:*`,
+              `ws://${window.location.hostname}:*`
+            ]
           }
         }
       },
@@ -1040,25 +1047,25 @@ async function initPusher() {
       return;
     }
 
-    // 1. Resolve Pusher Key and Cluster
+    // 1. Resolve Pusher Key and where to connect
     const baseUrl = window.WEB_URL || '/';
-    let pusherKey = window.AppConfigManager?.state?.lastConfig?.pusher_key || null;
-    let pusherCluster = window.AppConfigManager?.state?.lastConfig?.pusher_cluster || 'ap1';
+    let realtime = window.AppConfigManager?.state?.lastConfig || {};
 
-    if (!pusherKey) {
+    if (!realtime.pusher_key) {
       try {
         const res = await fetch(`${baseUrl}api/index/config/frontend-settings`, {
           credentials: 'same-origin',
           headers: { 'Accept': 'application/json' }
         });
         const json = await res.json();
-        const config = json?.data || {};
-        pusherKey = config.pusher_key || null;
-        pusherCluster = config.pusher_cluster || 'ap1';
+        realtime = json?.data || {};
       } catch (e) {
         console.warn('[Pusher] Could not fetch frontend-settings:', e);
       }
     }
+
+    const pusherKey = realtime.pusher_key || null;
+    const pusherCluster = realtime.pusher_cluster || 'ap1';
 
     if (!pusherKey) {
       console.warn('[Pusher] Disabled: PUSHER_KEY is not configured');
@@ -1071,9 +1078,28 @@ async function initPusher() {
       return;
     }
 
+    // Self-hosted (Sockudo): same host as this page unless PUSHER_WS_HOST says
+    // otherwise; same port too, which is the reverse proxy in production.
+    // TLS follows the page, since an https page may not open ws://.
+    let connection = {cluster: pusherCluster, forceTLS: true};
+    let endpoint = `cluster ${pusherCluster}`;
+    if (realtime.pusher_self_hosted) {
+      const secure = window.location.protocol === 'https:';
+      const wsHost = realtime.pusher_ws_host || window.location.hostname;
+      const wsPort = Number(realtime.pusher_ws_port) || Number(window.location.port) || (secure ? 443 : 80);
+      connection = {
+        cluster: pusherCluster, // pusher-js 8 requires one; wsHost takes precedence
+        wsHost,
+        wsPort,
+        wssPort: wsPort,
+        forceTLS: secure,
+        enabledTransports: ['ws', 'wss']
+      };
+      endpoint = `${secure ? 'wss' : 'ws'}://${wsHost}:${wsPort}`;
+    }
+
     const pusher = new Pusher(pusherKey, {
-      cluster: pusherCluster,
-      forceTLS: true,
+      ...connection,
       channelAuthorization: {
         endpoint: `${baseUrl}api/booking/pusher/authorize`,
         transport: 'ajax',
@@ -1152,7 +1178,7 @@ async function initPusher() {
     });
 
     pusher.connection.bind('connected', () => {
-      console.log('[Pusher] WebSocket connected to cluster:', pusherCluster);
+      console.log('[Pusher] WebSocket connected to', endpoint);
     });
 
     pusher.connection.bind('error', (err) => {

@@ -258,7 +258,9 @@ class Config
         $source = @file_get_contents($file);
         // Only single-line entries at the top level, which is how var_export()
         // and hand edits both lay them out; anything else is left as it was.
-        if ($source === false || !preg_match_all("/^  '([A-Za-z0-9_]+)' => (.*\\bgetenv\\s*\\(.*?),[ \\t]*$/m", $source, $matches, PREG_SET_ORDER)) {
+        // \r? because a Windows checkout (core.autocrlf) gives the file CRLF
+        // line ends, and without it no entry matched and secrets were saved.
+        if ($source === false || !preg_match_all("/^  '([A-Za-z0-9_]+)' => (.*\\bgetenv\\s*\\(.*?),[ \\t]*\\r?$/m", $source, $matches, PREG_SET_ORDER)) {
             return [];
         }
         $current = include $file;
