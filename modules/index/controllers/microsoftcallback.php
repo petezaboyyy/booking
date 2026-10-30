@@ -22,7 +22,8 @@ class Controller extends \Gcms\Api
             if ($transaction['tenant'] !== $cfg->microsoft_tenant || $transaction['client'] !== $cfg->microsoft_client_id
                 || $transaction['redirect'] !== $cfg->microsoft_redirect_uri
                 || ($transaction['authority'] ?? $cfg->microsoft_tenant) !== MicrosoftOAuth::authority($cfg)
-                || ($transaction['demo_email'] ?? '') !== MicrosoftOAuth::demoEmail()) {
+                || ($transaction['demo_email'] ?? '') !== MicrosoftOAuth::demoEmail()
+                || ($transaction['profile_api'] ?? 'graph') !== MicrosoftOAuth::profileApi($cfg)) {
                 throw new \RuntimeException('Configuration changed');
             }
             if ($request->get('error', '')->toString() !== '') {
@@ -83,6 +84,9 @@ class Controller extends \Gcms\Api
                         'social' => 'microsoft',
                         'status' => 0
                     ];
+                } elseif (MicrosoftOAuth::profileApi($cfg) === 'cmu') {
+                    $info = MicrosoftOAuth::request(MicrosoftOAuth::CMU_BASICINFO_URL, null, $tokens['access_token']);
+                    $identity = MicrosoftOAuth::cmuProfile($info, $claims, $cfg->microsoft_allowed_domains);
                 } else {
                     $user = MicrosoftOAuth::request('https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,userType', null, $tokens['access_token']);
                     $identity = MicrosoftOAuth::profile($user, $claims, $cfg->microsoft_allowed_domains);

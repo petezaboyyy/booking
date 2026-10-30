@@ -5,6 +5,25 @@ namespace Gcms;
 class MicrosoftOAuth
 {
     const PERSONAL_TENANT = '9188040d-6c67-4c5b-b112-36a304b66dad';
+    const GRAPH_SCOPE = 'https://graph.microsoft.com/User.Read';
+    const CMU_SCOPE = 'api://cmu/Mis.Account.Read.Me.Basicinfo';
+    const CMU_BASICINFO_URL = 'https://api.cmu.ac.th/mis/cmuaccount/prod/v3/me/basicinfo';
+
+    /**
+     * Where the profile comes from after the ID token is validated:
+     * 'graph' (Microsoft Graph /me, default) or 'cmu' (CMU MIS BasicInfo,
+     * for app registrations that are granted only the CMU API scope).
+     */
+    public static function profileApi($cfg)
+    {
+        return strtolower(trim((string) ($cfg->microsoft_profile_api ?? ''))) === 'cmu' ? 'cmu' : 'graph';
+    }
+
+    /** One resource per access token: Graph or CMU API, never both. */
+    public static function scope($cfg)
+    {
+        return 'openid profile email '.(self::profileApi($cfg) === 'cmu' ? self::CMU_SCOPE : self::GRAPH_SCOPE);
+    }
 
     public static function demoEmail()
     {
@@ -108,7 +127,7 @@ class MicrosoftOAuth
         return $result;
     }
 
-    /** Fixed Microsoft endpoints only. TLS verification and bounded requests are mandatory. */
+    /** Fixed Microsoft and CMU API endpoints only. TLS verification and bounded requests are mandatory. */
     public static function request($url, $post = null, $bearer = null)
     {
         $curl = curl_init($url);
@@ -216,6 +235,33 @@ class MicrosoftOAuth
         return [
             'username' => $email,
             'name' => trim($user['displayName'] ?? '') ?: $email,
+            'microsoft_id' => $claims['oid'],
+            'microsoft_tenant_id' => $claims['tid'],
+            'social' => 'microsoft',
+            'status' => 0
+        ];
+    }
+
+    /**
+     * CMU BasicInfo in place of Graph /me. Identity stays the validated ID token's
+     * oid/tid; BasicInfo only supplies the email and name. Guests and accounts
+     * without a CMU MIS record get no cmuitaccount and are rejected here.
+     */
+    public static function cmuProfile(array $info, array $claims, $allowedDomains)
+    {
+        $email = strtolower(trim((string) ($info['cmuitaccount'] ?? '')));
+        $domain = substr(strrchr($email, '@') ?: '', 1);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($domain, self::domains($allowedDomains), true)) {
+            error_log('Microsoft SSO: CMU BasicInfo account rejected: domain='.($domain ?: '-'));
+            throw new \RuntimeException('Your email domain is not allowed to access Booking.');
+        }
+        $name = trim(trim((string) ($info['firstname_TH'] ?? '')).' '.trim((string) ($info['lastname_TH'] ?? '')));
+        if ($name === '') {
+            $name = trim(trim((string) ($info['firstname_EN'] ?? '')).' '.trim((string) ($info['lastname_EN'] ?? '')));
+        }
+        return [
+            'username' => $email,
+            'name' => $name !== '' ? $name : $email,
             'microsoft_id' => $claims['oid'],
             'microsoft_tenant_id' => $claims['tid'],
             'social' => 'microsoft',

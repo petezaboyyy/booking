@@ -33,7 +33,8 @@ class Config extends \Kotchasan\Config
             'microsoft_client_secret' => 'BOOKING_MICROSOFT_CLIENT_SECRET',
             'microsoft_tenant' => 'BOOKING_MICROSOFT_TENANT',
             'microsoft_allowed_domains' => 'BOOKING_MICROSOFT_ALLOWED_DOMAINS',
-            'microsoft_redirect_uri' => 'BOOKING_MICROSOFT_REDIRECT_URI'
+            'microsoft_redirect_uri' => 'BOOKING_MICROSOFT_REDIRECT_URI',
+            'microsoft_profile_api' => 'BOOKING_MICROSOFT_PROFILE_API'
         ];
         foreach ($microsoftEnvironment as $property => $environmentName) {
             $value = getenv($environmentName);
@@ -97,6 +98,12 @@ class Config extends \Kotchasan\Config
     public $microsoft_tenant = '';
     public $microsoft_allowed_domains = '';
     public $microsoft_redirect_uri = '';
+    /**
+     * graph = Microsoft Graph /me, cmu = CMU MIS BasicInfo (api://cmu scope)
+     *
+     * @var string
+     */
+    public $microsoft_profile_api = 'graph';
     /**
      * รายชื่อฟิลด์จากตารางสมาชิก สำหรับตรวจสอบการ login
      *

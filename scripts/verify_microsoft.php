@@ -105,6 +105,21 @@ $blankGuest=$blankType; $blankGuest['userPrincipalName']='staff_university.ac.th
 rejects('null userType with guest UPN rejected', function () use ($blankGuest,$claims) { OAuth::profile($blankGuest,$claims,'university.ac.th'); });
 $lowerMember=$profile; $lowerMember['userType']='member';
 check('userType compared case-insensitively', OAuth::profile($lowerMember,$claims,'university.ac.th')['username'] === 'staff@university.ac.th');
+check('Graph profile API is the default', OAuth::profileApi($cfg) === 'graph' && strpos(OAuth::scope($cfg), OAuth::GRAPH_SCOPE) !== false);
+$cmuCfg = clone $cfg; $cmuCfg->microsoft_profile_api = 'CMU';
+check('CMU profile API requests only the CMU scope', OAuth::profileApi($cmuCfg) === 'cmu'
+    && OAuth::scope($cmuCfg) === 'openid profile email '.OAuth::CMU_SCOPE);
+$basicInfo = ['cmuitaccount'=>'Staff@University.ac.th','cmuitaccount_name'=>'staff','firstname_TH'=>'ทดสอบ','lastname_TH'=>'ระบบ','firstname_EN'=>'Test','lastname_EN'=>'Staff'];
+$cmuIdentity = OAuth::cmuProfile($basicInfo,$claims,'university.ac.th');
+check('CMU email normalized', $cmuIdentity['username'] === 'staff@university.ac.th');
+check('CMU identity is the ID token oid', $cmuIdentity['microsoft_id'] === $oid && $cmuIdentity['microsoft_tenant_id'] === $tenant);
+check('CMU Thai name preferred', $cmuIdentity['name'] === 'ทดสอบ ระบบ');
+$englishOnly=$basicInfo; $englishOnly['firstname_TH']=''; $englishOnly['lastname_TH']=null;
+check('CMU English name fallback', OAuth::cmuProfile($englishOnly,$claims,'university.ac.th')['name'] === 'Test Staff');
+foreach (['missing account'=>null,'wrong domain'=>'user@eviluniversity.ac.th','not an email'=>'staff'] as $label=>$bad) {
+    $modified=$basicInfo; $modified['cmuitaccount']=$bad;
+    rejects('CMU '.$label.' rejected', function () use ($modified,$claims) { OAuth::cmuProfile($modified,$claims,'university.ac.th'); });
+}
 if (in_array('--database', $argv, true)) {
     require dirname(__DIR__).'/load.php';
     Kotchasan::createWebApplication('Gcms\\Config');

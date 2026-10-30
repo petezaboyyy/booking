@@ -33,6 +33,7 @@ class Controller extends \Gcms\Api
             'redirect' => $cfg->microsoft_redirect_uri,
             'authority' => MicrosoftOAuth::authority($cfg),
             'demo_email' => MicrosoftOAuth::demoEmail(),
+            'profile_api' => MicrosoftOAuth::profileApi($cfg),
             'return' => MicrosoftOAuth::returnUrl($request->get('intended_url', '/')->toString(), MicrosoftOAuth::baseUrl($cfg->microsoft_redirect_uri))
         ];
         session_write_close();
@@ -42,7 +43,7 @@ class Controller extends \Gcms\Api
             'response_type' => 'code',
             'response_mode' => 'query',
             'prompt' => 'select_account',
-            'scope' => 'openid profile email https://graph.microsoft.com/User.Read',
+            'scope' => MicrosoftOAuth::scope($cfg),
             'state' => $state,
             'nonce' => $nonce,
             'code_challenge' => MicrosoftOAuth::encode(hash('sha256', $verifier, true)),

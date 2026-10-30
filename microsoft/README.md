@@ -30,6 +30,19 @@ Server-side authorization code flow with OIDC, PKCE S256 and a single university
 3. Configure delegated scopes `openid`, `profile`, `email`, `User.Read`. Apply administrator consent if your university policy requires it. No application permissions or `offline_access` are needed.
 4. In the Enterprise Application, set **Assignment required = Yes** and assign only eligible staff. This is required for staff-only access when students share the tenant/domain. The application checks tenant, exact email domain and Graph `userType=Member`; it does not infer employment from an email address. Guest accounts are denied.
 
+### CMU API instead of Microsoft Graph
+
+When the university grants the application only the CMU API permission
+(`Mis.Account.Read.Me.Basicinfo`, under **APIs my organization uses → CMU API**) and not
+Graph `User.Read`, set `BOOKING_MICROSOFT_PROFILE_API=cmu`. Sign-in then requests
+`openid profile email api://cmu/Mis.Account.Read.Me.Basicinfo` and reads the profile from
+`https://api.cmu.ac.th/mis/cmuaccount/prod/v3/me/basicinfo`. The ID token is validated
+exactly as in Graph mode and its `oid` remains the identity; BasicInfo supplies only the
+email (`cmuitaccount`, checked against the allowed domains) and name. There is no Graph
+`userType` check in this mode: accounts without a CMU MIS record (guests) receive no
+`cmuitaccount` and are denied. Students also have CMU MIS records, so staff-only access
+still relies on **Assignment required**. The personal-account demo needs Graph mode.
+
 ## Configure Booking
 
 For local development, copy `.env.example` to `.env` and fill in the Microsoft
