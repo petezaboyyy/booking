@@ -27,6 +27,7 @@ services:
       PUSHER_WS_HOST: ${PUSHER_WS_HOST:-}
       PUSHER_WS_PORT: ${PUSHER_WS_PORT:-}
     ports:
+      - "80:80"
       - "8080:80"
     volumes:
       - .:/var/www/html
