@@ -19,6 +19,17 @@ RUN sed -ri \
     -e 's!AllowOverride None!AllowOverride All!g' \
     /etc/apache2/apache2.conf
 
+# Browsers reach Sockudo's WebSocket on /app/ of the site itself, so it rides
+# the same https and port as the pages and the reverse proxy in front needs no
+# rule of its own. timeout stays above Sockudo's 120 s ping plus pusher-js's
+# 30 s pong wait, or idle sockets get cut.
+RUN a2enmod proxy proxy_http \
+    && printf '%s\n' \
+        'ProxyPass /app/ http://sockudo:6001/app/ upgrade=websocket timeout=300' \
+        'ProxyPassReverse /app/ http://sockudo:6001/app/' \
+        > /etc/apache2/conf-available/sockudo.conf \
+    && a2enconf sockudo
+
 WORKDIR /var/www/html
 
 # Copy source code into container
