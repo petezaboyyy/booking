@@ -63,7 +63,7 @@ a:hover {
    Sidebar
    ======================================== */
 .sidebar {
-  background: #5EAFD2;
+  background: var(--sidebar-color-background);
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
   color: var(--sidebar-color-text);
 }
