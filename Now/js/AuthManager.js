@@ -989,6 +989,11 @@ const AuthManager = {
         this.buildRefreshRequestOptions()
       );
 
+      // The server turned the refresh down (401 invalid/expired session, 400
+      // missing token or device mismatch), as opposed to a network or server
+      // hiccup, which must not sign anyone out.
+      this.state.sessionRejected = !response?.data?.success && [400, 401].includes(response?.status);
+
       if (response?.data?.success) {
         // The refreshed access token is set by the server as an httpOnly cookie;
         // the client neither receives nor stores it.
@@ -1023,8 +1028,62 @@ const AuthManager = {
       return false;
     } catch (error) {
       console.warn('Token refresh failed:', error.message || error);
+      this.state.sessionRejected = false;
       return false;
     }
+  },
+
+  /**
+   * Find out whether the server-side session is still live, and if it has ended
+   * (idle for an hour, or past its 12 hours) send the user to the login page.
+   * Uses the refresh endpoint because the server does not count a refresh as
+   * activity; polling verify instead would keep an idle session alive forever.
+   */
+  async checkSessionAlive() {
+    if (!this.state.authenticated || this.state.checkingSession) {
+      return;
+    }
+    this.state.checkingSession = true;
+    this.state.lastSessionCheck = Date.now();
+    try {
+      const refreshed = await this.refreshToken();
+      if (!refreshed && this.state.sessionRejected) {
+        await this.handleSessionExpired();
+      } else if (!refreshed && this.config.security.autoRefresh) {
+        // Transient failure: keep checking on the usual schedule.
+        this.setupAutoRefresh();
+      }
+    } finally {
+      this.state.checkingSession = false;
+    }
+  },
+
+  async handleSessionExpired() {
+    if (!this.state.authenticated) {
+      return;
+    }
+    this.emit('auth:session_expired', {timestamp: Date.now()});
+    await this.logout(false, {preventRedirect: true});
+    // RedirectManager stores the current route, so signing in again returns here.
+    if (window.RedirectManager?.requireAuth) {
+      await RedirectManager.requireAuth();
+    } else {
+      this.redirectTo(this.config.redirects.unauthorized);
+    }
+  },
+
+  /** A tab left in the background has its timers throttled; check on return. */
+  setupSessionWatch() {
+    if (this.state.sessionWatchBound || typeof document === 'undefined') {
+      return;
+    }
+    this.state.sessionWatchBound = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible'
+        && Date.now() - (this.state.lastSessionCheck || 0) >= 60 * 1000) {
+        this.checkSessionAlive();
+      }
+    });
   },
 
   setupAutoRefresh() {
@@ -1032,11 +1091,11 @@ const AuthManager = {
       clearTimeout(this.state.refreshTimer);
     }
 
+    this.setupSessionWatch();
+
     const refreshInterval = this.config.security.refreshBeforeExpiry;
-    this.state.refreshTimer = setTimeout(async () => {
-      if (this.state.authenticated) {
-        await this.refreshToken();
-      }
+    this.state.refreshTimer = setTimeout(() => {
+      this.checkSessionAlive();
     }, refreshInterval);
   },
 

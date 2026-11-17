@@ -689,7 +689,13 @@ const RouterManager = {
       const isAuthenticated = authManager.isAuthenticated();
 
       if (route.requireGuest) {
-        if (isAuthenticated) {
+        // In-memory state goes stale while the tab sits idle: the server ends the
+        // session after an hour without activity, but nothing tells this page.
+        // Ask the server before turning a visitor away from /login, otherwise an
+        // expired session can never sign in again ("already logged in").
+        if (isAuthenticated && typeof authManager.verifyAuthState === 'function'
+          ? await authManager.verifyAuthState()
+          : isAuthenticated) {
           result.allowed = false;
           result.reason = 'already_authenticated';
           result.redirectTo = this.config.auth?.redirects?.afterLogin || '/';
