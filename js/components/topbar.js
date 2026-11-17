@@ -22,15 +22,6 @@ Now.getManager('component').define('topbar', {
             </ul>
           </button>
 
-          <!-- Language toggle component (cycles configured locales) -->
-          <button type="button" class="lang-toggle btn dropdown" data-component="lang-toggle" data-locales="en,th" title="Switch language">
-            <span data-lang-label>EN</span>
-            <ul>
-              <li><a data-locale="th">TH</a></li>
-              <li><a data-locale="en">EN</a></li>
-            </ul>
-          </button>
-
           <!-- Theme toggle component (cycles configured themes) -->
           <button type="button" data-component="config" class="nav-link" title="Toggle theme"></button>
 
@@ -44,5 +35,18 @@ Now.getManager('component').define('topbar', {
           </button>
         </div>
       </div>
-    </header>`
+    </header>`,
+
+  // Admin pages are Thai only (no language switch here). Someone who picked
+  // English on the member pages still gets the admin pages in Thai.
+  async mounted() {
+    const i18n = Now.getManager('i18n');
+    if (i18n && typeof i18n.setLocale === 'function' && i18n.getCurrentLocale?.() !== 'th') {
+      try {
+        await i18n.setLocale('th');
+      } catch (e) {
+        console.warn('topbar: could not switch to Thai', e);
+      }
+    }
+  }
 });

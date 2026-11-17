@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Load application components after framework initialization
       const scripts = [
         `${currentDir}js/components/sidebar.js`,
-        `${currentDir}js/components/topbar.js`,
+        `${currentDir}js/components/topbar.js?v=20261117-admin-thai-only`,
         `${currentDir}js/components/SocialLogin.js?v=20260912-microsoft-sso-3`
       ];
 
