@@ -86,5 +86,19 @@ services:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     restart: unless-stopped
 
+  # Database GUI. Bound to 127.0.0.1 only: reach it on the VPS itself, or from
+  # another machine through an SSH tunnel (ssh -L 8081:127.0.0.1:8081 ...).
+  # Never publish it on 0.0.0.0.
+  adminer:
+    image: adminer:4.8.1
+    container_name: booking-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: database
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      - database
+    restart: unless-stopped
+
 volumes:
   booking-database-data:
